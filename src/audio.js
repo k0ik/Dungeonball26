@@ -25,12 +25,17 @@ const SYNTHS = {
       const env = t < 0.24 ? Math.exp(-local * 12) : Math.exp(-(t - 0.24) * 5);
       return Math.sin(2 * Math.PI * note * t) * env * 0.5;
     }),
-  // Soft thump plus a short breathy noise swish.
+  // Cue strike: a sharp tip click over a short woody "tock", with a little
+  // low body. Lower and drier than the glassy ball-on-ball clack.
   launch: (ctx) =>
-    synth(ctx, 0.22, (t) => {
-      const thump = Math.sin(2 * Math.PI * (90 - 120 * t) * t) * Math.exp(-t * 30);
-      const swish = (Math.random() * 2 - 1) * Math.exp(-t * 18) * 0.35 * Math.min(1, t * 60);
-      return (thump + swish) * 0.8;
+    synth(ctx, 0.14, (t) => {
+      const click = (Math.random() * 2 - 1) * Math.exp(-t * 900);
+      const tock =
+        Math.sin(2 * Math.PI * 850 * t) * Math.exp(-t * 55) * 0.6 +
+        Math.sin(2 * Math.PI * 1650 * t) * Math.exp(-t * 80) * 0.35 +
+        Math.sin(2 * Math.PI * 2900 * t) * Math.exp(-t * 140) * 0.15;
+      const body = Math.sin(2 * Math.PI * 140 * t) * Math.exp(-t * 40) * 0.35;
+      return (click * 0.5 + tock + body) * 0.75; // peaks just under 1
     }),
   // Knocky stone clack: a quick click on top of a low body.
   wall: (ctx) =>

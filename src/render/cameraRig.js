@@ -97,6 +97,9 @@ export function createCameraRig() {
   let box = { minX: -Infinity, maxX: Infinity, minY: -Infinity, maxY: Infinity };
   let aspect = 9 / 16;
   let viewWidth = K.baseViewWidth;
+  // While aiming: the width at the press, and where the ball sat on screen
+  // then, as a fraction of the view width from its centre.
+  const aim = { width: K.baseViewWidth, fx: 0, fy: 0 };
 
   function applyFrustum() {
     const halfW = viewWidth / 2;
@@ -170,7 +173,7 @@ export function createCameraRig() {
      * Ease toward framing `points`. `minWidth` is the narrowest allowed view
      * (the speed-based zoom); the framing only ever widens beyond it.
      */
-    frame(points, minWidth, dt, { zoomOutRate = K.zoomOutRate } = {}) {
+    frame(points, minWidth, dt) {
       Object.assign(
         goal,
         computeFraming(points, { yaw, elevation, aspect, minWidth, maxWidth: K.maxFrameWidth, padding: K.framePadding }),
@@ -179,8 +182,39 @@ export function createCameraRig() {
       const k = 1 - Math.exp(-K.followRate * dt);
       target.x += (goal.x - target.x) * k;
       target.z += (goal.z - target.z) * k;
-      const rate = goal.width > viewWidth ? zoomOutRate : K.zoomInRate;
+      const rate = goal.width > viewWidth ? K.zoomOutRate : K.zoomInRate;
       viewWidth += (goal.width - viewWidth) * (1 - Math.exp(-rate * dt));
+      applyFrustum();
+      place();
+    },
+    /** Start an aim drag: remember where `ball` sits on screen right now. */
+    beginAim(ball) {
+      const ax = axes(yaw);
+      const squash = Math.sin(elevation);
+      const b = toScreen(ball, ax, squash); // the ground point under the ball, where the ring is drawn
+      const c = toScreen(target, ax, squash);
+      // The view centre is the target, which sits at ball height: on screen it
+      // is raised by y·cos(elevation) relative to its ground point.
+      const cy = c.sy - target.y * Math.cos(elevation);
+      Object.assign(aim, { width: viewWidth, fx: (b.sx - c.sx) / viewWidth, fy: (b.sy - cy) / viewWidth });
+    },
+    /** Width at the press, for scaling on-screen aim guides. */
+    get aimStartWidth() {
+      return aim.width;
+    },
+    /**
+     * While aiming: ease toward `width`, zooming around the ball so it stays
+     * at the same spot on screen (no panning, no level clamping).
+     */
+    aimZoom(ball, width, dt) {
+      viewWidth += (width - viewWidth) * (1 - Math.exp(-K.aimZoomRate * dt));
+      const ax = axes(yaw);
+      const squash = Math.sin(elevation);
+      const b = toScreen(ball, ax, squash);
+      const c = toGround(b.sx - aim.fx * viewWidth, b.sy - aim.fy * viewWidth + target.y * Math.cos(elevation), ax, squash);
+      target.x = c.x;
+      target.z = c.z;
+      Object.assign(goal, { x: c.x, z: c.z, width: viewWidth });
       applyFrustum();
       place();
     },

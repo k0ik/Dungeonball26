@@ -44,7 +44,7 @@ The loop repeats until the hero touches the exit, which ends the level at once, 
 - **At rest:** the next launch, lunge or patrol move waits until every ball is below the stop threshold, so positions are always stable before the next move. Nothing moves outside a shot or a turn.
 - **Patrol:** each round, a random half of the enemies (rounded up) are picked to patrol; the rest sit the round out unless they can see the hero, in which case they still lunge. A picked enemy that does not currently see the hero picks a random open floor tile within about 3 tiles (one it can roll to in a straight line, with no ball on it) and rolls toward it at the modest speed (1 to 3 tiles/s) that friction brings to rest there. It behaves like any pool ball on the way, so it can still bounce off walls, barrels and other enemies. If no open tile is available, it stays put for that turn. Every move is shown: the camera visits each enemy on its turn (see the camera section).
 - **Exit:** enemies never follow you out. Killing everything is not required.
-- **Enemy lunge:** an enemy that currently sees the hero launches in a straight line at it at a fixed speed instead of patrolling. Its "!" pulses for about half a second first, with a growl, so the attack never comes out of nowhere. Like any pool ball, it stays wherever it stops, which becomes its new position. Its hit only counts at an impact of at least 1.5 tiles/s, and it can hurt the hero at most once per turn.
+- **Enemy lunge:** an enemy that currently sees the hero launches in a straight line at it at a fixed speed instead of patrolling. Its "!" pulses for about half a second first, with a growl, so the attack never comes out of nowhere. Like any pool ball, it stays wherever it stops, which becomes its new position. Its hit only counts at an impact of at least 0.4 tiles/s, and it can hurt the hero at most once per turn.
 
 ## Ball physics and input
 
@@ -104,7 +104,7 @@ D_{\text{enemy}} = \text{ATK} \qquad D_{\text{hero}} = 1 \qquad \text{HP}_{\text
 
 Combo example: with ATK 1, you hit enemy A and it slides into enemy B. A takes 2 damage in total and B takes 1. A level-1 enemy has 2 HP, so A dies and B is left at 1 HP if it is also level 1.
 
-Pinning works too. Trap an enemy between you and a wall and your rebound can hit it again within the same shot. A hit counts only at an impact speed of at least 1.5 tiles/s, with a 0.15 s cooldown per enemy, so a ball resting against another cannot grind it down.
+Pinning works too. Trap an enemy between you and a wall and your rebound can hit it again within the same shot. A hit counts only at an impact speed of at least 0.4 tiles/s (just above the stop threshold, so any visible contact lands; it was 1.5 until halving friction made slow roll-ins common), with a 0.15 s cooldown per enemy, so a ball resting against another cannot grind it down.
 
 Every enemy that currently sees the hero shows a "!" above it, updated live even mid-shot, so you can steer toward a safe stopping spot. Sight range is 6 tiles. Walls, barrels, closed doors and other enemies block sight, and sight is a hero-width sweep so a lunge can really reach you. Watchers off screen get an edge marker. A patrolling enemy shows no marker and a calm expression; a sighted one shows the "!" now, and swapping to an alert expression (as in your sketch) is a good post-MVP addition.
 
@@ -128,7 +128,7 @@ Barrels, chests, keys and doors are the level's furniture, and barrel and chest 
 
 | Object | Behavior |
 | --- | --- |
-| Barrel | Solid bumper. Each contact above 1.5 tiles/s cracks it one stage, with a 0.15 s cooldown per barrel. The third hit breaks it and drops random loot, picked up automatically. |
+| Barrel | Solid bumper. Each contact above 0.4 tiles/s cracks it one stage, with a 0.15 s cooldown per barrel. The third hit breaks it and drops random loot, picked up automatically. |
 | Chest | Solid bumper. The first contact opens it and grants 50 gold. |
 | Key | Floor pickup, collected by rolling over it. Color-matched to one door and shown in a HUD slot. |
 | Door | Solid and opaque until the hero is within half a tile while holding the matching key. Then it opens for good and the key is consumed. Enemies can pass through an open door. |
@@ -205,7 +205,7 @@ The camera is a true orthographic projection at a fixed isometric angle matched 
 
 - **Camera type:** `THREE.OrthographicCamera`, fixed isometric angle, no rotation or manual zoom in the MVP. Angles live in the config as `camera.yawDeg` (30) and `camera.elevationDeg` (37).
 - **Frame the action:** the camera eases its centre and zoom to fit whatever matters right now, with about 2 tiles of padding, so no collision or combo happens out of view. While balls are moving, that's every moving ball (not every enemy, only the ones in motion); at rest on your turn, it's the hero, centred. It zooms out at most to 22 tiles across, and it keeps its view inside the level's on-screen outline wherever the level is big enough to fill the screen, so it doesn't show empty space past the level's edge (near an edge, the hero sits off-centre as a result).
-- **Aiming:** as soon as you start dragging, the camera pulls out to at least 16 tiles across and keeps the whole preview path in view, so you can plan with more of the board. The drag is measured against the view from the moment you pressed, so the camera moving never changes a shot's power or direction.
+- **Aiming:** while you drag, the zoom follows shot power: from the resting width at no power out to 13 tiles across at full power, easing smoothly and anchored on the ball (no panning), so pulling harder shows more of where the shot will go. The drag is measured in screen terms from the moment you pressed, so the zoom never feeds back into the shot's power, and the cancel marker keeps its size on screen so it always matches where releasing cancels.
 - **Enemy phase:** the camera visits each enemy on its turn, patrols included. Before a lunge it frames the attacker and the hero; before a patrol, the enemy and the tile it's heading for; while it moves, the enemy and every ball in motion. An enemy waits for the camera to arrive (up to 1.5 s) before it moves.
 - **View size:** the orthographic frustum has a base width of 9 tiles measured across the screen (with the grid turned, that is not the same as 9 columns), adjusted for aspect ratio, and scales to fit the browser window.
 - **Dynamic zoom:** the frustum widens as the hero speeds up, so a hard shot pulls the camera out to reveal more of its path, then eases back to the base 9-tile width once every ball is at rest. Default range: 9 tiles at rest up to about 13 tiles at max launch speed (9 tiles/s). This is the minimum width; framing several moving balls can widen it further.
@@ -274,7 +274,7 @@ The rules above use these defaults where your answers left a gap. Change any tha
 - Barrel loot and chest gold are granted at once with a floating label. Keys and enemy coins lie on the floor.
 - Respawn restores full HP, and keys you hold are kept.
 - Aiming is a slingshot pull-back rather than dragging toward the target.
-- An explosive barrel deals a flat 1 damage regardless of stats, ignores the normal 1.5 tiles/s hit threshold, and drops no loot.
+- An explosive barrel deals a flat 1 damage regardless of stats, ignores the normal 0.4 tiles/s hit threshold, and drops no loot.
 - Zoom tracks the hero's speed only. Enemy lunges and patrols don't drive it.
 - Patrol speed is 1–3 tiles/s, well under the 6 tiles/s lunge speed, so a patrolling enemy always reads as calmer than an attacking one.
 - A patrol move follows normal physics, so if it happens to collide with the hero it still deals damage, the same as a lunge would. Contact is what matters, not intent.

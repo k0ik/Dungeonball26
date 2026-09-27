@@ -132,6 +132,7 @@ export function createAimView(yaw = 0) {
     /** It's your turn and you haven't started dragging: show only the green ring. */
     showTurn(hero, dt) {
       group.visible = true;
+      cancelMark.scale.set(1, 1, 1);
       turnRing.visible = true;
       cancelMark.visible = false;
       pathGroup.visible = false;
@@ -139,11 +140,16 @@ export function createAimView(yaw = 0) {
       turnRing.position.z = hero.z;
       turnRing.rotation.y -= A.turnRingSpin * dt;
     },
-    /** shot: from shotFromDrag; path: from previewPath, or null to hide the path (cancel). */
-    show(hero, shot, path) {
+    /**
+     * shot: from shotFromDrag; path: from previewPath, or null to hide the path
+     * (cancel). `uiScale` grows the cancel marker as the camera zooms out, so it
+     * keeps its size on screen and always matches where releasing cancels.
+     */
+    show(hero, shot, path, uiScale = 1) {
       group.visible = true;
       turnRing.visible = false;
       cancelMark.visible = true;
+      cancelMark.scale.set(uiScale, 1, uiScale);
       cancelMark.position.x = hero.x;
       cancelMark.position.z = hero.z;
       cancelMat.opacity = shot.cancel ? A.cancelActiveOpacity : A.cancelOpacity;

@@ -76,7 +76,6 @@ export function createGame(container, levels, startIndex = 0) {
     plan: null, // its move: { kind: 'lunge' } or { kind: 'patrol', vx, vz, target }
     timer: 0,
     waited: 0, // seconds the acting enemy has waited for the camera
-    preview: null, // the aim preview path while dragging
   };
 
   let levelIndex = -1;
@@ -142,9 +141,9 @@ export function createGame(container, levels, startIndex = 0) {
   const canvas = renderer.domElement;
   const tmp = new THREE.Vector3();
 
-  // The camera zooms out while you aim. Drags are measured against a frozen
-  // copy of the view from when you pressed, so the camera moving under your
-  // finger never changes the shot's power or direction.
+  // The camera zooms out with shot power while you aim. Drags are measured
+  // against a frozen copy of the view from when you pressed (in effect, in
+  // screen pixels), so the zoom never feeds back into the shot's power.
   let aimCamera = null;
 
   function pointerOn(plane, e, out, camera = rig.camera) {
@@ -163,6 +162,7 @@ export function createGame(container, levels, startIndex = 0) {
     canvas.setPointerCapture(e.pointerId);
     aimCamera = rig.camera.clone();
     aimCamera.updateMatrixWorld();
+    rig.beginAim(hero);
     pointerOn(groundPlane, e, state.pointer, aimCamera);
   });
 
@@ -410,8 +410,8 @@ export function createGame(container, levels, startIndex = 0) {
     if (state.aiming) {
       const shot = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z });
       const others = world.balls.filter((b) => b !== hero);
-      state.preview = shot.cancel ? null : previewPath(level, hero, shot.dirX, shot.dirZ, shot.speed, others);
-      aimView.show(hero, shot, state.preview);
+      const preview = shot.cancel ? null : previewPath(level, hero, shot.dirX, shot.dirZ, shot.speed, others);
+      aimView.show(hero, shot, preview, rig.viewWidth / rig.aimStartWidth);
     } else if (state.phase === 'aim') {
       aimView.showTurn(hero, dt);
     } else {
@@ -436,11 +436,10 @@ export function createGame(container, levels, startIndex = 0) {
     }
 
     if (state.aiming) {
-      // Aiming: pull out to see much more of the board, and keep the whole
-      // preview path (to where the ball ends up) in view.
-      rig.frame([hero, ...(state.preview?.points ?? [])], CONFIG.camera.aimViewWidth, dt, {
-        zoomOutRate: CONFIG.camera.aimZoomOutRate,
-      });
+      // Aiming: zoom out with shot power, anchored on the ball.
+      const fill = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z }).fill;
+      const from = rig.aimStartWidth;
+      rig.aimZoom(hero, from + (Math.max(from, CONFIG.camera.aimMaxWidth) - from) * fill, dt);
     } else {
       rig.frame(framingPoints(), rig.speedWidth(speedOf(hero)), dt);
     }

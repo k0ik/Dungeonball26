@@ -44,9 +44,18 @@ test('hero hit costs the enemy ATK HP, regardless of speed', () => {
   }
 });
 
-test('a soft touch below the hit threshold does nothing', () => {
+test('a slow roll-in at the tail end of a shot still lands a hit', () => {
+  // Launched at 3 tiles/s, the hero reaches the enemy at under 1 tile/s.
+  const ctx = setup([{ x: 5, z: 4.5, level: 1 }]);
+  ctx.hero.vx = 3;
+  runShot(ctx);
+  assert.equal(ctx.list[0].hp, 1);
+});
+
+test('a barely-moving touch below the hit threshold does nothing', () => {
   const ctx = setup([{ x: 3, z: 4.5, level: 1 }]);
-  ctx.hero.vx = 1.2; // still below 1.5 at contact
+  ctx.hero.x = 3 - 0.66;
+  ctx.hero.vx = 0.35; // just above the stop threshold, below the hit threshold
   runShot(ctx);
   assert.equal(ctx.list[0].hp, 2);
 });
@@ -98,4 +107,14 @@ test('hit cooldown stops rapid repeat hits; a later re-contact (e.g. a pin) land
   ctx.world.time += CONFIG.enemy.hitCooldown;
   hit();
   assert.equal(A.hp, 4);
+});
+
+test('a slow combo still counts: a gently knocked enemy nudging another', () => {
+  const ctx = setup([
+    { x: 5, z: 4.5, level: 1 },
+    { x: 6.1, z: 4.5, level: 1 },
+  ]);
+  ctx.hero.vx = 3.2; // slow shot: the knocked enemy reaches the other at well under 1.5 tiles/s
+  const out = runShot(ctx);
+  assert.equal(out.filter((o) => o.type === 'combo').length, 2, 'both enemies take the combo hit');
 });

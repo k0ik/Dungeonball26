@@ -140,7 +140,7 @@ test('enemy phase: a soft touch below the hit threshold does no damage', () => {
   const attacker = enemy(4, 3, 1, 'a');
   const combat = createCombat();
   combat.beginEnemyTurn(attacker);
-  world.events.push({ type: 'ball', a: attacker, b: h, speed: 1 });
+  world.events.push({ type: 'ball', a: attacker, b: h, speed: 0.3 });
   combat.resolve(world, h);
   assert.equal(h.hp, 10);
 });

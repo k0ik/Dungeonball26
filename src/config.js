@@ -33,9 +33,14 @@ export const CONFIG = {
     gapMin: 0.12, // gap at full power
     gapMax: 0.3, // gap at the weakest shot
     dashWidth: 0.09,
-    // Thin guide circle at full-power drag distance, shown only while aiming.
+    // Cancel marker, shown only while aiming: a thin circle at the cancel
+    // radius with an "x" on the ground under the ball. Both brighten while
+    // the pointer is inside the cancel zone.
     ringWidth: 0.035,
-    ringOpacity: 0.25,
+    cancelXHalfLength: 0.56, // each arm reaches this far from the centre
+    cancelXWidth: 0.05,
+    cancelOpacity: 0.25,
+    cancelActiveOpacity: 0.7,
     castStep: 0.02, // step size for swept-circle casts
   },
 

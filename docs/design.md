@@ -66,10 +66,10 @@ Every value below is a starting point to tune by feel. Distances are in tiles.
 | Enemy lunge speed | 6 tiles/s | Fixed for every enemy in the MVP |
 | Physics step | 1/120 s, fixed | Fastest ball moves 0.075 tile per step, so nothing tunnels |
 
-Aim is a slingshot pull-back: press on the hero, drag away from the target, release to launch the opposite way. Mouse and touch share one pointer path, raycast onto the ground plane so a drag means the same thing from any camera angle, and the pull-back keeps the finger off the line of fire. There's no cue stick sprite and no filling power ring; the dashed path preview below carries the aiming information, with a faint guide circle for reference.
+Aim is a slingshot pull-back: press on the hero, drag away from the target, release to launch the opposite way. Mouse and touch share one pointer path, raycast onto the ground plane so a drag means the same thing from any camera angle, and the pull-back keeps the finger off the line of fire. There's no cue stick sprite and no filling power ring; the dashed path preview below carries the aiming information, with a faint cancel marker under the hero.
 
 - **Power:** drag distance past the cancel radius sets launch speed, reaching full power at about 1.6 tiles; it doesn't depend on the drag's angle.
-- **Guide circle:** while you drag, a thin, low-opacity circle around the hero marks the full-power drag distance. It disappears when you release.
+- **Cancel marker:** while you drag, a thin, low-opacity circle at the cancel radius and a small "x" on the ground under the hero mark the cancel zone. Both brighten while your finger is inside it, and disappear when you release.
 - **Cancel zone:** within about 0.6 tile of the hero the preview disappears, which reads as "release here to cancel." Releasing inside it cancels the shot; releasing past it fires.
 - **Preview:** a dashed line on the ground that runs the shot through the real physics ahead of time, so its length is exactly how far the ball will travel at the current power, including friction and bounce losses. It shows the first bounce, marked with a small ring, then ends where the ball stops or at its next contact. The dash pattern also encodes power: a soft shot draws short, sparse dots, and a hard one draws long dashes packed close together.
 - **Locked:** while any ball is moving or during the enemy phase.

@@ -1,7 +1,7 @@
 // Aim preview drawn on the ground plane in the 3D scene: a dashed path that
 // ends where the shot would stop. The dash pattern encodes power, so there is
-// no filling power ring; a faint circle just marks the full-power drag
-// distance while aiming. Small rings mark where the path bends.
+// no power ring. While aiming, a faint circle and an "x" under the ball mark
+// the cancel zone. Small rings mark where the path bends.
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
@@ -11,7 +11,7 @@ const Y = 0.02; // just above the floor
 const MAX_DASHES = 400;
 const MAX_BENDS = 4;
 
-export function createAimView() {
+export function createAimView(yaw = 0) {
   const group = new THREE.Group();
   group.visible = false;
 
@@ -33,18 +33,32 @@ export function createAimView() {
   dashes.frustumCulled = false;
   pathGroup.add(dashes);
 
-  // Full-power guide: a thin, faint circle around the hero.
-  const guide = new THREE.Mesh(
-    new THREE.RingGeometry(A.fullPowerDrag - A.ringWidth / 2, A.fullPowerDrag + A.ringWidth / 2, 96).rotateX(-Math.PI / 2),
-    new THREE.MeshBasicMaterial({
-      color: CONFIG.colors.aim,
-      transparent: true,
-      opacity: A.ringOpacity,
-      depthWrite: false,
-    }),
+  // Cancel marker: a thin circle at the cancel radius plus an "x" under the
+  // ball, turned with the camera so the "x" stays upright on screen.
+  const cancelMat = new THREE.MeshBasicMaterial({
+    color: CONFIG.colors.aim,
+    transparent: true,
+    opacity: A.cancelOpacity,
+    depthWrite: false,
+  });
+  const cancelMark = new THREE.Group();
+  cancelMark.rotation.y = yaw;
+  cancelMark.position.y = Y;
+  cancelMark.add(
+    new THREE.Mesh(
+      new THREE.RingGeometry(A.cancelRadius - A.ringWidth / 2, A.cancelRadius + A.ringWidth / 2, 72).rotateX(-Math.PI / 2),
+      cancelMat,
+    ),
   );
-  guide.position.y = Y;
-  group.add(guide);
+  for (const angle of [Math.PI / 4, -Math.PI / 4]) {
+    const arm = new THREE.Mesh(
+      new THREE.PlaneGeometry(A.cancelXHalfLength * 2, A.cancelXWidth).rotateX(-Math.PI / 2),
+      cancelMat,
+    );
+    arm.rotation.y = angle;
+    cancelMark.add(arm);
+  }
+  group.add(cancelMark);
 
   const bendRings = [];
   for (let i = 0; i < MAX_BENDS; i++) {
@@ -79,8 +93,9 @@ export function createAimView() {
     /** shot: from shotFromDrag; path: from previewPath, or null to hide the path (cancel). */
     show(hero, shot, path) {
       group.visible = true;
-      guide.position.x = hero.x;
-      guide.position.z = hero.z;
+      cancelMark.position.x = hero.x;
+      cancelMark.position.z = hero.z;
+      cancelMat.opacity = shot.cancel ? A.cancelActiveOpacity : A.cancelOpacity;
       pathGroup.visible = !!path;
       if (!path) return;
 

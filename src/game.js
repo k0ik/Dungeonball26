@@ -33,7 +33,7 @@ export function createGame(container, levels, startIndex = 0) {
   const heroView = createBallView(hero, { color: CONFIG.colors.hero, stripe: CONFIG.colors.heroStripe });
   scene.add(heroView.object);
 
-  const aimView = createAimView();
+  const aimView = createAimView(rig.yaw);
   scene.add(aimView.object);
 
   let levelIndex = -1;

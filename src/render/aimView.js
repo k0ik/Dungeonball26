@@ -1,6 +1,6 @@
 // Aim preview drawn on the ground plane in the 3D scene: a dashed path that
 // ends where the shot would stop. The dash pattern encodes power, so there is
-// no power ring. While aiming, a faint circle and an "x" under the ball mark
+// no power ring. While aiming, a faint circle and a small "x" just below the ball mark
 // the cancel zone. Small hoops mark each bounce and where the path ends,
 // whether the ball comes to rest there or hits something.
 

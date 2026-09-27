@@ -14,6 +14,7 @@ M0 + M1 done: level 1 renders in the isometric view, and you can shoot the hero 
 npm install
 npm run dev     # then open the printed URL
 npm test        # physics, aim and level-loader unit tests
+npm run build:page -- out.html   # one self-contained HTML page, for sharing a playable snapshot
 ```
 
 Controls: press on the ball, drag back away from where you want to go, release. Release inside the inner ring to cancel. `d` toggles the debug overlay (or add `?debug` to the URL), `r` respawns the hero.

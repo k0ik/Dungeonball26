@@ -7,6 +7,7 @@
     "dev": "vite",
     "host": "vite --host",
     "build": "vite build",
+    "build:page": "node scripts/build-web-page.mjs",
     "preview": "vite preview",
     "test": "node --test tests/*.test.js"
   },

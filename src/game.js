@@ -196,7 +196,7 @@ export function createGame(container, levels, startIndex = 0) {
 
     if (state.aiming) {
       const shot = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z });
-      aimView.show(shot, shot.cancel ? null : previewPath(level, hero, shot.dirX, shot.dirZ, shot.speed));
+      aimView.show(hero, shot, shot.cancel ? null : previewPath(level, hero, shot.dirX, shot.dirZ, shot.speed));
     }
 
     heroView.update();

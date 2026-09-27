@@ -1,6 +1,7 @@
 // Aim preview drawn on the ground plane in the 3D scene: a dashed path that
 // ends where the shot would stop. The dash pattern encodes power, so there is
-// no separate power ring. Small rings mark where the path bends.
+// no filling power ring; a faint circle just marks the full-power drag
+// distance while aiming. Small rings mark where the path bends.
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
@@ -21,12 +22,29 @@ export function createAimView() {
     depthWrite: false,
   });
 
+  // The dashed path and its bend rings; hidden in the cancel zone.
+  const pathGroup = new THREE.Group();
+  group.add(pathGroup);
+
   // Unit square lying flat, long along local +x; scaled per dash.
   const dashGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
   const dashes = new THREE.InstancedMesh(dashGeo, material, MAX_DASHES);
   dashes.count = 0;
   dashes.frustumCulled = false;
-  group.add(dashes);
+  pathGroup.add(dashes);
+
+  // Full-power guide: a thin, faint circle around the hero.
+  const guide = new THREE.Mesh(
+    new THREE.RingGeometry(A.fullPowerDrag - A.ringWidth / 2, A.fullPowerDrag + A.ringWidth / 2, 96).rotateX(-Math.PI / 2),
+    new THREE.MeshBasicMaterial({
+      color: CONFIG.colors.aim,
+      transparent: true,
+      opacity: A.ringOpacity,
+      depthWrite: false,
+    }),
+  );
+  guide.position.y = Y;
+  group.add(guide);
 
   const bendRings = [];
   for (let i = 0; i < MAX_BENDS; i++) {
@@ -34,7 +52,7 @@ export function createAimView() {
     ring.rotation.x = -Math.PI / 2;
     ring.visible = false;
     bendRings.push(ring);
-    group.add(ring);
+    pathGroup.add(ring);
   }
 
   const m = new THREE.Matrix4();
@@ -58,9 +76,12 @@ export function createAimView() {
     hide() {
       group.visible = false;
     },
-    /** shot: from shotFromDrag; path: from previewPath, or null to show nothing (cancel). */
-    show(shot, path) {
-      group.visible = !!path;
+    /** shot: from shotFromDrag; path: from previewPath, or null to hide the path (cancel). */
+    show(hero, shot, path) {
+      group.visible = true;
+      guide.position.x = hero.x;
+      guide.position.z = hero.z;
+      pathGroup.visible = !!path;
       if (!path) return;
 
       const dash = A.dashMin + (A.dashMax - A.dashMin) * shot.fill;

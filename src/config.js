@@ -33,6 +33,9 @@ export const CONFIG = {
     gapMin: 0.12, // gap at full power
     gapMax: 0.3, // gap at the weakest shot
     dashWidth: 0.09,
+    // Thin guide circle at full-power drag distance, shown only while aiming.
+    ringWidth: 0.035,
+    ringOpacity: 0.25,
     castStep: 0.02, // step size for swept-circle casts
   },
 

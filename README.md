@@ -6,7 +6,7 @@ Rendered as a true orthographic 3D isometric view in [Three.js](https://threejs.
 
 ## Status
 
-M0 + M1 done: level 1 renders in the isometric view, and you can shoot the hero ball around it with slingshot aim, a power ring, a bounce preview, speed-based zoom and placeholder SFX. Enemies, turns and loot come next (M2–M7). See **[docs/design.md](docs/design.md)** for the full design doc: core loop, physics parameters, combat formulas, object behavior, level format, camera and audio design, and the milestone build order.
+M0–M2 done: levels render at the mockup's isometric angle, you can shoot the hero ball around with slingshot aim, a power ring, a bounce preview, speed-based zoom and placeholder SFX, and the camera follows the ball through levels bigger than the screen. Enemies, turns and loot come next (M3–M7). See **[docs/design.md](docs/design.md)** for the full design doc: core loop, physics parameters, combat formulas, object behavior, level format, camera and audio design, and the milestone build order.
 
 ## Getting started
 
@@ -17,7 +17,7 @@ npm test        # physics, aim and level-loader unit tests
 npm run build:page -- out.html   # one self-contained HTML page, for sharing a playable snapshot
 ```
 
-Controls: press on the ball, drag back away from where you want to go, release. Release inside the inner ring to cancel. `d` toggles the debug overlay (or add `?debug` to the URL), `r` respawns the hero.
+Controls: press on the ball, drag back away from where you want to go, release. Release inside the inner ring to cancel. `d` toggles the debug overlay (or add `?debug` to the URL), `r` respawns the hero, `n` loads the next level. Open a level directly with its id in the URL hash, e.g. `#long-hall`.
 
 To test on a phone on the same network, run `npm run host` and open the printed LAN address on the phone's browser.
 

@@ -14,7 +14,7 @@ function flat(mesh) {
   return mesh;
 }
 
-export function createAimView() {
+export function createAimView(yaw = 0) {
   const group = new THREE.Group();
   group.visible = false;
 
@@ -48,6 +48,8 @@ export function createAimView() {
 
   const ringGroup = new THREE.Group();
   ringGroup.add(track, fill);
+  // Turn the ring with the camera so it still fills from the top of the screen.
+  ringGroup.rotation.y = yaw;
   group.add(ringGroup, dots, bendRing);
 
   let lastFill = -1;
@@ -61,7 +63,7 @@ export function createAimView() {
     lastFill = f;
     fill.geometry.dispose();
     // Fills clockwise from the top of the screen. The ring's local +y maps to
-    // world -z (screen up), and local orientation matches screen orientation.
+    // world -z, which ringGroup's yaw turns to screen up.
     const len = Math.max(f, 0.0001) * Math.PI * 2;
     fill.geometry = new THREE.RingGeometry(A.ringInner, A.ringOuter, 64, 1, Math.PI / 2 - len, len);
     fill.visible = f > 0;

@@ -198,17 +198,17 @@ The five MVP levels ramp one idea at a time. Sizes are suggestions in tiles.
 
 ## Camera, HUD and presentation
 
-The camera is a true orthographic projection at a fixed isometric angle, close to your mockup's roughly 30–35° tilt, so parallel lines never converge and scale stays constant with distance. It never rotates and has no manual zoom; its only zoom is the automatic speed-based zoom below. It pans the same way as before: only when the hero nears the edge of its view, using a deadzone follow.
+The camera is a true orthographic projection at a fixed isometric angle matched to your mockup: the grid is turned about 30° on screen (columns run gently down-right, rows run steeply down-left) and seen from about 37° above the ground, so parallel lines never converge and scale stays constant with distance. It never rotates and has no manual zoom; its only zoom is the automatic speed-based zoom below. It pans the same way as before: only when the hero nears the edge of its view, using a deadzone follow.
 
-- **Camera type:** `THREE.OrthographicCamera`, fixed isometric angle, no rotation or manual zoom in the MVP. The build currently tilts the camera 40° away from straight down (`camera.tiltDeg` in the config), which keeps the portrait board large while still showing wall faces; tune by feel.
+- **Camera type:** `THREE.OrthographicCamera`, fixed isometric angle, no rotation or manual zoom in the MVP. Angles live in the config as `camera.yawDeg` (30) and `camera.elevationDeg` (37).
 - **Deadzone:** about 60% of the view width and 50% of its height, with a gentle lerp. The camera is clamped to the level bounds.
 - **Enemy phase:** if an attacker is off screen, the camera pans to it briefly, then returns to the hero.
-- **View size:** the orthographic frustum has a base width of about 9 tiles, adjusted for aspect ratio, and scales to fit the browser window.
+- **View size:** the orthographic frustum has a base width of 9 tiles measured across the screen (with the grid turned, that is not the same as 9 columns), adjusted for aspect ratio, and scales to fit the browser window.
 - **Dynamic zoom:** the frustum widens as the hero speeds up, so a hard shot pulls the camera out to reveal more of its path, then eases back to the base 9-tile width once every ball is at rest. Default range: 9 tiles at rest up to about 13 tiles at max launch speed (9 tiles/s).
-- **Walls:** short, as in your mockup, so they never block the isometric view.
+- **Walls:** short, so they never hide a ball behind them. The mockup's walls stand a little taller than the ball; the build uses 0.55 tile (`render.wallHeight`) so a ball resting just behind a wall stays visible.
 - **Lighting:** one ambient light plus one directional light, no dynamic shadows for the MVP.
 - **HUD:** a dark top bar as in your mock, with gold on the left, lives in the middle and key slots on the right. HP bars sit above the hero and each enemy, rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The power ring and the aim preview are different: they're drawn in the 3D scene itself, on the ground plane, so they land exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
-- **Art:** procedural, toon-shaded 3D primitives with black outlines, matching your mockup: extruded boxes for walls, cylinders for barrels, boxes for chests, spheres for hero and enemies, using the same flat palette as before.
+- **Art:** procedural 3D primitives matching your mockup: extruded boxes for walls, cylinders for barrels, boxes for chests, spheres for hero and enemies. Walls and floor are flat greys with no outlines, shaded per face (light tops, darker sides); balls and props are toon-shaded with outlines.
 
 ## Audio
 

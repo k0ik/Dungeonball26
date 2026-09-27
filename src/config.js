@@ -47,30 +47,42 @@ export const CONFIG = {
   },
 
   camera: {
-    tiltDeg: 40, // camera tilt away from straight down; higher shows more wall, less board
-    baseViewWidth: 9, // tiles across at rest
-    maxViewWidth: 13, // tiles across at max launch speed
+    // Matched to the mockup: the grid is turned so level columns run gently
+    // down-right and rows run steeply down-left, seen from ~37° above the ground.
+    elevationDeg: 37, // camera angle above the ground plane
+    yawDeg: 30, // grid rotation on screen
+    baseViewWidth: 9, // world units across the screen at rest
+    maxViewWidth: 13, // world units across at max launch speed
     zoomOutRate: 4, // exponential smoothing rates, 1/s
     zoomInRate: 1.5,
+    deadzoneWidth: 0.6, // fraction of the view the hero roams before the camera pans
+    deadzoneHeight: 0.5,
+    followRate: 5, // pan smoothing, 1/s
     distance: 60, // orthographic, so this only has to clear the scene
   },
 
   render: {
     maxAspect: 9 / 16, // desktop browsers get a portrait column like a phone
     maxPixelRatio: 2,
-    wallHeight: 0.6, // short walls, per the mockup
+    // The mockup's walls stand a bit taller than the ball; kept lower here so a
+    // ball just behind a wall stays visible. Raise toward 0.8 for the mockup look.
+    wallHeight: 0.55,
+    wallOutlines: false, // the mockup's walls read by shading alone
     outlineScale: 1.08, // inverted-hull outline thickness for balls
   },
 
+  // Flat greys from the mockup.
   colors: {
-    background: 0x16121d,
-    floorA: 0x6b6478,
-    floorB: 0x625b6f,
-    wallTop: 0x9a8fb0,
-    wallSide: 0x4a4258,
-    outline: 0x000000,
+    background: 0x3b3c3f,
+    floorA: 0x55575a,
+    floorB: 0x55575a, // same as floorA: the mockup floor has no checker
+    wallTop: 0xb5b8be,
+    wallFront: 0x85878c, // faces pointing down-left on screen
+    wallSide: 0x7a7c81, // faces pointing down-right on screen
+    wallBack: 0x6e7075, // faces pointing away from the camera
+    outline: 0x1e1f21,
     exit: 0x5fd08a,
-    hero: 0xf4efe3,
+    hero: 0xd6d7da,
     heroStripe: 0x3a86ff,
     aim: 0xffffff,
     ringTrack: 0xffffff,

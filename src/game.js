@@ -1,4 +1,4 @@
-// M0 + M1: render a level, and shoot the hero around it.
+// M0–M2: render a level, shoot the hero around it, camera follows.
 
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
@@ -11,8 +11,8 @@ import { createAimView } from './render/aimView.js';
 import { createCameraRig } from './render/cameraRig.js';
 import { createAudio } from './audio.js';
 
-export function createGame(container, levelText, levelName) {
-  const level = parseLevel(levelText, levelName);
+/** levels: [{ id, name, text }]. */
+export function createGame(container, levels, startIndex = 0) {
 
   // --- Rendering -----------------------------------------------------------
   const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -26,24 +26,36 @@ export function createGame(container, levelText, levelName) {
   sun.position.set(-4, 10, 6);
   scene.add(sun);
 
-  scene.add(buildLevelView(level));
-
   const rig = createCameraRig();
-  // Until M2's deadzone follow, frame the level's centre.
-  rig.lookAt(level.width / 2, level.height / 2);
 
-  // --- Simulation ------------------------------------------------------------
-  const world = createWorld(level);
-  const start = tileCenter(level.start);
-  const hero = createBall({ ...start, kind: 'hero', id: 'hero' });
-  world.balls.push(hero);
-
+  // The hero persists across levels; the level, its world and its view don't.
+  const hero = createBall({ x: 0, z: 0, kind: 'hero', id: 'hero' });
   const heroView = createBallView(hero, { color: CONFIG.colors.hero, stripe: CONFIG.colors.heroStripe });
   scene.add(heroView.object);
-  heroView.snap();
 
-  const aimView = createAimView();
+  const aimView = createAimView(rig.yaw);
   scene.add(aimView.object);
+
+  let levelIndex = -1;
+  let level = null;
+  let world = null;
+  let start = null;
+  let levelView = null;
+
+  function loadLevel(i) {
+    levelIndex = (i + levels.length) % levels.length;
+    const def = levels[levelIndex];
+    level = parseLevel(def.text, def.name);
+    if (levelView) scene.remove(levelView);
+    levelView = buildLevelView(level);
+    scene.add(levelView);
+    world = createWorld(level);
+    world.balls.push(hero);
+    start = tileCenter(level.start);
+    rig.setBounds(0, level.width, 0, level.height);
+    respawn();
+    rig.snapTo(hero.x, hero.z);
+  }
 
   const sfx = createAudio(rig.camera);
 
@@ -105,6 +117,8 @@ export function createGame(container, levelText, levelName) {
     hero.vx = hero.vz = 0;
     heroView.snap();
     state.phase = 'aim';
+    state.aiming = false;
+    aimView.hide();
   }
 
   // --- Debug overlay -----------------------------------------------------------
@@ -116,6 +130,7 @@ export function createGame(container, levelText, levelName) {
   window.addEventListener('keydown', (e) => {
     if (e.key === 'd' || e.key === '`') debug.hidden = !debug.hidden;
     if (e.key === 'r') respawn();
+    if (e.key === 'n') loadLevel(levelIndex + 1);
   });
 
   // --- Layout ------------------------------------------------------------------
@@ -174,6 +189,7 @@ export function createGame(container, levelText, levelName) {
 
     heroView.update();
     rig.updateZoom(speedOf(hero), dt);
+    rig.follow(hero.x, hero.z, dt);
     renderer.render(scene, rig.camera);
 
     if (!debug.hidden) {
@@ -182,16 +198,29 @@ export function createGame(container, levelText, levelName) {
         `phase  ${state.aiming ? 'aiming' : state.phase}`,
         `hero   ${hero.x.toFixed(2)}, ${hero.z.toFixed(2)}`,
         `speed  ${speedOf(hero).toFixed(2)} tiles/s`,
-        `view   ${rig.viewWidth.toFixed(2)} tiles`,
+        `view   ${rig.viewWidth.toFixed(2)} units`,
         `shots  ${state.shots}`,
-        `[d] debug  [r] respawn`,
+        `[d] debug  [r] respawn  [n] next level`,
       ].join('\n');
     }
 
     requestAnimationFrame(frame);
   }
+  loadLevel(startIndex);
   requestAnimationFrame(frame);
 
   // Handy for poking at the game from the browser console.
-  return { level, world, hero, state, rig, respawn };
+  return {
+    get level() {
+      return level;
+    },
+    get world() {
+      return world;
+    },
+    hero,
+    state,
+    rig,
+    respawn,
+    loadLevel,
+  };
 }

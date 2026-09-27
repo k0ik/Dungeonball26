@@ -1,10 +1,10 @@
-// Builds the static level geometry: a checkered floor, short extruded walls with
-// black outlines, and exit tiles.
+// Builds the static level geometry: the floor, short extruded walls and exit
+// tiles. Colours are baked per face (flat, like the mockup) rather than lit.
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { tileAt } from '../level.js';
-import { toonMaterial, outlineLineMaterial } from './materials.js';
+import { outlineLineMaterial } from './materials.js';
 
 const C = CONFIG.colors;
 
@@ -14,12 +14,13 @@ function pushQuad(pos, col, a, b, c, d, color) {
   for (let i = 0; i < 6; i++) col.push(color.r, color.g, color.b);
 }
 
-function meshFrom(pos, col, material) {
+const flatMaterial = new THREE.MeshBasicMaterial({ vertexColors: true });
+
+function meshFrom(pos, col) {
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-  geo.computeVertexNormals();
-  return new THREE.Mesh(geo, material);
+  return new THREE.Mesh(geo, flatMaterial);
 }
 
 export function buildLevelView(level) {
@@ -40,15 +41,16 @@ export function buildLevelView(level) {
       pushQuad(floorPos, floorCol, [col, 0, row + 1], [col + 1, 0, row + 1], [col + 1, 0, row], [col, 0, row], color);
     }
   }
-  const floor = meshFrom(floorPos, floorCol, toonMaterial(0xffffff, { vertexColors: true }));
-  group.add(floor);
+  group.add(meshFrom(floorPos, floorCol));
 
   // Walls: top face per wall tile, side faces only where the neighbour is open,
   // so the merged outline traces the wall mass instead of every tile.
   const wallPos = [];
   const wallCol = [];
   const top = new THREE.Color(C.wallTop);
-  const side = new THREE.Color(C.wallSide);
+  const front = new THREE.Color(C.wallFront); // +z
+  const side = new THREE.Color(C.wallSide); // +x
+  const back = new THREE.Color(C.wallBack); // -z and -x
   const isWall = (c, r) => {
     const t = tileAt(level, c, r);
     return t === 'wall' || t === 'door';
@@ -58,17 +60,18 @@ export function buildLevelView(level) {
       if (!isWall(col, row)) continue;
       const x0 = col, x1 = col + 1, z0 = row, z1 = row + 1;
       pushQuad(wallPos, wallCol, [x0, h, z1], [x1, h, z1], [x1, h, z0], [x0, h, z0], top);
-      if (!isWall(col, row + 1)) pushQuad(wallPos, wallCol, [x0, 0, z1], [x1, 0, z1], [x1, h, z1], [x0, h, z1], side);
-      if (!isWall(col, row - 1)) pushQuad(wallPos, wallCol, [x1, 0, z0], [x0, 0, z0], [x0, h, z0], [x1, h, z0], side);
+      if (!isWall(col, row + 1)) pushQuad(wallPos, wallCol, [x0, 0, z1], [x1, 0, z1], [x1, h, z1], [x0, h, z1], front);
+      if (!isWall(col, row - 1)) pushQuad(wallPos, wallCol, [x1, 0, z0], [x0, 0, z0], [x0, h, z0], [x1, h, z0], back);
       if (!isWall(col + 1, row)) pushQuad(wallPos, wallCol, [x1, 0, z1], [x1, 0, z0], [x1, h, z0], [x1, h, z1], side);
-      if (!isWall(col - 1, row)) pushQuad(wallPos, wallCol, [x0, 0, z0], [x0, 0, z1], [x0, h, z1], [x0, h, z0], side);
+      if (!isWall(col - 1, row)) pushQuad(wallPos, wallCol, [x0, 0, z0], [x0, 0, z1], [x0, h, z1], [x0, h, z0], back);
     }
   }
   if (wallPos.length) {
-    const walls = meshFrom(wallPos, wallCol, toonMaterial(0xffffff, { vertexColors: true }));
+    const walls = meshFrom(wallPos, wallCol);
     group.add(walls);
-    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(walls.geometry, 30), outlineLineMaterial);
-    group.add(edges);
+    if (CONFIG.render.wallOutlines) {
+      group.add(new THREE.LineSegments(new THREE.EdgesGeometry(walls.geometry, 30), outlineLineMaterial));
+    }
   }
 
   return group;

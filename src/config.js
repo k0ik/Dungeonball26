@@ -6,7 +6,7 @@ export const CONFIG = {
   physics: {
     step: 1 / 120, // fixed timestep, seconds
     maxStepsPerFrame: 12, // cap catch-up after a stall so we never spiral
-    friction: 3.5, // constant deceleration, tiles/s²
+    friction: 1.75, // constant deceleration, tiles/s² (halved from the doc's 3.5 after playtesting)
     stopThreshold: 0.25, // below this a ball counts as at rest
     wallRestitution: 0.9, // fraction of speed kept after a wall bounce
     bumperRestitution: 0.7, // barrels and chests (M5)
@@ -25,7 +25,7 @@ export const CONFIG = {
     // The preview runs the real physics ahead of time, so it ends where the
     // shot would stop. It shows at most this many bounces, then ends at the next contact.
     previewBounces: 1,
-    previewMaxTime: 4, // seconds of simulated travel, a safety cap
+    previewMaxTime: 8, // seconds of simulated travel, a safety cap (full power stops in ~5 s)
     // Dash pattern encodes power: soft shots are short, sparse dots; hard
     // shots are long dashes packed close together. Lengths in tiles.
     dashMin: 0.06,
@@ -88,6 +88,10 @@ export const CONFIG = {
     wallHeight: 0.55,
     wallOutlines: false, // the mockup's walls read by shading alone
     outlineScale: 1.08, // inverted-hull outline thickness for balls
+    // Enemy HP bars get one notch per HP and grow with max HP, so a tougher
+    // enemy has a visibly longer bar. Pixels.
+    hpBarPxPerHp: 6,
+    hpBarMinPx: 14,
   },
 
   // Flat greys from the mockup.

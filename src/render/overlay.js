@@ -1,8 +1,10 @@
 // HTML layer over the canvas for things that must always face the viewer:
-// enemy HP bars (with the enemy's level) and floating damage numbers.
+// enemy HP bars (one notch per HP, longer for tougher enemies) and floating
+// damage numbers.
 // Positions come from projecting world points through the camera each frame.
 
 import * as THREE from 'three';
+import { CONFIG } from '../config.js';
 
 const BAR_HEIGHT = 0.3; // tiles above the top of the ball
 
@@ -29,8 +31,10 @@ export function createOverlay(container, camera) {
     addBar(ball) {
       const el = document.createElement('div');
       el.className = 'enemy-tag';
-      el.innerHTML = `<span class="lvl">${ball.level}</span><span class="hp"><span class="fill"></span></span>`;
-      el.querySelector('.hp').style.setProperty('--segments', ball.maxHp);
+      el.innerHTML = `<span class="hp"><span class="fill"></span></span>`;
+      const hp = el.querySelector('.hp');
+      hp.style.setProperty('--segments', ball.maxHp);
+      hp.style.width = `${Math.max(CONFIG.render.hpBarMinPx, CONFIG.render.hpBarPxPerHp * ball.maxHp)}px`;
       layer.appendChild(el);
       bars.set(ball, { el, fill: el.querySelector('.fill'), shown: -1 });
     },

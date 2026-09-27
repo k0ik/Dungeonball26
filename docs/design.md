@@ -58,7 +58,7 @@ Every value below is a starting point to tune by feel. Distances are in tiles.
 | Cancel radius | 0.6 tile | Releasing closer than this cancels; wide enough to read as its own space |
 | Full-power drag | 1.6 tiles | Drag distance that reaches max launch speed |
 | Max launch speed | 9 tiles/s | Reached at full drag |
-| Friction | 3.5 tiles/s² constant | About 2.6 s to stop from full power |
+| Friction | 1.75 tiles/s² constant | About 5 s and 23 tiles to stop from full power (halved from 3.5 after playtesting) |
 | Stop threshold | 0.25 tiles/s | Below this a ball counts as at rest |
 | Wall bounce | keeps 90% of speed | High bounce, as requested |
 | Barrel and chest bounce | keeps 70% of speed | Loses some speed on impact |
@@ -98,7 +98,7 @@ D_{\text{enemy}} = \text{ATK} \qquad D_{\text{hero}} = \max(1,\; L - \text{DEF})
 | Hero max HP | 10 | Potions heal 3, capped at max |
 | Hero ATK | 1 | A sword raises it to 2 |
 | Hero DEF | 0 | A shield raises it to 1 |
-| Enemy level L | 1 to 3 in the MVP | Shown as a small number beside the enemy's HP bar, which has one notch per HP |
+| Enemy level L | 1 to 3 in the MVP | Read from the enemy's HP bar: one notch per HP, and the bar grows longer for tougher enemies |
 | Kill reward | 10 × L gold | Drops as coins where it died |
 
 Combo example: with ATK 1, you hit enemy A and it slides into enemy B. A takes 2 damage in total and B takes 1. A level-1 enemy has 2 HP, so A dies and B is left at 1 HP if it is also level 1.

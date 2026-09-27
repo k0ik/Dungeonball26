@@ -20,7 +20,7 @@ function run(world, seconds) {
   for (let t = 0; t < seconds; t += CONFIG.physics.step) stepWorld(world);
 }
 
-test('friction stops a full-power ball in about 2.6 s', () => {
+test('friction stops a full-power ball at the time and distance constant deceleration predicts', () => {
   const huge = parseLevel('#'.repeat(50) + '\n#S' + '.'.repeat(47) + '#\n' + '#'.repeat(50));
   const world = createWorld(huge);
   const b = createBall({ x: 1.5, z: 1.5 });
@@ -31,9 +31,12 @@ test('friction stops a full-power ball in about 2.6 s', () => {
     stepWorld(world);
     t += CONFIG.physics.step;
   }
-  assert.ok(t > 2.4 && t < 2.7, `stopped after ${t.toFixed(2)} s`);
-  // Distance ≈ v²/2a ≈ 11.6 tiles.
-  assert.ok(Math.abs(b.x - 1.5 - 81 / 7) < 0.2, `travelled ${(b.x - 1.5).toFixed(2)}`);
+  // It counts as stopped once it drops below the stop threshold.
+  const v = CONFIG.aim.maxLaunchSpeed;
+  const a = CONFIG.physics.friction;
+  const s = CONFIG.physics.stopThreshold;
+  assert.ok(Math.abs(t - (v - s) / a) < 0.05, `stopped after ${t.toFixed(2)} s`);
+  assert.ok(Math.abs(b.x - 1.5 - (v * v - s * s) / (2 * a)) < 0.2, `travelled ${(b.x - 1.5).toFixed(2)}`);
 });
 
 test('wall bounce reflects and keeps 90% of speed', () => {

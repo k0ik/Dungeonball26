@@ -48,24 +48,13 @@ body {
   will-change: transform;
 }
 
-/* Enemy level badge + HP bar, after the mockup's pill bars. */
+/* Enemy HP bar, after the mockup's pill bars. Width is set per enemy. */
 .enemy-tag {
   display: flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.enemy-tag .lvl {
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1;
-  color: #ffd0de;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
 }
 
 .enemy-tag .hp {
   position: relative;
-  width: 28px;
   height: 5px;
   border-radius: 3px;
   background: #2a2b2e;
@@ -94,20 +83,26 @@ body {
 }
 
 .float {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
-  color: #ffe1ea;
+  color: #ff4f8b; /* your hits: hot pink */
   text-shadow:
-    0 1px 0 #7a0033,
-    0 0 3px rgba(0, 0, 0, 0.6);
+    0 0 2px #3a0018,
+    0 1px 0 #3a0018,
+    0 -1px 0 #3a0018,
+    1px 0 0 #3a0018,
+    -1px 0 0 #3a0018;
   animation: float-up 0.8s ease-out forwards;
 }
 
 .float.combo {
-  color: #ffd166;
+  color: #ffc233; /* combos: gold */
   text-shadow:
-    0 1px 0 #6b4a00,
-    0 0 3px rgba(0, 0, 0, 0.6);
+    0 0 2px #3d2a00,
+    0 1px 0 #3d2a00,
+    0 -1px 0 #3d2a00,
+    1px 0 0 #3d2a00,
+    -1px 0 0 #3d2a00;
 }
 
 @keyframes float-up {

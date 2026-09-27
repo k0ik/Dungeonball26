@@ -55,8 +55,8 @@ Every value below is a starting point to tune by feel. Distances are in tiles.
 | Parameter | Start value | Why |
 | --- | --- | --- |
 | Ball diameter | 0.65 tile | Leaves room to thread one-tile gaps |
-| Power ring inner radius | 0.6 tile | Cancel zone; wide enough to read as its own space |
-| Power ring outer radius | 1.6 tiles | Full ring; drag distance here reaches max launch speed |
+| Cancel radius | 0.6 tile | Releasing closer than this cancels; wide enough to read as its own space |
+| Full-power drag | 1.6 tiles | Drag distance that reaches max launch speed |
 | Max launch speed | 9 tiles/s | Reached at full drag |
 | Friction | 3.5 tiles/s² constant | About 2.6 s to stop from full power |
 | Stop threshold | 0.25 tiles/s | Below this a ball counts as at rest |
@@ -66,11 +66,11 @@ Every value below is a starting point to tune by feel. Distances are in tiles.
 | Enemy lunge speed | 6 tiles/s | Fixed for every enemy in the MVP |
 | Physics step | 1/120 s, fixed | Fastest ball moves 0.075 tile per step, so nothing tunnels |
 
-Aim is a slingshot pull-back: press on the hero, drag away from the target, release to launch the opposite way. Mouse and touch share one pointer path, raycast onto the ground plane so a drag means the same thing from any camera angle, and the pull-back keeps the finger off the line of fire. There's no cue stick sprite; the power ring and dotted path preview below carry all the aiming information on their own.
+Aim is a slingshot pull-back: press on the hero, drag away from the target, release to launch the opposite way. Mouse and touch share one pointer path, raycast onto the ground plane so a drag means the same thing from any camera angle, and the pull-back keeps the finger off the line of fire. There's no cue stick sprite and no power ring; the dashed path preview below carries all the aiming information on its own.
 
-- **Power ring:** a ring around the hero fills clockwise from the top as you drag outward, empty at its inner edge and full at its outer edge (about 1.6 tiles out). The fill percentage sets launch speed; it doesn't depend on the drag's angle.
-- **Cancel zone:** the gap between the hero and the ring's inner edge (about 0.6 tile) is deliberately wide, so the empty space itself reads as "release here to cancel." Releasing inside it cancels the shot; releasing past it fires.
-- **Preview:** aim direction is a dotted line to the first contact, plus one reflected segment, with a small ring marking the point where it bends, as in your reference.
+- **Power:** drag distance past the cancel radius sets launch speed, reaching full power at about 1.6 tiles; it doesn't depend on the drag's angle.
+- **Cancel zone:** within about 0.6 tile of the hero the preview disappears, which reads as "release here to cancel." Releasing inside it cancels the shot; releasing past it fires.
+- **Preview:** a dashed line on the ground that runs the shot through the real physics ahead of time, so its length is exactly how far the ball will travel at the current power, including friction and bounce losses. It shows the first bounce, marked with a small ring, then ends where the ball stops or at its next contact. The dash pattern also encodes power: a soft shot draws short, sparse dots, and a hard one draws long dashes packed close together.
 - **Locked:** while any ball is moving or during the enemy phase.
 
 ## Combat rules and formulas
@@ -209,7 +209,7 @@ The camera is a true orthographic projection at a fixed isometric angle matched 
 - **Dynamic zoom:** the frustum widens as the hero speeds up, so a hard shot pulls the camera out to reveal more of its path, then eases back to the base 9-tile width once every ball is at rest. Default range: 9 tiles at rest up to about 13 tiles at max launch speed (9 tiles/s).
 - **Walls:** short, so they never hide a ball behind them. The mockup's walls stand a little taller than the ball; the build uses 0.55 tile (`render.wallHeight`) so a ball resting just behind a wall stays visible.
 - **Lighting:** one ambient light plus one directional light, no dynamic shadows for the MVP.
-- **HUD:** a dark top bar as in your mock, with gold on the left, lives in the middle and key slots on the right. HP bars sit above the hero and each enemy, rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The power ring and the aim preview are different: they're drawn in the 3D scene itself, on the ground plane, so they land exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
+- **HUD:** a dark top bar as in your mock, with gold on the left, lives in the middle and key slots on the right. HP bars sit above the hero and each enemy, rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The aim preview is different: it's drawn in the 3D scene itself, on the ground plane, so they land exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
 - **Art:** procedural 3D primitives matching your mockup: extruded boxes for walls, cylinders for barrels, boxes for chests, spheres for hero and enemies. Walls and floor are flat greys with no outlines, shaded per face (light tops, darker sides); balls and props are toon-shaded with outlines.
 
 ## Audio

@@ -33,7 +33,7 @@ export function createGame(container, levels, startIndex = 0) {
   const heroView = createBallView(hero, { color: CONFIG.colors.hero, stripe: CONFIG.colors.heroStripe });
   scene.add(heroView.object);
 
-  const aimView = createAimView(rig.yaw);
+  const aimView = createAimView();
   scene.add(aimView.object);
 
   let levelIndex = -1;
@@ -196,7 +196,7 @@ export function createGame(container, levels, startIndex = 0) {
 
     if (state.aiming) {
       const shot = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z });
-      aimView.show(hero, shot, shot.cancel ? null : previewPath(level, hero, shot.dirX, shot.dirZ));
+      aimView.show(shot, shot.cancel ? null : previewPath(level, hero, shot.dirX, shot.dirZ, shot.speed));
     }
 
     heroView.update();

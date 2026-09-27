@@ -9,7 +9,7 @@ Full design spec: **[docs/design.md](docs/design.md)** — read it before implem
 - **Rendering:** Three.js, `THREE.OrthographicCamera` at a fixed isometric angle. No rotation or zoom control in the MVP beyond the speed-based dynamic zoom described in the design doc.
 - **Simulation:** a custom 2D circle-physics solver on a fixed timestep (1/120s). The simulation is entirely 2D (x, z on the ground plane); only rendering is 3D. Matter.js is the fallback if the custom solver becomes too much work.
 - **Build tooling:** Vite, plain JavaScript (no framework, no TypeScript unless you introduce it deliberately).
-- **HUD:** HTML/CSS overlay on top of the canvas. The aim power ring and path preview are drawn in the 3D scene itself (ground plane), not the HTML overlay, so they track the isometric projection correctly.
+- **HUD:** HTML/CSS overlay on top of the canvas. The aim path preview is drawn in the 3D scene itself (ground plane), not the HTML overlay, so they track the isometric projection correctly.
 - **Audio:** `THREE.AudioListener` / `THREE.Audio`, non-positional for the MVP. Placeholder SFX/music should come from a free CC0 pack (e.g. Kenney) until custom audio is ready.
 
 ## Conventions

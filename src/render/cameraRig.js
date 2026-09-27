@@ -51,8 +51,6 @@ export function createCameraRig() {
 
   return {
     camera,
-    /** Yaw in radians, for ground-plane visuals that must stay screen-aligned. */
-    yaw,
     get viewWidth() {
       return viewWidth;
     },

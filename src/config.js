@@ -18,15 +18,22 @@ export const CONFIG = {
   },
 
   aim: {
-    ringInner: 0.6, // cancel zone radius
-    ringOuter: 1.6, // full power radius
+    cancelRadius: 0.6, // releasing closer than this to the hero cancels the shot
+    fullPowerDrag: 1.6, // drag distance that reaches max launch speed
     maxLaunchSpeed: 9,
     grabRadius: 1.0, // how close to the hero a press must land to start aiming
-    previewMaxLength: 40, // first segment is cast at most this far
-    previewBounceLength: 3, // length of the reflected segment after the first contact
-    previewDotSpacing: 0.35,
-    previewDotRadius: 0.06,
-    castStep: 0.02, // step size for the preview's swept-circle cast
+    // The preview runs the real physics ahead of time, so it ends where the
+    // shot would stop. It shows at most this many bounces, then ends at the next contact.
+    previewBounces: 1,
+    previewMaxTime: 4, // seconds of simulated travel, a safety cap
+    // Dash pattern encodes power: soft shots are short, sparse dots; hard
+    // shots are long dashes packed close together. Lengths in tiles.
+    dashMin: 0.06,
+    dashMax: 0.42,
+    gapMin: 0.12, // gap at full power
+    gapMax: 0.3, // gap at the weakest shot
+    dashWidth: 0.09,
+    castStep: 0.02, // step size for swept-circle casts
   },
 
   enemy: {
@@ -88,8 +95,6 @@ export const CONFIG = {
     hero: 0xd6d7da,
     heroStripe: 0x3a86ff,
     aim: 0xffffff,
-    ringTrack: 0xffffff,
-    ringFill: 0xffd166,
     shadow: 0x000000,
   },
 

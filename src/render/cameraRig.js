@@ -1,7 +1,7 @@
 // Orthographic camera at the mockup's fixed angle: the grid turned `yawDeg` on
-// screen, seen from `elevationDeg` above the ground. It never rotates. It pans
-// with a deadzone follow, and its only zoom is automatic, driven by the hero's
-// speed (design doc: "Camera, HUD and presentation").
+// screen, seen from `elevationDeg` above the ground. It never rotates. It eases
+// to keep the hero centred (optionally with a deadzone), and its only zoom is
+// automatic, driven by the hero's speed (design doc: "Camera, HUD and presentation").
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
@@ -67,12 +67,13 @@ export function createCameraRig() {
     },
     /** Jump straight to a ground point. */
     snapTo(x, z) {
-      target.set(x, 0, z);
+      // Aim at ball-centre height so the ball itself sits at screen centre.
+      target.set(x, CONFIG.ball.diameter / 2, z);
       place();
     },
     /**
-     * Deadzone follow: the hero roams the central deadzone freely; once it
-     * leaves, the camera eases along by however far it overshot.
+     * Ease toward the hero. With a deadzone configured, the hero roams the
+     * central deadzone freely and the camera only chases the overshoot.
      */
     follow(x, z, dt) {
       const dx = x - target.x;

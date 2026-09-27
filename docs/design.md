@@ -198,10 +198,10 @@ The five MVP levels ramp one idea at a time. Sizes are suggestions in tiles.
 
 ## Camera, HUD and presentation
 
-The camera is a true orthographic projection at a fixed isometric angle matched to your mockup: the grid is turned about 30° on screen (columns run gently down-right, rows run steeply down-left) and seen from about 37° above the ground, so parallel lines never converge and scale stays constant with distance. It never rotates and has no manual zoom; its only zoom is the automatic speed-based zoom below. It pans the same way as before: only when the hero nears the edge of its view, using a deadzone follow.
+The camera is a true orthographic projection at a fixed isometric angle matched to your mockup: the grid is turned about 30° on screen (columns run gently down-right, rows run steeply down-left) and seen from about 37° above the ground, so parallel lines never converge and scale stays constant with distance. It never rotates and has no manual zoom; its only zoom is the automatic speed-based zoom below. It follows the hero, keeping it centred on screen with a gentle ease.
 
 - **Camera type:** `THREE.OrthographicCamera`, fixed isometric angle, no rotation or manual zoom in the MVP. Angles live in the config as `camera.yawDeg` (30) and `camera.elevationDeg` (37).
-- **Deadzone:** about 60% of the view width and 50% of its height, with a gentle lerp. The camera is clamped to the level bounds.
+- **Follow:** the camera eases to keep the hero at the centre of the screen, and its centre never leaves the level. (An earlier draft used a deadzone of 60% × 50% of the view; `camera.deadzoneWidth`/`deadzoneHeight` still support one.)
 - **Enemy phase:** if an attacker is off screen, the camera pans to it briefly, then returns to the hero.
 - **View size:** the orthographic frustum has a base width of 9 tiles measured across the screen (with the grid turned, that is not the same as 9 columns), adjusted for aspect ratio, and scales to fit the browser window.
 - **Dynamic zoom:** the frustum widens as the hero speeds up, so a hard shot pulls the camera out to reveal more of its path, then eases back to the base 9-tile width once every ball is at rest. Default range: 9 tiles at rest up to about 13 tiles at max launch speed (9 tiles/s).

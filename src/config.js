@@ -55,9 +55,12 @@ export const CONFIG = {
     maxViewWidth: 13, // world units across at max launch speed
     zoomOutRate: 4, // exponential smoothing rates, 1/s
     zoomInRate: 1.5,
-    deadzoneWidth: 0.6, // fraction of the view the hero roams before the camera pans
-    deadzoneHeight: 0.5,
-    followRate: 5, // pan smoothing, 1/s
+    // Fraction of the view the hero can roam before the camera pans. 0 keeps
+    // the hero centred (eased by followRate); the design doc's original
+    // deadzone was 0.6 x 0.5.
+    deadzoneWidth: 0,
+    deadzoneHeight: 0,
+    followRate: 4, // pan smoothing, 1/s
     distance: 60, // orthographic, so this only has to clear the scene
   },
 

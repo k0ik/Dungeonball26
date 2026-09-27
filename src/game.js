@@ -396,6 +396,10 @@ export function createGame(container, levels, startIndex = 0) {
       const shot = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z });
       const others = world.balls.filter((b) => b !== hero);
       aimView.show(hero, shot, shot.cancel ? null : previewPath(level, hero, shot.dirX, shot.dirZ, shot.speed, others));
+    } else if (state.phase === 'aim') {
+      aimView.showTurn(hero, dt);
+    } else {
+      aimView.hide();
     }
 
     heroView.update();

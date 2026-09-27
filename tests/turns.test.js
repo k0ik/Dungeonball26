@@ -105,11 +105,8 @@ test('patrol stays put when boxed in', () => {
   assert.equal(patrolMove(box, e, [e]), null);
 });
 
-test('hero damage is max(1, L - DEF)', () => {
-  assert.equal(heroDamage(1, 0), 1);
-  assert.equal(heroDamage(3, 0), 3);
-  assert.equal(heroDamage(1, 1), 1);
-  assert.equal(heroDamage(3, 1), 2);
+test('an attacker hit costs the hero 1 HP, whatever its level', () => {
+  assert.equal(heroDamage(), 1);
 });
 
 test('enemy phase: only the attacker hurts the hero, once per turn', () => {
@@ -127,14 +124,14 @@ test('enemy phase: only the attacker hurts the hero, once per turn', () => {
     { type: 'ball', a: attacker, b: bystander, speed: 5 },
   );
   const out = combat.resolve(world, h);
-  assert.deepEqual(out.map((o) => [o.type, o.amount]), [['hurt', 3]]);
-  assert.equal(h.hp, 7);
+  assert.deepEqual(out.map((o) => [o.type, o.amount]), [['hurt', 1]], 'a level-3 attacker still deals 1');
+  assert.equal(h.hp, 9);
   assert.equal(attacker.hp, 6, 'hero contact in the enemy phase does no damage');
   assert.equal(bystander.hp, 4, 'enemy-enemy contact in the enemy phase does no damage');
   combat.beginShot();
   world.events.push({ type: 'ball', a: attacker, b: h, speed: 5 });
   combat.resolve(world, h);
-  assert.equal(h.hp, 7, 'no hero damage during your own shot');
+  assert.equal(h.hp, 9, 'no hero damage during your own shot');
 });
 
 test('enemy phase: a soft touch below the hit threshold does no damage', () => {

@@ -41,11 +41,19 @@ export const CONFIG = {
     cancelXWidth: 0.035,
     cancelOpacity: 0.25,
     cancelActiveOpacity: 0.7,
+    // "Your turn" ring: a dashed green ring at the cancel radius (as in the
+    // mockup) shown whenever you can shoot, until you start dragging.
+    turnRingDashes: 14,
+    turnRingDashFill: 0.6, // fraction of each dash slot that is drawn
+    turnRingWidth: 0.05,
+    turnRingSpin: 0.5, // radians per second
+    turnRingOpacity: 0.9,
     castStep: 0.02, // step size for swept-circle casts
   },
 
   enemy: {
     lungeSpeed: 6,
+    damageToHero: 1, // HP an attacker's hit costs you, whatever its level (playtest change)
     patrolSpeedMin: 1,
     patrolSpeedMax: 3,
     patrolRadius: 3,
@@ -118,6 +126,7 @@ export const CONFIG = {
     hero: 0xd6d7da,
     heroStripe: 0x3a86ff,
     aim: 0xffffff,
+    turnRing: 0x5ad16a, // matches the hero's HP bar
     shadow: 0x000000,
   },
 

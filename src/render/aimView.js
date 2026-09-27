@@ -2,7 +2,8 @@
 // ends where the shot would stop. The dash pattern encodes power, so there is
 // no power ring. While aiming, a faint circle and a small "x" just below the ball mark
 // the cancel zone. Small hoops mark each bounce and where the path ends,
-// whether the ball comes to rest there or hits something.
+// whether the ball comes to rest there or hits something. Before you start
+// dragging, a dashed green ring around the ball says it's your turn.
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
@@ -74,6 +75,30 @@ export function createAimView(yaw = 0) {
   }
   group.add(cancelMark);
 
+  // "Your turn": dashed green ring at the cancel radius, slowly turning.
+  const turnRing = new THREE.Group();
+  const turnMat = new THREE.MeshBasicMaterial({
+    color: CONFIG.colors.turnRing,
+    transparent: true,
+    opacity: A.turnRingOpacity,
+    depthWrite: false,
+  });
+  const slot = (Math.PI * 2) / A.turnRingDashes;
+  for (let i = 0; i < A.turnRingDashes; i++) {
+    const geo = new THREE.RingGeometry(
+      A.cancelRadius - A.turnRingWidth / 2,
+      A.cancelRadius + A.turnRingWidth / 2,
+      8,
+      1,
+      i * slot,
+      slot * A.turnRingDashFill,
+    ).rotateX(-Math.PI / 2);
+    turnRing.add(new THREE.Mesh(geo, turnMat));
+  }
+  turnRing.position.y = Y;
+  turnRing.visible = false;
+  group.add(turnRing);
+
   const hoops = [];
   for (let i = 0; i < MAX_HOOPS; i++) {
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.14, 0.2, 24), material);
@@ -104,9 +129,21 @@ export function createAimView(yaw = 0) {
     hide() {
       group.visible = false;
     },
+    /** It's your turn and you haven't started dragging: show only the green ring. */
+    showTurn(hero, dt) {
+      group.visible = true;
+      turnRing.visible = true;
+      cancelMark.visible = false;
+      pathGroup.visible = false;
+      turnRing.position.x = hero.x;
+      turnRing.position.z = hero.z;
+      turnRing.rotation.y -= A.turnRingSpin * dt;
+    },
     /** shot: from shotFromDrag; path: from previewPath, or null to hide the path (cancel). */
     show(hero, shot, path) {
       group.visible = true;
+      turnRing.visible = false;
+      cancelMark.visible = true;
       cancelMark.position.x = hero.x;
       cancelMark.position.z = hero.z;
       cancelMat.opacity = shot.cancel ? A.cancelActiveOpacity : A.cancelOpacity;

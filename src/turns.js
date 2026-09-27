@@ -75,7 +75,10 @@ export function patrolMove(level, enemy, balls, rng = Math.random) {
   };
 }
 
-/** Damage the hero takes from an attacker: max(1, L − DEF). */
-export function heroDamage(enemyLevel, def) {
-  return Math.max(1, enemyLevel - def);
+/**
+ * Damage the hero takes from an attacker's hit: a flat amount, whatever the
+ * enemy's level (changed after playtesting from the doc's max(1, L − DEF)).
+ */
+export function heroDamage() {
+  return E.damageToHero;
 }

@@ -69,6 +69,7 @@ Every value below is a starting point to tune by feel. Distances are in tiles.
 Aim is a slingshot pull-back: press on the hero, drag away from the target, release to launch the opposite way. Mouse and touch share one pointer path, raycast onto the ground plane so a drag means the same thing from any camera angle, and the pull-back keeps the finger off the line of fire. There's no cue stick sprite and no filling power ring; the dashed path preview below carries the aiming information, with a faint cancel marker around the hero.
 
 - **Power:** drag distance past the cancel radius sets launch speed, reaching full power at about 1.6 tiles; it doesn't depend on the drag's angle.
+- **Your turn:** whenever you can shoot, a dashed green ring (as in your mockup) turns slowly around the hero at the cancel radius. It gives way to the cancel marker as soon as you start dragging, and is hidden while anything is moving or the enemies are acting.
 - **Cancel marker:** while you drag, a thin, low-opacity circle at the cancel radius and a small "x" just below the hero on screen (inside the circle) mark the cancel zone. Both brighten while your finger is inside it, and disappear when you release.
 - **Cancel zone:** within about 0.6 tile of the hero the preview disappears, which reads as "release here to cancel." Releasing inside it cancels the shot; releasing past it fires.
 - **Preview:** a dashed line on the ground that runs the shot through the real physics ahead of time, so its length is exactly how far the ball will travel at the current power, including friction and bounce losses. It shows the first bounce, then ends where the ball stops or at its next contact. A small hoop marks each bounce and the end of the path, so the ball's next position is always marked, whether it comes to rest in the open or against something. The dash pattern also encodes power: a soft shot draws short, sparse dots, and a hard one draws long dashes packed close together.
@@ -90,14 +91,14 @@ Who takes damage depends on whose phase it is, never on ball speed. Speed only d
 Damage and health formulas, with L as the enemy's level:
 
 ```latex
-D_{\text{enemy}} = \text{ATK} \qquad D_{\text{hero}} = \max(1,\; L - \text{DEF}) \qquad \text{HP}_{\text{enemy}} = 2L
+D_{\text{enemy}} = \text{ATK} \qquad D_{\text{hero}} = 1 \qquad \text{HP}_{\text{enemy}} = 2L
 ```
 
 | Stat | Start value | Notes |
 | --- | --- | --- |
 | Hero max HP | 10 | Potions heal 3, capped at max |
 | Hero ATK | 1 | A sword raises it to 2 |
-| Hero DEF | 0 | A shield raises it to 1 |
+| Hero DEF | 0 | A shield raises it to 1 (currently no effect: see open questions) |
 | Enemy level L | 1 to 3 in the MVP | Read from the enemy's HP bar: one notch per HP, and the bar grows longer for tougher enemies |
 | Kill reward | 10 × L gold | Drops as coins where it died |
 
@@ -247,6 +248,7 @@ Two habits keep tuning cheap. Put every number from this doc in one config file.
 Changes agreed during development that aren't built yet.
 
 - **Frame the action:** collisions and combos can happen out of view, for example when you knock ball A toward ball B and then roll away from both. While balls are moving, the camera should frame every moving ball with generous padding, centred on the moving balls and zoomed out just enough to fit them all, easing (lerping) between framings so it never jerks. Not every enemy needs to be on screen, only the balls in motion. This would replace the "pan to an off-screen attacker" rule and extend the speed-based zoom.
+- **Visit each enemy's turn:** in the enemy phase the camera should focus on each enemy in turn as it acts, patrols included, rather than only on attackers. With that in place, off-screen patrols stop resolving instantly: every move is shown.
 
 ## Out of scope for the MVP
 
@@ -281,4 +283,6 @@ The rules above use these defaults where your answers left a gap. Change any tha
 - A patrol move follows normal physics, so if it happens to collide with the hero it still deals damage, the same as a lunge would. Contact is what matters, not intent.
 - The "nearest first" turn order from the original attack-only design now covers every enemy, sighted or not, so a patrolling enemy can still block or reveal sightlines for the ones after it.
 
-No open questions remain for the MVP; new ones will get added here as they come up.
+Open questions:
+
+- **What does the shield do?** After playtesting, every enemy hit costs the hero exactly 1 HP whatever the enemy's level (it was max(1, L − DEF)), so DEF no longer changes anything. Options for M5: the shield blocks the first hit each round, or it raises max HP, or it's dropped from the loot table.

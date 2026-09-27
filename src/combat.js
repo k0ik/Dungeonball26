@@ -6,8 +6,8 @@
 // - Hero hits enemy: the enemy loses ATK HP on each fresh contact.
 // - A knocked enemy hits another enemy: both lose 1 HP, once per pair per shot.
 // Enemy phase:
-// - Only the enemy whose turn it is can hurt the hero: max(1, L − DEF), at
-//   most once per turn. No other contact deals damage.
+// - Only the enemy whose turn it is can hurt the hero: 1 HP per hit, whatever
+//   its level, at most once per turn. No other contact deals damage.
 // Walls never deal damage.
 // A hit only counts at an impact speed of at least `hitMinSpeed`, and each
 // enemy has a short cooldown so a ball resting against it can't grind it down.
@@ -76,7 +76,7 @@ export function createCombat() {
           const pair = (ev.a === hero && ev.b === actor) || (ev.b === hero && ev.a === actor);
           if (!pair || hero.hp <= 0) continue;
           actorHasHit = true;
-          const amount = heroDamage(actor.level, hero.def);
+          const amount = heroDamage();
           hero.hp = Math.max(0, hero.hp - amount);
           out.push({ type: 'hurt', target: hero, amount, source: actor, event: ev });
         }

@@ -16,7 +16,7 @@ const room = parseLevel(`
 #S.........#
 ############`);
 
-const hero = (x, z) => Object.assign(createBall({ x, z, kind: 'hero', id: 'hero' }), { hp: 10, maxHp: 10, atk: 1, def: 0 });
+const hero = (x, z) => Object.assign(createBall({ x, z, kind: 'hero', id: 'hero' }), { hp: 10, maxHp: 10, atk: 1 });
 const enemy = (x, z, level = 1, id = 'e') => createEnemy({ x, z, level, id });
 
 test('sight: open line within range', () => {

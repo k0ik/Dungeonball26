@@ -62,7 +62,7 @@ export function createCombat() {
       actorHasHit = false;
     },
     /**
-     * Apply one physics step's events. `hero` carries `atk`, `def` and `hp`.
+     * Apply one physics step's events. `hero` carries `atk` and `hp`.
      * Dead enemies are removed from world.balls. Returns outcomes:
      * { type: 'hit' | 'combo', target, amount, event }, { type: 'kill', target }
      * and, in the enemy phase, { type: 'hurt', target: hero, amount, source, event }.

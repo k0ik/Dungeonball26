@@ -29,8 +29,6 @@ import { createAimView } from './render/aimView.js';
 import { createCameraRig } from './render/cameraRig.js';
 import { createAudio } from './audio.js';
 
-const FAST_FORWARD_MAX_STEPS = 2000; // safety cap for an instant patrol move
-
 /** levels: [{ id, name, text }]. */
 export function createGame(container, levels, startIndex = 0) {
   // --- Rendering -----------------------------------------------------------
@@ -52,7 +50,7 @@ export function createGame(container, levels, startIndex = 0) {
 
   // The hero persists across levels; the level, its world and its view don't.
   const hero = createBall({ x: 0, z: 0, kind: 'hero', id: 'hero' });
-  Object.assign(hero, { atk: CONFIG.hero.atk, def: CONFIG.hero.def, maxHp: CONFIG.hero.maxHp, hp: CONFIG.hero.maxHp });
+  Object.assign(hero, { atk: CONFIG.hero.atk, maxHp: CONFIG.hero.maxHp, hp: CONFIG.hero.maxHp });
   const heroView = createBallView(hero, { color: CONFIG.colors.hero, stripe: CONFIG.colors.heroStripe });
   scene.add(heroView.object);
   overlay.addBar(hero, 'hero');
@@ -74,9 +72,9 @@ export function createGame(container, levels, startIndex = 0) {
     entryHp: hero.hp, // HP when this level was entered; game over restores it
     taken: new Set(), // enemies that have acted this round
     actor: null, // the enemy whose turn it is
-    plan: null, // its move: { kind: 'lunge' } or { kind: 'patrol', vx, vz }
+    plan: null, // its move: { kind: 'lunge' } or { kind: 'patrol', vx, vz, target }
     timer: 0,
-    focus: null, // ball the camera follows instead of the hero, if any
+    waited: 0, // seconds the acting enemy has waited for the camera
   };
 
   let levelIndex = -1;
@@ -130,7 +128,6 @@ export function createGame(container, levels, startIndex = 0) {
     state.phase = 'aim';
     state.aiming = false;
     state.actor = null;
-    state.focus = null;
     aimView.hide();
   }
 
@@ -195,7 +192,6 @@ export function createGame(container, levels, startIndex = 0) {
       if (state.phase === 'down') return;
       const actor = nextActor(enemies(), hero, state.taken);
       state.actor = actor;
-      state.focus = null;
       if (!actor) {
         state.phase = 'aim';
         return;
@@ -208,20 +204,16 @@ export function createGame(container, levels, startIndex = 0) {
         state.plan = { kind: 'lunge' };
         state.phase = 'enemyWait';
         state.timer = CONFIG.enemy.lungeTelegraph;
-        // An attacker off screen gets the camera briefly.
-        if (!overlay.isOnScreen(actor.x, actor.z)) state.focus = actor;
+        state.waited = 0;
         return;
       }
 
       const move = patrolMove(level, actor, world.balls);
       if (!move) continue; // boxed in: it stays put this turn
-      if (CONFIG.enemy.fastForwardOffscreenPatrols && !overlay.isOnScreen(actor.x, actor.z, -0.1)) {
-        fastForward(actor, move);
-        continue;
-      }
-      state.plan = { kind: 'patrol', vx: move.vx, vz: move.vz };
+      state.plan = { kind: 'patrol', ...move };
       state.phase = 'enemyWait';
       state.timer = CONFIG.enemy.patrolDelay;
+      state.waited = 0;
       return;
     }
   }
@@ -236,17 +228,6 @@ export function createGame(container, levels, startIndex = 0) {
       actor.vz = plan.vz;
     }
     state.phase = 'enemyMove';
-  }
-
-  /** Resolve an off-screen patrol move instantly with the same physics. */
-  function fastForward(actor, move) {
-    actor.vx = move.vx;
-    actor.vz = move.vz;
-    for (let i = 0; i < FAST_FORWARD_MAX_STEPS && !isAtRest(world); i++) {
-      stepWorld(world);
-      handleEvents(combat.resolve(world, hero), { quiet: true });
-      if (state.phase === 'down') return;
-    }
   }
 
   function knockedOut() {
@@ -286,17 +267,15 @@ export function createGame(container, levels, startIndex = 0) {
   }
 
   // --- Events ------------------------------------------------------------------
-  function handleEvents(outcomes, { quiet = false } = {}) {
+  function handleEvents(outcomes) {
     const A = CONFIG.audio;
     const damaging = new Set(outcomes.map((o) => o.event).filter(Boolean));
-    if (!quiet) {
-      for (const ev of world.events) {
-        const loud = Math.min(1, ev.speed / CONFIG.aim.maxLaunchSpeed);
-        if (ev.type === 'wall' && ev.speed >= A.minWallSoundSpeed) {
-          sfx.play('wall', 0.25 + 0.75 * loud, { pitch: 0.9 + Math.random() * 0.2, minInterval: A.minWallSoundInterval });
-        } else if (ev.type === 'ball' && !damaging.has(ev)) {
-          sfx.play('ball', 0.3 + 0.7 * loud);
-        }
+    for (const ev of world.events) {
+      const loud = Math.min(1, ev.speed / CONFIG.aim.maxLaunchSpeed);
+      if (ev.type === 'wall' && ev.speed >= A.minWallSoundSpeed) {
+        sfx.play('wall', 0.25 + 0.75 * loud, { pitch: 0.9 + Math.random() * 0.2, minInterval: A.minWallSoundInterval });
+      } else if (ev.type === 'ball' && !damaging.has(ev)) {
+        sfx.play('ball', 0.3 + 0.7 * loud);
       }
     }
     world.events.length = 0;
@@ -320,6 +299,27 @@ export function createGame(container, levels, startIndex = 0) {
         floatAt(hero, `-${o.amount}`, 'hurt');
         if (hero.hp <= 0) knockedOut();
       }
+    }
+  }
+
+  // --- Camera ------------------------------------------------------------------
+  /**
+   * What the camera should keep in view right now: every moving ball, so no
+   * collision or combo happens off screen; the enemy whose turn it is (and,
+   * for a lunge, you, or for a patrol, where it's heading); otherwise you.
+   */
+  function framingPoints() {
+    const moving = world.balls.filter((b) => b.vx !== 0 || b.vz !== 0);
+    const { actor, plan } = state;
+    switch (state.phase) {
+      case 'enemyWait':
+        return plan.kind === 'lunge' ? [actor, hero] : [actor, plan.target];
+      case 'enemyMove':
+        return moving.includes(actor) ? moving : [actor, ...moving];
+      case 'shot':
+        return moving.length ? moving : [hero];
+      default:
+        return [hero];
     }
   }
 
@@ -380,8 +380,11 @@ export function createGame(container, levels, startIndex = 0) {
         if (isAtRest(world)) startEnemyPhase();
         break;
       case 'enemyWait':
+        // The enemy moves once its telegraph is done and the camera has
+        // reached it (or it has waited long enough).
         state.timer -= dt;
-        if (state.timer <= 0) launchActor();
+        state.waited += dt;
+        if (state.timer <= 0 && (rig.settled || state.waited >= CONFIG.enemy.enemyTurnMaxWait)) launchActor();
         break;
       case 'enemyMove':
         if (isAtRest(world)) nextTurn();
@@ -419,9 +422,7 @@ export function createGame(container, levels, startIndex = 0) {
       overlay.setAlert(enemy, lunging || canSee(level, enemy, hero, world.balls), lunging);
     }
 
-    rig.updateZoom(speedOf(hero), dt);
-    const focus = state.focus ?? hero;
-    rig.follow(focus.x, focus.z, dt);
+    rig.frame(framingPoints(), rig.speedWidth(speedOf(hero)), dt);
     renderer.render(scene, rig.camera);
     overlay.update();
 

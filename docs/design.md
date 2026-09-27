@@ -42,7 +42,7 @@ The loop repeats until the hero touches the exit, which ends the level at once, 
 - **Order:** enemies act nearest-to-hero first, whether they end up attacking or patrolling. Sight is rechecked before each enemy's turn, since earlier moves this round can create or break sightlines.
 - **Once per round:** each enemy acts exactly once per round, either lunging at the hero or patrolling, then the turn passes to the next enemy.
 - **At rest:** the next launch, lunge or patrol move waits until every ball is below the stop threshold, so positions are always stable before the next move. Nothing moves outside a shot or a turn.
-- **Patrol:** an enemy that does not currently see the hero picks a random open floor tile within about 3 tiles (one it can roll to in a straight line, with no ball on it) and rolls toward it at the modest speed (1 to 3 tiles/s) that friction brings to rest there. It behaves like any pool ball on the way, so it can still bounce off walls, barrels and other enemies. If no open tile is available, it stays put for that turn. A patrol move by an enemy that is off screen resolves instantly with the same physics, so distant enemies don't make you wait through their turns.
+- **Patrol:** an enemy that does not currently see the hero picks a random open floor tile within about 3 tiles (one it can roll to in a straight line, with no ball on it) and rolls toward it at the modest speed (1 to 3 tiles/s) that friction brings to rest there. It behaves like any pool ball on the way, so it can still bounce off walls, barrels and other enemies. If no open tile is available, it stays put for that turn. Every move is shown: the camera visits each enemy on its turn (see the camera section).
 - **Exit:** enemies never follow you out. Killing everything is not required.
 - **Enemy lunge:** an enemy that currently sees the hero launches in a straight line at it at a fixed speed instead of patrolling. Its "!" pulses for about half a second first, with a growl, so the attack never comes out of nowhere. Like any pool ball, it stays wherever it stops, which becomes its new position. Its hit only counts at an impact of at least 1.5 tiles/s, and it can hurt the hero at most once per turn.
 
@@ -98,7 +98,7 @@ D_{\text{enemy}} = \text{ATK} \qquad D_{\text{hero}} = 1 \qquad \text{HP}_{\text
 | --- | --- | --- |
 | Hero max HP | 10 | Potions heal 3, capped at max |
 | Hero ATK | 1 | A sword raises it to 2 |
-| Hero DEF | 0 | A shield raises it to 1 (currently no effect: see open questions) |
+| Shield | None | A shield blocks the first enemy hit each round (replaces DEF, now that every hit costs 1 HP) |
 | Enemy level L | 1 to 3 in the MVP | Read from the enemy's HP bar: one notch per HP, and the bar grows longer for tougher enemies |
 | Kill reward | 10 × L gold | Drops as coins where it died |
 
@@ -134,7 +134,7 @@ Barrels, chests, keys and doors are the level's furniture, and barrel and chest 
 | Door | Solid and opaque until the hero is within half a tile while holding the matching key. Then it opens for good and the key is consumed. Enemies can pass through an open door. |
 | Exit | Ends the level when the hero's center enters its tile. |
 | Coins | Dropped where an enemy dies, worth 10 × its level in total. Collected by rolling over them, so grabbing them can pull you back into an enemy's sight. |
-| Explosive barrel (red) | Solid bumper with the same physics as a barrel. Any contact from the hero or an enemy, at any speed, detonates it: the ball that touched it takes 1 flat damage, ignoring ATK and DEF, and the barrel is destroyed with no loot. |
+| Explosive barrel (red) | Solid bumper with the same physics as a barrel. Any contact from the hero or an enemy, at any speed, detonates it: the ball that touched it takes 1 flat damage, ignoring ATK and the shield, and the barrel is destroyed with no loot. |
 
 Barrel loot uses these starting weights:
 
@@ -144,7 +144,7 @@ Barrel loot uses these starting weights:
 | Gold | 35% | +10 to +30 gold |
 | Health potion | 20% | +3 HP, capped at max |
 | Sword | 6% | Equips a sword: ATK 2 |
-| Shield | 6% | Equips a shield: DEF 1 |
+| Shield | 6% | Equips a shield: blocks the first enemy hit each round |
 | Extra life | 3% | +1 life |
 
 There is no inventory. Each pickup floats above the hero for about a second, for example "+3 HP", "+20" or "Sword +1". Only the hero cracks barrels and opens chests.
@@ -202,13 +202,13 @@ Until the other levels exist (M6–M7), Long Hall is the only level and reaching
 
 ## Camera, HUD and presentation
 
-The camera is a true orthographic projection at a fixed isometric angle matched to your mockup: the grid is turned about 30° on screen (columns run gently down-right, rows run steeply down-left) and seen from about 37° above the ground, so parallel lines never converge and scale stays constant with distance. It never rotates and has no manual zoom; its only zoom is the automatic speed-based zoom below. It follows the hero, keeping it centred on screen with a gentle ease.
+The camera is a true orthographic projection at a fixed isometric angle matched to your mockup: the grid is turned about 30° on screen (columns run gently down-right, rows run steeply down-left) and seen from about 37° above the ground, so parallel lines never converge and scale stays constant with distance. It never rotates and has no manual zoom; it pans and zooms automatically to frame the action, as below.
 
 - **Camera type:** `THREE.OrthographicCamera`, fixed isometric angle, no rotation or manual zoom in the MVP. Angles live in the config as `camera.yawDeg` (30) and `camera.elevationDeg` (37).
-- **Follow:** the camera eases to keep the hero at the centre of the screen, and its centre never leaves the level. (An earlier draft used a deadzone of 60% × 50% of the view; `camera.deadzoneWidth`/`deadzoneHeight` still support one.)
-- **Enemy phase:** if an attacker is off screen, the camera pans to it briefly, then returns to the hero.
+- **Frame the action:** the camera eases its centre and zoom to fit whatever matters right now, with about 2 tiles of padding, so no collision or combo happens out of view. While balls are moving, that's every moving ball (not every enemy, only the ones in motion); at rest on your turn, it's the hero, centred. Its centre never leaves the level, and it zooms out at most to 22 tiles across.
+- **Enemy phase:** the camera visits each enemy on its turn, patrols included. Before a lunge it frames the attacker and the hero; before a patrol, the enemy and the tile it's heading for; while it moves, the enemy and every ball in motion. An enemy waits for the camera to arrive (up to 1.5 s) before it moves.
 - **View size:** the orthographic frustum has a base width of 9 tiles measured across the screen (with the grid turned, that is not the same as 9 columns), adjusted for aspect ratio, and scales to fit the browser window.
-- **Dynamic zoom:** the frustum widens as the hero speeds up, so a hard shot pulls the camera out to reveal more of its path, then eases back to the base 9-tile width once every ball is at rest. Default range: 9 tiles at rest up to about 13 tiles at max launch speed (9 tiles/s).
+- **Dynamic zoom:** the frustum widens as the hero speeds up, so a hard shot pulls the camera out to reveal more of its path, then eases back to the base 9-tile width once every ball is at rest. Default range: 9 tiles at rest up to about 13 tiles at max launch speed (9 tiles/s). This is the minimum width; framing several moving balls can widen it further.
 - **Walls:** short, so they never hide a ball behind them. The mockup's walls stand a little taller than the ball; the build uses 0.55 tile (`render.wallHeight`) so a ball resting just behind a wall stays visible.
 - **Lighting:** one ambient light plus one directional light, no dynamic shadows for the MVP.
 - **HUD:** a dark top bar as in your mock, with gold on the left, lives in the middle (one small hero ball per life) and key slots on the right. HP bars sit above the hero (green) and each enemy (pink), rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The aim preview is different: it's drawn in the 3D scene itself, on the ground plane, so it lands exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
@@ -245,10 +245,7 @@ Two habits keep tuning cheap. Put every number from this doc in one config file.
 
 ## To-do
 
-Changes agreed during development that aren't built yet.
-
-- **Frame the action:** collisions and combos can happen out of view, for example when you knock ball A toward ball B and then roll away from both. While balls are moving, the camera should frame every moving ball with generous padding, centred on the moving balls and zoomed out just enough to fit them all, easing (lerping) between framings so it never jerks. Not every enemy needs to be on screen, only the balls in motion. This would replace the "pan to an off-screen attacker" rule and extend the speed-based zoom.
-- **Visit each enemy's turn:** in the enemy phase the camera should focus on each enemy in turn as it acts, patrols included, rather than only on attackers. With that in place, off-screen patrols stop resolving instantly: every move is shown.
+Changes agreed during development that aren't built yet. (None right now: framing the action and visiting each enemy's turn are built; see the camera section.)
 
 ## Out of scope for the MVP
 
@@ -273,7 +270,7 @@ The rules above use these defaults where your answers left a gap. Change any tha
 - Each enemy attacks at most once per round, and only the attacker (the enemy whose turn it is) can damage the hero. Red barrels are the exception: they damage whichever ball touches them, hero included, in any phase.
 - If the hero dies mid-round, the round ends there: the remaining enemies skip their turn and the hero respawns with the first move.
 - Sight range is 6 tiles, not the screen width, because a portrait screen is only 9 tiles wide. Other enemies also block sight, so they can shield you.
-- Gear is one sword (ATK 2) and one shield (DEF 1), so the maximum is the one in hand and a duplicate pickup changes nothing.
+- Gear is one sword (ATK 2) and one shield (blocks the first enemy hit each round), so the maximum is the one in hand and a duplicate pickup changes nothing.
 - Barrel loot and chest gold are granted at once with a floating label. Keys and enemy coins lie on the floor.
 - Respawn restores full HP, and keys you hold are kept.
 - Aiming is a slingshot pull-back rather than dragging toward the target.
@@ -285,4 +282,4 @@ The rules above use these defaults where your answers left a gap. Change any tha
 
 Open questions:
 
-- **What does the shield do?** After playtesting, every enemy hit costs the hero exactly 1 HP whatever the enemy's level (it was max(1, L − DEF)), so DEF no longer changes anything. Options for M5: the shield blocks the first hit each round, or it raises max HP, or it's dropped from the loot table.
+- None right now. (Resolved: after every enemy hit became a flat 1 HP, the shield was redefined to block the first enemy hit each round.)

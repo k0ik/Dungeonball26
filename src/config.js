@@ -62,17 +62,14 @@ export const CONFIG = {
     hitMinSpeed: 1.5, // impacts below this don't count
     hitCooldown: 0.15, // seconds, per enemy
     lungeTelegraph: 0.45, // seconds the "!" pulses before a lunge launches
-    patrolDelay: 0.12, // seconds before an on-screen patrol move
-    // Off-screen patrol moves resolve instantly (same physics, not animated),
-    // so distant enemies don't make you wait through their turns.
-    fastForwardOffscreenPatrols: true,
+    patrolDelay: 0.2, // seconds before a patrol move
+    enemyTurnMaxWait: 1.5, // seconds an enemy waits at most for the camera to reach it
   },
 
   hero: {
     downPause: 1.0, // seconds after a knockout before you respawn
     maxHp: 10,
     atk: 1,
-    def: 0,
     lives: 3,
   },
 
@@ -82,15 +79,17 @@ export const CONFIG = {
     elevationDeg: 37, // camera angle above the ground plane
     yawDeg: 30, // grid rotation on screen
     baseViewWidth: 9, // world units across the screen at rest
-    maxViewWidth: 13, // world units across at max launch speed
-    zoomOutRate: 4, // exponential smoothing rates, 1/s
+    maxViewWidth: 13, // speed zoom: world units across at max launch speed
+    // Framing: the camera fits every ball in play (plus the acting enemy)
+    // with this much padding, zooming out as far as maxFrameWidth.
+    framePadding: 2.2, // screen units around the framed balls
+    maxFrameWidth: 22,
+    zoomOutRate: 3, // exponential smoothing rates, 1/s
     zoomInRate: 1.5,
-    // Fraction of the view the hero can roam before the camera pans. 0 keeps
-    // the hero centred (eased by followRate); the design doc's original
-    // deadzone was 0.6 x 0.5.
-    deadzoneWidth: 0,
-    deadzoneHeight: 0,
-    followRate: 4, // pan smoothing, 1/s
+    followRate: 3, // pan smoothing, 1/s
+    // An enemy waits for the camera to arrive before it moves (at most enemyTurnMaxWait).
+    settleDistance: 0.6, // tiles from the framing goal that count as arrived
+    settleZoom: 0.12, // fraction of the goal width that counts as arrived
     distance: 60, // orthographic, so this only has to clear the scene
   },
 

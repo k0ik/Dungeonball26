@@ -100,11 +100,6 @@ export function createOverlay(container, camera) {
         floats.delete(f);
       });
     },
-    /** Screen-space test used by the camera logic; margin is in NDC units. */
-    isOnScreen(x, z, margin = 0.05) {
-      v.set(x, 0, z).project(camera);
-      return Math.abs(v.x) <= 1 - margin && Math.abs(v.y) <= 1 - margin;
-    },
     update() {
       for (const f of floats) place(f.el, f.x, f.y, f.z);
       for (const [ball, bar] of bars) {

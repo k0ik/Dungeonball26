@@ -153,7 +153,7 @@ You hold at most one sword and one shield. A new one replaces the one in hand, s
 
 ## Levels
 
-Each level is a plain text file with one character per tile. The screen shows 9×16 tiles, and levels can be any size, so larger ones scroll.
+Each level is a plain text file with one character per tile. The screen shows about 9 tiles across, and levels can be any size; the camera follows the hero, so larger ones scroll.
 
 | Character | Meaning |
 | --- | --- |
@@ -188,9 +188,11 @@ Barrel loot is random by default. Per-barrel overrides can be added later withou
 
 The five MVP levels ramp one idea at a time. Sizes are suggestions in tiles.
 
+Until the other levels exist (M6–M7), Long Hall is the only level and reaching its exit sends the hero straight back to its start.
+
 | # | Name | Size | Enemies | Keys and doors | Teaches |
 | --- | --- | --- | --- | --- | --- |
-| 1 | First Shot | 9×16 | One level-1 | None | Aiming, bouncing, hitting an enemy, the exit |
+| 1 | Long Hall | 12×32 | One level-1 | None | Aiming, bouncing, hitting an enemy, the exit |
 | 2 | Breakables | 9×20 | Two level-1 | None | Barrels, chest, potions, sightlines |
 | 3 | One Key | 12×20 | Level 1 and level 2 | Red | Keys, doors, hiding from sight |
 | 4 | Two Keys | 14×24 | Four, levels 1 to 3 | Red, blue | Routing, combos, using enemies as blockers |

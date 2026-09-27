@@ -13,10 +13,10 @@ test('every shipped level parses', () => {
   }
 });
 
-test('level 1 matches the design doc: 9x16, one level-1 enemy', () => {
-  const level = parseLevel(readFileSync(new URL('level1.txt', levelsDir), 'utf8'));
-  assert.equal(level.width, 9);
-  assert.equal(level.height, 16);
+test('level 1 matches the design doc: 12x32, one level-1 enemy', () => {
+  const level = parseLevel(readFileSync(new URL('long-hall.txt', levelsDir), 'utf8'));
+  assert.equal(level.width, 12);
+  assert.equal(level.height, 32);
   assert.deepEqual(level.enemies.map((e) => e.level), [1]);
 });
 

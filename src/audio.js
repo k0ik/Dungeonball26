@@ -17,6 +17,14 @@ function synth(ctx, seconds, fn) {
 }
 
 const SYNTHS = {
+  // Rising three-note chime.
+  exit: (ctx) =>
+    synth(ctx, 0.6, (t) => {
+      const note = t < 0.12 ? 523 : t < 0.24 ? 659 : 784;
+      const local = t % 0.12;
+      const env = t < 0.24 ? Math.exp(-local * 12) : Math.exp(-(t - 0.24) * 5);
+      return Math.sin(2 * Math.PI * note * t) * env * 0.5;
+    }),
   // Soft thump plus a short breathy noise swish.
   launch: (ctx) =>
     synth(ctx, 0.22, (t) => {

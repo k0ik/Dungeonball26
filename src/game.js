@@ -2,7 +2,7 @@
 
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
-import { parseLevel, tileCenter } from './level.js';
+import { parseLevel, tileCenter, tileAt } from './level.js';
 import { createWorld, createBall, stepWorld, isAtRest, speedOf } from './physics.js';
 import { shotFromDrag, canGrab, previewPath } from './aim.js';
 import { buildLevelView } from './render/levelView.js';
@@ -60,7 +60,7 @@ export function createGame(container, levels, startIndex = 0) {
   const sfx = createAudio(rig.camera);
 
   // phase: 'aim' (at rest, input open) or 'rolling' (input locked)
-  const state = { phase: 'aim', aiming: false, pointerId: null, pointer: new THREE.Vector3(), shots: 0 };
+  const state = { phase: 'aim', aiming: false, pointerId: null, pointer: new THREE.Vector3(), shots: 0, clears: 0 };
 
   // --- Input -----------------------------------------------------------------
   const raycaster = new THREE.Raycaster();
@@ -110,6 +110,14 @@ export function createGame(container, levels, startIndex = 0) {
   }
   canvas.addEventListener('pointerup', (e) => endAim(e, true));
   canvas.addEventListener('pointercancel', (e) => endAim(e, false));
+
+  // Reaching the exit ends the run at once, even mid-roll. For now there is
+  // one level, so the hero goes straight back to its start.
+  function reachExit() {
+    state.clears++;
+    sfx.play('exit', 0.8);
+    respawn();
+  }
 
   function respawn() {
     hero.x = start.x;
@@ -175,6 +183,10 @@ export function createGame(container, levels, startIndex = 0) {
     while (acc >= step && steps < CONFIG.physics.maxStepsPerFrame) {
       stepWorld(world, step);
       handleEvents();
+      if (tileAt(level, Math.floor(hero.x), Math.floor(hero.z)) === 'exit') {
+        reachExit();
+        break;
+      }
       acc -= step;
       steps++;
     }
@@ -199,7 +211,7 @@ export function createGame(container, levels, startIndex = 0) {
         `hero   ${hero.x.toFixed(2)}, ${hero.z.toFixed(2)}`,
         `speed  ${speedOf(hero).toFixed(2)} tiles/s`,
         `view   ${rig.viewWidth.toFixed(2)} units`,
-        `shots  ${state.shots}`,
+        `shots  ${state.shots}   exits  ${state.clears}`,
         `[d] debug  [r] respawn  [n] next level`,
       ].join('\n');
     }

@@ -24,13 +24,14 @@ ${css}
 .hint {
   position: absolute; top: 14px; left: 16px; right: 16px; margin: 0;
   font: 500 13px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif;
-  color: #cfc7e0; text-align: center; letter-spacing: 0.01em;
+  color: #e4e5e8; text-align: center; letter-spacing: 0.01em;
+  padding: 8px 12px; border-radius: 8px; background: rgba(24, 25, 28, 0.78);
   pointer-events: none; transition: opacity 0.6s;
 }
 .hint b { color: #ffd166; font-weight: 600; }
 .hint.gone { opacity: 0; }
 </style>
-<div id="game"><p class="hint" id="hint"><b>Press on the ball</b>, drag back, release to shoot.<br>Let go near the ball to cancel. Keys: <b>r</b> respawn, <b>n</b> next level, <b>d</b> debug.</p></div>
+<div id="game"><p class="hint" id="hint"><b>Press on the ball</b>, drag back, release to shoot.<br>Let go near the ball to cancel. The green exit loops you back to the start.<br>Keys: <b>r</b> respawn, <b>d</b> debug.</p></div>
 <script type="module">
 ${js}
 </script>

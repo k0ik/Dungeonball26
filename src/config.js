@@ -45,7 +45,7 @@ export const CONFIG = {
   },
 
   enemy: {
-    lungeSpeed: 6, // M4
+    lungeSpeed: 6,
     patrolSpeedMin: 1,
     patrolSpeedMax: 3,
     patrolRadius: 3,
@@ -53,9 +53,15 @@ export const CONFIG = {
     hpPerLevel: 2, // HP = 2 × level
     hitMinSpeed: 1.5, // impacts below this don't count
     hitCooldown: 0.15, // seconds, per enemy
+    lungeTelegraph: 0.45, // seconds the "!" pulses before a lunge launches
+    patrolDelay: 0.12, // seconds before an on-screen patrol move
+    // Off-screen patrol moves resolve instantly (same physics, not animated),
+    // so distant enemies don't make you wait through their turns.
+    fastForwardOffscreenPatrols: true,
   },
 
   hero: {
+    downPause: 1.0, // seconds after a knockout before you respawn
     maxHp: 10,
     atk: 1,
     def: 0,

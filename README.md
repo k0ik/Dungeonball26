@@ -6,7 +6,7 @@ Rendered as a true orthographic 3D isometric view in [Three.js](https://threejs.
 
 ## Status
 
-M0–M3 done: the level (Long Hall) renders at the mockup's isometric angle, you can shoot the hero ball around with slingshot aim, a power-scaled path preview, speed-based zoom and placeholder SFX, and the camera follows the ball. Enemies have HP bars and take damage from your hits and from being knocked into each other (combos). Enemy turns, loot and more levels come next (M4–M7). See **[docs/design.md](docs/design.md)** for the full design doc: core loop, physics parameters, combat formulas, object behavior, level format, camera and audio design, and the milestone build order.
+M0–M4 done: the full core loop. You shoot, then every enemy takes a turn, nearest first: ones that can see you (marked "!") lunge at you, the rest patrol. You have HP, 3 lives and respawns; enemies take damage from your hits and combos. The level (Long Hall) renders at the mockup's isometric angle with a slingshot aim, power-scaled path preview and a camera that follows the ball. Loot, score and more levels come next (M5–M7). See **[docs/design.md](docs/design.md)** for the full design doc: core loop, physics parameters, combat formulas, object behavior, level format, camera and audio design, and the milestone build order.
 
 ## Getting started
 
@@ -29,8 +29,9 @@ To test on a phone on the same network, run `npm run host` and open the printed 
 - `src/level.js` + `src/levels/*.txt` — text-grid level loader and levels
 - `src/physics.js` — fixed-step 2D circle solver and the swept cast used by the aim preview
 - `src/aim.js` — slingshot aim maths and the physics look-ahead preview
-- `src/combat.js` — hit, combo and kill rules for your shot
-- `src/render/` — Three.js views: level geometry, hero and enemy balls, aim preview, camera rig, and the HTML overlay for HP bars and damage numbers
+- `src/combat.js` — damage rules for your shot and the enemy phase
+- `src/sight.js`, `src/turns.js` — line of sight, turn order, lunges and patrols
+- `src/render/` — Three.js views: level geometry, hero and enemy balls, aim preview, camera rig, HUD bar, and the HTML overlay for HP bars, "!" markers and damage numbers
 - `src/audio.js` — SFX via `THREE.Audio` (synthesized placeholders for now)
 - `src/game.js` — wires input, simulation, rendering and audio together
 - `tests/` — `node --test` unit tests

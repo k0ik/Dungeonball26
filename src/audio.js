@@ -16,6 +16,16 @@ function synth(ctx, seconds, fn) {
   return buffer;
 }
 
+/** A little melody of sine notes, each `step` seconds long. */
+function notes(ctx, freqs, step, volume) {
+  return synth(ctx, step * freqs.length + 0.25, (t) => {
+    const i = Math.min(freqs.length - 1, Math.floor(t / step));
+    const local = t - i * step;
+    const env = Math.min(1, local * 60) * Math.exp(-local * (i === freqs.length - 1 ? 5 : 10));
+    return Math.sin(2 * Math.PI * freqs[i] * t) * env * volume;
+  });
+}
+
 const SYNTHS = {
   // Rising three-note chime.
   exit: (ctx) =>
@@ -67,6 +77,27 @@ const SYNTHS = {
       const puff = (Math.random() * 2 - 1) * Math.exp(-t * 25) * 0.25;
       return (bloop + puff) * 0.55;
     }),
+  // Enemy lunge: a short rising growl-whoosh, so you hear an attack coming.
+  lunge: (ctx) =>
+    synth(ctx, 0.3, (t) => {
+      const env = Math.min(1, t * 20) * Math.exp(-t * 7);
+      const growl = Math.sign(Math.sin(2 * Math.PI * (70 + 160 * t) * t)) * 0.25;
+      const whoosh = (Math.random() * 2 - 1) * 0.35 * Math.sin(Math.PI * Math.min(1, t / 0.3));
+      return (growl + whoosh) * env * 0.8;
+    }),
+  // You take damage: a heavy thud with a falling buzz.
+  hurt: (ctx) =>
+    synth(ctx, 0.3, (t) => {
+      const thud = Math.sin(2 * Math.PI * (160 - 260 * t) * t) * Math.exp(-t * 16);
+      const buzz = Math.sign(Math.sin(2 * Math.PI * (420 - 700 * t) * t)) * Math.exp(-t * 14) * 0.2;
+      return (thud + buzz) * 0.7;
+    }),
+  // Knocked out: three falling notes.
+  down: (ctx) => notes(ctx, [523, 392, 262], 0.16, 0.5),
+  // Back at the start: two soft rising notes.
+  respawn: (ctx) => notes(ctx, [392, 587], 0.12, 0.35),
+  // Out of lives: a slow low fall.
+  gameover: (ctx) => notes(ctx, [330, 262, 196, 131], 0.22, 0.5),
   // Two billiard balls: bright and short.
   ball: (ctx) =>
     synth(ctx, 0.08, (t) => {

@@ -22,7 +22,7 @@ const page = `<title>Dungeonball</title>
 html, body { height: 100%; }
 ${css}
 .hint {
-  position: absolute; top: 14px; left: 16px; right: 16px; margin: 0;
+  position: absolute; top: 56px; left: 16px; right: 16px; margin: 0; z-index: 2;
   font: 500 13px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif;
   color: #e4e5e8; text-align: center; letter-spacing: 0.01em;
   padding: 8px 12px; border-radius: 8px; background: rgba(24, 25, 28, 0.78);

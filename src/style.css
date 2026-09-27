@@ -1,3 +1,8 @@
+/* Keep the hidden attribute authoritative over display rules below. */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
@@ -7,9 +12,16 @@ body {
   overscroll-behavior: none;
 }
 
+/* A portrait column: full height, as wide as the aspect allows, never wider
+   than the window. Sized by CSS so it corrects itself whenever the page
+   resizes; the renderer follows via a ResizeObserver. */
 #game {
   position: relative;
+  height: 100%;
+  aspect-ratio: var(--max-aspect, 0.5625);
+  max-width: 100%;
   margin: 0 auto;
+  overflow: hidden;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
@@ -48,12 +60,12 @@ body {
   will-change: transform;
 }
 
-/* Enemy HP bar, after the mockup's pill bars. Width is set per enemy. */
-.enemy-tag {
+/* HP bars, after the mockup's pill bars. Width is set per ball. */
+.tag {
   display: flex;
 }
 
-.enemy-tag .hp {
+.tag .hp {
   position: relative;
   height: 5px;
   border-radius: 3px;
@@ -61,7 +73,7 @@ body {
   overflow: hidden;
 }
 
-.enemy-tag .fill {
+.tag .fill {
   position: absolute;
   inset: 0 auto 0 0;
   width: 100%;
@@ -70,8 +82,12 @@ body {
   transition: width 0.2s ease-out;
 }
 
+.tag.hero .fill {
+  background: #5ad16a;
+}
+
 /* One notch per HP point, so a bar shows both level and damage taken. */
-.enemy-tag .hp::after {
+.tag .hp::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -120,5 +136,136 @@ body {
   .float {
     animation-duration: 0.01s;
     animation-delay: 0.6s;
+  }
+}
+
+.float.hurt {
+  color: #ff7a3d; /* damage to you: orange-red */
+  font-size: 18px;
+  text-shadow:
+    0 0 2px #3d1000,
+    0 1px 0 #3d1000,
+    0 -1px 0 #3d1000,
+    1px 0 0 #3d1000,
+    -1px 0 0 #3d1000;
+}
+
+/* "!" over an enemy that can see you, as in the mockup. */
+.alert {
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffd23f;
+  text-shadow:
+    0 0 2px #7a0a2c,
+    0 1px 0 #7a0a2c,
+    0 -1px 0 #7a0a2c,
+    1px 0 0 #7a0a2c,
+    -1px 0 0 #7a0a2c;
+}
+
+.alert span {
+  display: inline-block;
+}
+
+.alert.acting span {
+  animation: alert-pulse 0.35s ease-in-out infinite alternate;
+}
+
+/* Pinned to the screen edge when the watcher is off screen. */
+.alert.edge {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+  border-radius: 50%;
+  background: rgba(122, 10, 44, 0.85);
+  box-shadow: 0 0 0 2px #ffd23f;
+}
+
+@keyframes alert-pulse {
+  to {
+    scale: 1.35;
+  }
+}
+
+.hud {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 44px;
+  padding-top: env(safe-area-inset-top, 0px);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding-inline: 16px;
+  background: #3f4144;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hud-lives {
+  display: flex;
+  gap: 6px;
+}
+
+/* A little hero ball per life. */
+.life {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, transparent 38%, #3a86ff 38% 62%, transparent 62%), #d6d7da;
+  box-shadow: inset 0 0 0 1.5px #1e1f21;
+}
+
+.life.lost {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px #6b6d72;
+}
+
+.banner {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  translate: -50% -50%;
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  padding: 12px 20px;
+  border-radius: 10px;
+  background: rgba(24, 25, 28, 0.85);
+  color: #e4e5e8;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  text-align: center;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.banner strong {
+  font-size: 22px;
+  color: #ffd23f;
+  text-wrap: balance;
+}
+
+.banner span {
+  font-size: 13px;
+}
+
+.banner.show {
+  animation: banner-in 0.25s ease-out;
+}
+
+@keyframes banner-in {
+  from {
+    opacity: 0;
+    scale: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alert.acting span,
+  .banner.show {
+    animation: none;
   }
 }

@@ -1,19 +1,24 @@
 // HTML layer over the canvas for things that must always face the viewer:
-// enemy HP bars (one notch per HP, longer for tougher enemies) and floating
-// damage numbers.
-// Positions come from projecting world points through the camera each frame.
+// HP bars (one notch per HP; enemies' grow with max HP), "!" markers over
+// enemies that can see the hero (pinned to the screen edge when the enemy is
+// off screen), and floating damage numbers. Positions come from projecting
+// world points through the camera each frame.
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 
 const BAR_HEIGHT = 0.3; // tiles above the top of the ball
+const ALERT_HEIGHT = 0.75; // tiles above the top of the ball
+const EDGE_MARGIN = 18; // px kept clear at the screen edges for pinned markers
+const TOP_RESERVED = 56; // px under the HUD bar
 
 export function createOverlay(container, camera) {
   const layer = document.createElement('div');
   layer.className = 'overlay';
   container.appendChild(layer);
 
-  const bars = new Map();
+  const bars = new Map(); // ball -> { el, fill, shown }
+  const alerts = new Map(); // ball -> { el, on, acting }
   const floats = new Set(); // { el, x, y, z }: re-placed each frame so they stay on the world spot
   const v = new THREE.Vector3();
 
@@ -22,15 +27,25 @@ export function createOverlay(container, camera) {
     return { left: ((v.x + 1) / 2) * layer.clientWidth, top: ((1 - v.y) / 2) * layer.clientHeight };
   }
 
+  function placeAt(el, left, top) {
+    el.style.transform = `translate(${left.toFixed(1)}px, ${top.toFixed(1)}px) translate(-50%, -100%)`;
+  }
+
   function place(el, x, y, z) {
     const p = toScreen(x, y, z);
-    el.style.transform = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px) translate(-50%, -100%)`;
+    placeAt(el, p.left, p.top);
+  }
+
+  function removeAlert(ball) {
+    alerts.get(ball)?.el.remove();
+    alerts.delete(ball);
   }
 
   return {
-    addBar(ball) {
+    /** HP bar over a ball; `variant` 'hero' draws it green like the mockup. */
+    addBar(ball, variant = 'enemy') {
       const el = document.createElement('div');
-      el.className = 'enemy-tag';
+      el.className = `tag ${variant}`;
       el.innerHTML = `<span class="hp"><span class="fill"></span></span>`;
       const hp = el.querySelector('.hp');
       hp.style.setProperty('--segments', ball.maxHp);
@@ -41,9 +56,35 @@ export function createOverlay(container, camera) {
     removeBar(ball) {
       bars.get(ball)?.el.remove();
       bars.delete(ball);
+      removeAlert(ball);
     },
-    clearBars() {
-      for (const ball of [...bars.keys()]) this.removeBar(ball);
+    /** Remove every enemy's bar and marker (the hero's bar stays). */
+    clearEnemies(hero) {
+      for (const ball of [...bars.keys()]) if (ball !== hero) this.removeBar(ball);
+      for (const ball of [...alerts.keys()]) removeAlert(ball);
+    },
+    /** Show or hide an enemy's "!"; `acting` makes it pulse while it takes its turn. */
+    setAlert(ball, on, acting = false) {
+      let a = alerts.get(ball);
+      if (!a) {
+        const el = document.createElement('div');
+        el.className = 'alert';
+        // The pulse animates the inner span: scaling the positioned element
+        // itself would also scale its screen position.
+        el.innerHTML = '<span>!</span>';
+        el.hidden = true;
+        layer.appendChild(el);
+        a = { el, on: false, acting: false };
+        alerts.set(ball, a);
+      }
+      if (a.on !== on) {
+        a.on = on;
+        a.el.hidden = !on;
+      }
+      if (a.acting !== acting) {
+        a.acting = acting;
+        a.el.classList.toggle('acting', acting);
+      }
     },
     /** Rising, fading label at a world point, e.g. "-1". */
     float(text, x, z, height, className = '') {
@@ -59,6 +100,11 @@ export function createOverlay(container, camera) {
         floats.delete(f);
       });
     },
+    /** Screen-space test used by the camera logic; margin is in NDC units. */
+    isOnScreen(x, z, margin = 0.05) {
+      v.set(x, 0, z).project(camera);
+      return Math.abs(v.x) <= 1 - margin && Math.abs(v.y) <= 1 - margin;
+    },
     update() {
       for (const f of floats) place(f.el, f.x, f.y, f.z);
       for (const [ball, bar] of bars) {
@@ -67,6 +113,18 @@ export function createOverlay(container, camera) {
           bar.shown = ball.hp;
           bar.fill.style.width = `${(100 * ball.hp) / ball.maxHp}%`;
         }
+      }
+      const w = layer.clientWidth;
+      const h = layer.clientHeight;
+      for (const [ball, a] of alerts) {
+        if (!a.on) continue;
+        const p = toScreen(ball.x, ball.radius * 2 + ALERT_HEIGHT, ball.z);
+        // Off screen: pin to the nearest edge so the watcher is never a surprise.
+        const left = Math.min(w - EDGE_MARGIN, Math.max(EDGE_MARGIN, p.left));
+        const top = Math.min(h - EDGE_MARGIN, Math.max(TOP_RESERVED + EDGE_MARGIN, p.top));
+        const pinned = left !== p.left || top !== p.top;
+        a.el.classList.toggle('edge', pinned);
+        placeAt(a.el, left, pinned ? top + 12 : top);
       }
     },
   };

@@ -42,9 +42,9 @@ The loop repeats until the hero touches the exit, which ends the level at once, 
 - **Order:** enemies act nearest-to-hero first, whether they end up attacking or patrolling. Sight is rechecked before each enemy's turn, since earlier moves this round can create or break sightlines.
 - **Once per round:** each enemy acts exactly once per round, either lunging at the hero or patrolling, then the turn passes to the next enemy.
 - **At rest:** the next launch, lunge or patrol move waits until every ball is below the stop threshold, so positions are always stable before the next move. Nothing moves outside a shot or a turn.
-- **Patrol:** an enemy that does not currently see the hero picks a random open floor tile within about 3 tiles and rolls toward it at a random, modest speed. It behaves like any pool ball on the way, so it can still bounce off walls, barrels and other enemies. If no open tile is available, it stays put for that turn.
+- **Patrol:** an enemy that does not currently see the hero picks a random open floor tile within about 3 tiles (one it can roll to in a straight line, with no ball on it) and rolls toward it at the modest speed (1 to 3 tiles/s) that friction brings to rest there. It behaves like any pool ball on the way, so it can still bounce off walls, barrels and other enemies. If no open tile is available, it stays put for that turn. A patrol move by an enemy that is off screen resolves instantly with the same physics, so distant enemies don't make you wait through their turns.
 - **Exit:** enemies never follow you out. Killing everything is not required.
-- **Enemy lunge:** an enemy that currently sees the hero launches in a straight line at it at a fixed speed instead of patrolling. Like any pool ball, it stays wherever it stops, which becomes its new position.
+- **Enemy lunge:** an enemy that currently sees the hero launches in a straight line at it at a fixed speed instead of patrolling. Its "!" pulses for about half a second first, with a growl, so the attack never comes out of nowhere. Like any pool ball, it stays wherever it stops, which becomes its new position. Its hit only counts at an impact of at least 1.5 tiles/s, and it can hurt the hero at most once per turn.
 
 ## Ball physics and input
 
@@ -210,7 +210,7 @@ The camera is a true orthographic projection at a fixed isometric angle matched 
 - **Dynamic zoom:** the frustum widens as the hero speeds up, so a hard shot pulls the camera out to reveal more of its path, then eases back to the base 9-tile width once every ball is at rest. Default range: 9 tiles at rest up to about 13 tiles at max launch speed (9 tiles/s).
 - **Walls:** short, so they never hide a ball behind them. The mockup's walls stand a little taller than the ball; the build uses 0.55 tile (`render.wallHeight`) so a ball resting just behind a wall stays visible.
 - **Lighting:** one ambient light plus one directional light, no dynamic shadows for the MVP.
-- **HUD:** a dark top bar as in your mock, with gold on the left, lives in the middle and key slots on the right. HP bars sit above the hero and each enemy, rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The aim preview is different: it's drawn in the 3D scene itself, on the ground plane, so it lands exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
+- **HUD:** a dark top bar as in your mock, with gold on the left, lives in the middle (one small hero ball per life) and key slots on the right. HP bars sit above the hero (green) and each enemy (pink), rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The aim preview is different: it's drawn in the 3D scene itself, on the ground plane, so it lands exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
 - **Art:** procedural 3D primitives matching your mockup: extruded boxes for walls, cylinders for barrels, boxes for chests, spheres for hero and enemies. Walls and floor are flat greys with no outlines, shaded per face (light tops, darker sides); balls and props are toon-shaded with outlines.
 
 ## Audio
@@ -241,6 +241,12 @@ Two habits keep tuning cheap. Put every number from this doc in one config file.
 | M5 | Barrels, chests, loot table, coin drops, floating labels, HUD, pickup and break SFX | Loot and score |
 | M6 | Keys, doors, exit, carry-over between levels, door and key SFX | Finish a run of levels |
 | M7 | Five levels, tuning pass, feedback effects, ambient music, phone test | The MVP |
+
+## To-do
+
+Changes agreed during development that aren't built yet.
+
+- **Frame the action:** collisions and combos can happen out of view, for example when you knock ball A toward ball B and then roll away from both. While balls are moving, the camera should frame every moving ball with generous padding, centred on the moving balls and zoomed out just enough to fit them all, easing (lerping) between framings so it never jerks. Not every enemy needs to be on screen, only the balls in motion. This would replace the "pan to an off-screen attacker" rule and extend the speed-based zoom.
 
 ## Out of scope for the MVP
 

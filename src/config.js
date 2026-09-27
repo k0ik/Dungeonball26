@@ -57,6 +57,7 @@ export const CONFIG = {
     patrolSpeedMin: 1,
     patrolSpeedMax: 3,
     patrolRadius: 3,
+    patrolShare: 0.5, // fraction of enemies (picked at random each round) that patrol; the rest sit it out
     sightRange: 6,
     hpPerLevel: 2, // HP = 2 × level
     hitMinSpeed: 1.5, // impacts below this don't count
@@ -80,11 +81,13 @@ export const CONFIG = {
     yawDeg: 30, // grid rotation on screen
     baseViewWidth: 9, // world units across the screen at rest
     maxViewWidth: 13, // speed zoom: world units across at max launch speed
+    aimViewWidth: 16, // while you drag to aim, the camera pulls out to at least this wide
     // Framing: the camera fits every ball in play (plus the acting enemy)
     // with this much padding, zooming out as far as maxFrameWidth.
     framePadding: 2.2, // screen units around the framed balls
     maxFrameWidth: 22,
     zoomOutRate: 3, // exponential smoothing rates, 1/s
+    aimZoomOutRate: 5, // faster pull-out when you start aiming
     zoomInRate: 1.5,
     followRate: 3, // pan smoothing, 1/s
     // An enemy waits for the camera to arrive before it moves (at most enemyTurnMaxWait).

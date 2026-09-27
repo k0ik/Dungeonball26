@@ -22,6 +22,20 @@ export function nextActor(enemies, hero, taken) {
   return best;
 }
 
+/**
+ * The enemies allowed to patrol this round: a random `share` of them (rounded
+ * up), so a round doesn't drag through every enemy's patrol. Enemies left out
+ * still lunge if they can see the hero on their turn.
+ */
+export function pickPatrollers(enemies, share = E.patrolShare, rng = Math.random) {
+  const pool = [...enemies];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return new Set(pool.slice(0, Math.ceil(pool.length * share)));
+}
+
 /** Velocity for a lunge: straight at the hero's current position. */
 export function lungeVelocity(enemy, hero) {
   const dx = hero.x - enemy.x;

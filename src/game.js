@@ -18,7 +18,7 @@ import { parseLevel, tileCenter, tileAt } from './level.js';
 import { createWorld, createBall, stepWorld, isAtRest, speedOf } from './physics.js';
 import { createCombat, createEnemy } from './combat.js';
 import { canSee } from './sight.js';
-import { nextActor, lungeVelocity, patrolMove } from './turns.js';
+import { nextActor, lungeVelocity, patrolMove, pickPatrollers } from './turns.js';
 import { shotFromDrag, canGrab, previewPath } from './aim.js';
 import { buildLevelView } from './render/levelView.js';
 import { createBallView } from './render/ballView.js';
@@ -71,10 +71,12 @@ export function createGame(container, levels, startIndex = 0) {
     lives: CONFIG.hero.lives,
     entryHp: hero.hp, // HP when this level was entered; game over restores it
     taken: new Set(), // enemies that have acted this round
+    patrollers: new Set(), // enemies allowed to patrol this round
     actor: null, // the enemy whose turn it is
     plan: null, // its move: { kind: 'lunge' } or { kind: 'patrol', vx, vz, target }
     timer: 0,
     waited: 0, // seconds the acting enemy has waited for the camera
+    preview: null, // the aim preview path while dragging
   };
 
   let levelIndex = -1;
@@ -140,10 +142,15 @@ export function createGame(container, levels, startIndex = 0) {
   const canvas = renderer.domElement;
   const tmp = new THREE.Vector3();
 
-  function pointerOn(plane, e, out) {
+  // The camera zooms out while you aim. Drags are measured against a frozen
+  // copy of the view from when you pressed, so the camera moving under your
+  // finger never changes the shot's power or direction.
+  let aimCamera = null;
+
+  function pointerOn(plane, e, out, camera = rig.camera) {
     const rect = canvas.getBoundingClientRect();
     ndc.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
-    raycaster.setFromCamera(ndc, rig.camera);
+    raycaster.setFromCamera(ndc, camera);
     return raycaster.ray.intersectPlane(plane, out);
   }
 
@@ -154,12 +161,14 @@ export function createGame(container, levels, startIndex = 0) {
     state.aiming = true;
     state.pointerId = e.pointerId;
     canvas.setPointerCapture(e.pointerId);
-    pointerOn(groundPlane, e, state.pointer);
+    aimCamera = rig.camera.clone();
+    aimCamera.updateMatrixWorld();
+    pointerOn(groundPlane, e, state.pointer, aimCamera);
   });
 
   canvas.addEventListener('pointermove', (e) => {
     if (!state.aiming || e.pointerId !== state.pointerId) return;
-    pointerOn(groundPlane, e, state.pointer);
+    pointerOn(groundPlane, e, state.pointer, aimCamera);
   });
 
   function endAim(e, fire) {
@@ -167,7 +176,7 @@ export function createGame(container, levels, startIndex = 0) {
     state.aiming = false;
     aimView.hide();
     if (!fire || state.phase !== 'aim') return;
-    pointerOn(groundPlane, e, state.pointer);
+    pointerOn(groundPlane, e, state.pointer, aimCamera);
     const shot = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z });
     if (shot.cancel || shot.speed <= CONFIG.physics.stopThreshold) return;
     hero.vx = shot.dirX * shot.speed;
@@ -183,6 +192,7 @@ export function createGame(container, levels, startIndex = 0) {
   // --- Turns -----------------------------------------------------------------
   function startEnemyPhase() {
     state.taken = new Set();
+    state.patrollers = pickPatrollers(enemies());
     nextTurn();
   }
 
@@ -208,6 +218,8 @@ export function createGame(container, levels, startIndex = 0) {
         return;
       }
 
+      // Only this round's chosen half patrol; the rest sit it out, unseen.
+      if (!state.patrollers.has(actor)) continue;
       const move = patrolMove(level, actor, world.balls);
       if (!move) continue; // boxed in: it stays put this turn
       state.plan = { kind: 'patrol', ...move };
@@ -398,7 +410,8 @@ export function createGame(container, levels, startIndex = 0) {
     if (state.aiming) {
       const shot = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z });
       const others = world.balls.filter((b) => b !== hero);
-      aimView.show(hero, shot, shot.cancel ? null : previewPath(level, hero, shot.dirX, shot.dirZ, shot.speed, others));
+      state.preview = shot.cancel ? null : previewPath(level, hero, shot.dirX, shot.dirZ, shot.speed, others);
+      aimView.show(hero, shot, state.preview);
     } else if (state.phase === 'aim') {
       aimView.showTurn(hero, dt);
     } else {
@@ -422,7 +435,15 @@ export function createGame(container, levels, startIndex = 0) {
       overlay.setAlert(enemy, lunging || canSee(level, enemy, hero, world.balls), lunging);
     }
 
-    rig.frame(framingPoints(), rig.speedWidth(speedOf(hero)), dt);
+    if (state.aiming) {
+      // Aiming: pull out to see much more of the board, and keep the whole
+      // preview path (to where the ball ends up) in view.
+      rig.frame([hero, ...(state.preview?.points ?? [])], CONFIG.camera.aimViewWidth, dt, {
+        zoomOutRate: CONFIG.camera.aimZoomOutRate,
+      });
+    } else {
+      rig.frame(framingPoints(), rig.speedWidth(speedOf(hero)), dt);
+    }
     renderer.render(scene, rig.camera);
     overlay.update();
 

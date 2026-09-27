@@ -23,21 +23,48 @@ function axes(yaw) {
   };
 }
 
+/** Ground point -> screen-space coordinates (y is screen-down). */
+function toScreen(p, { toward, right }, squash) {
+  return { sx: p.x * right.x + p.z * right.z, sy: (p.x * toward.x + p.z * toward.z) * squash };
+}
+
+/** Screen-space coordinates -> ground point. */
+function toGround(sx, sy, { toward, right }, squash) {
+  const gy = sy / squash;
+  return { x: right.x * sx + toward.x * gy, z: right.z * sx + toward.z * gy };
+}
+
+/**
+ * Shift a framing so the view stays inside the level's on-screen outline
+ * (`box`, in screen space) wherever the level is big enough to fill it, so
+ * the camera doesn't show empty space past the level's edge. Pure.
+ */
+export function clampFraming(f, box, { yaw, elevation, aspect }) {
+  const ax = axes(yaw);
+  const squash = Math.sin(elevation);
+  const { sx, sy } = toScreen(f, ax, squash);
+  const halfW = f.width / 2;
+  const halfH = f.width / aspect / 2;
+  const clamp = (v, lo, hi) => (lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, v)));
+  const cx = clamp(sx, box.minX + halfW, box.maxX - halfW);
+  const cy = clamp(sy, box.minY + halfH, box.maxY - halfH);
+  return { ...toGround(cx, cy, ax, squash), width: f.width };
+}
+
 /**
  * Where to look and how wide to be to fit `points` (ground {x, z}) on screen
  * with `padding` (screen units, i.e. tiles at the view plane) around them.
  * Pure, so it can be unit tested. Returns { x, z, width }.
  */
 export function computeFraming(points, { yaw, elevation, aspect, minWidth, maxWidth, padding }) {
-  const { toward, right } = axes(yaw);
+  const ax = axes(yaw);
   const squash = Math.sin(elevation); // ground depth is foreshortened on screen
   let minX = Infinity;
   let maxX = -Infinity;
   let minY = Infinity;
   let maxY = -Infinity;
   for (const p of points) {
-    const sx = p.x * right.x + p.z * right.z;
-    const sy = (p.x * toward.x + p.z * toward.z) * squash;
+    const { sx, sy } = toScreen(p, ax, squash);
     minX = Math.min(minX, sx);
     maxX = Math.max(maxX, sx);
     minY = Math.min(minY, sy);
@@ -50,8 +77,7 @@ export function computeFraming(points, { yaw, elevation, aspect, minWidth, maxWi
   // Width must fit the spread across, and (via the aspect) the spread down.
   const width = Math.min(maxWidth, Math.max(minWidth, 2 * halfW, 2 * halfH * aspect));
   // Back from screen space to the ground point at the centre.
-  const gy = cy / squash;
-  return { x: right.x * cx + toward.x * gy, z: right.z * cx + toward.z * gy, width };
+  return { ...toGround(cx, cy, ax, squash), width };
 }
 
 export function createCameraRig() {
@@ -67,7 +93,8 @@ export function createCameraRig() {
   // Aim at ball-centre height so a framed ball sits at screen centre.
   const target = new THREE.Vector3(0, CONFIG.ball.diameter / 2, 0);
   const goal = { x: 0, z: 0, width: K.baseViewWidth };
-  const bounds = { minX: -Infinity, maxX: Infinity, minZ: -Infinity, maxZ: Infinity };
+  // The level's outline in screen space (see clampFraming).
+  let box = { minX: -Infinity, maxX: Infinity, minY: -Infinity, maxY: Infinity };
   let aspect = 9 / 16;
   let viewWidth = K.baseViewWidth;
 
@@ -81,13 +108,11 @@ export function createCameraRig() {
     camera.updateProjectionMatrix();
   }
 
-  function clampToBounds(p) {
-    p.x = Math.min(Math.max(p.x, bounds.minX), bounds.maxX);
-    p.z = Math.min(Math.max(p.z, bounds.minZ), bounds.maxZ);
+  function clampGoal() {
+    Object.assign(goal, clampFraming(goal, box, { yaw, elevation, aspect }));
   }
 
   function place() {
-    clampToBounds(target);
     camera.position.copy(target).add(offset);
     camera.lookAt(target);
   }
@@ -115,15 +140,26 @@ export function createCameraRig() {
       aspect = a;
       applyFrustum();
     },
-    /** Keep the view centre over the level rectangle. */
+    /** The level's ground rectangle; the view keeps inside its on-screen outline. */
     setBounds(minX, maxX, minZ, maxZ) {
-      Object.assign(bounds, { minX, maxX, minZ, maxZ });
-      place();
+      const ax = axes(yaw);
+      const corners = [
+        [minX, minZ],
+        [maxX, minZ],
+        [minX, maxZ],
+        [maxX, maxZ],
+      ].map(([x, z]) => toScreen({ x, z }, ax, Math.sin(elevation)));
+      box = {
+        minX: Math.min(...corners.map((c) => c.sx)),
+        maxX: Math.max(...corners.map((c) => c.sx)),
+        minY: Math.min(...corners.map((c) => c.sy)),
+        maxY: Math.max(...corners.map((c) => c.sy)),
+      };
     },
     /** Jump straight to a ground point at the resting zoom. */
     snapTo(x, z) {
       Object.assign(goal, { x, z, width: K.baseViewWidth });
-      clampToBounds(goal);
+      clampGoal();
       target.x = goal.x;
       target.z = goal.z;
       viewWidth = goal.width;
@@ -134,16 +170,16 @@ export function createCameraRig() {
      * Ease toward framing `points`. `minWidth` is the narrowest allowed view
      * (the speed-based zoom); the framing only ever widens beyond it.
      */
-    frame(points, minWidth, dt) {
+    frame(points, minWidth, dt, { zoomOutRate = K.zoomOutRate } = {}) {
       Object.assign(
         goal,
         computeFraming(points, { yaw, elevation, aspect, minWidth, maxWidth: K.maxFrameWidth, padding: K.framePadding }),
       );
-      clampToBounds(goal);
+      clampGoal();
       const k = 1 - Math.exp(-K.followRate * dt);
       target.x += (goal.x - target.x) * k;
       target.z += (goal.z - target.z) * k;
-      const rate = goal.width > viewWidth ? K.zoomOutRate : K.zoomInRate;
+      const rate = goal.width > viewWidth ? zoomOutRate : K.zoomInRate;
       viewWidth += (goal.width - viewWidth) * (1 - Math.exp(-rate * dt));
       applyFrustum();
       place();

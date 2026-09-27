@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeFraming } from '../src/render/cameraRig.js';
+import { computeFraming, clampFraming } from '../src/render/cameraRig.js';
 
 const opts = {
   yaw: (30 * Math.PI) / 180,
@@ -37,4 +37,28 @@ test('the view never exceeds the maximum width', () => {
 test('a speed-based minimum still applies when balls are close', () => {
   const f = computeFraming([{ x: 3, z: 3 }], { ...opts, minWidth: 12 });
   assert.equal(f.width, 12);
+});
+
+test('the view is shifted to stay inside the level outline, never off a ball', () => {
+  const box = { minX: 0, maxX: 20, minY: 0, maxY: 40 };
+  // A ball near the bottom edge: the centre is pulled up so the view's bottom
+  // edge sits on the level's, but the ball stays in view.
+  const f = { x: 0, z: 0, width: 10 };
+  const ax = { right: { x: Math.cos(opts.yaw), z: -Math.sin(opts.yaw) }, toward: { x: Math.sin(opts.yaw), z: Math.cos(opts.yaw) } };
+  const squash = Math.sin(opts.elevation);
+  // Build a ground point whose screen position is (10, 39).
+  const gy = 39 / squash;
+  f.x = ax.right.x * 10 + ax.toward.x * gy;
+  f.z = ax.right.z * 10 + ax.toward.z * gy;
+  const c = clampFraming(f, box, opts);
+  const sy = (c.x * ax.toward.x + c.z * ax.toward.z) * squash;
+  const halfH = 10 / opts.aspect / 2;
+  assert.ok(Math.abs(sy - (40 - halfH)) < 1e-9, 'bottom edge of the view on the level edge');
+  assert.ok(39 <= sy + halfH, 'the ball is still on screen');
+});
+
+test('a level smaller than the view is simply centred', () => {
+  const c = clampFraming({ x: 1, z: 1, width: 50 }, { minX: 0, maxX: 4, minY: 0, maxY: 4 }, opts);
+  const ax = { right: { x: Math.cos(opts.yaw), z: -Math.sin(opts.yaw) } };
+  assert.ok(Math.abs(c.x * ax.right.x + c.z * ax.right.z - 2) < 1e-9);
 });

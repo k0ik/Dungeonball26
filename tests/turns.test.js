@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { parseLevel } from '../src/level.js';
 import { createBall, createWorld, stepWorld, isAtRest } from '../src/physics.js';
 import { canSee } from '../src/sight.js';
-import { nextActor, lungeVelocity, patrolMove, heroDamage } from '../src/turns.js';
+import { nextActor, lungeVelocity, patrolMove, heroDamage, pickPatrollers } from '../src/turns.js';
 import { createCombat, createEnemy } from '../src/combat.js';
 import { CONFIG } from '../src/config.js';
 
@@ -143,4 +143,17 @@ test('enemy phase: a soft touch below the hit threshold does no damage', () => {
   world.events.push({ type: 'ball', a: attacker, b: h, speed: 1 });
   combat.resolve(world, h);
   assert.equal(h.hp, 10);
+});
+
+test('half the enemies (rounded up) are picked to patrol each round, at random', () => {
+  const list = Array.from({ length: 7 }, (_, i) => enemy(i + 1.5, 1.5, 1, `e${i}`));
+  const picks = new Set();
+  for (let i = 0; i < 30; i++) {
+    const chosen = pickPatrollers(list, 0.5);
+    assert.equal(chosen.size, 4);
+    for (const e of chosen) assert.ok(list.includes(e));
+    picks.add([...chosen].map((e) => e.id).sort().join());
+  }
+  assert.ok(picks.size > 1, 'the choice varies between rounds');
+  assert.equal(pickPatrollers([], 0.5).size, 0);
 });

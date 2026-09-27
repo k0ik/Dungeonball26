@@ -50,7 +50,8 @@ export const CONFIG = {
     patrolSpeedMax: 3,
     patrolRadius: 3,
     sightRange: 6,
-    hitMinSpeed: 1.5, // M3: impacts below this don't count
+    hpPerLevel: 2, // HP = 2 × level
+    hitMinSpeed: 1.5, // impacts below this don't count
     hitCooldown: 0.15, // seconds, per enemy
   },
 
@@ -100,6 +101,10 @@ export const CONFIG = {
     wallBack: 0x6e7075, // faces pointing away from the camera
     outline: 0x1e1f21,
     exit: 0x5fd08a,
+    enemy: 0xc8005f, // mockup magenta
+    enemyFace: 0x111111,
+    hpFill: 0xe8336f,
+    hpTrack: 0x2a2b2e,
     hero: 0xd6d7da,
     heroStripe: 0x3a86ff,
     aim: 0xffffff,

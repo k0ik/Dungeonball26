@@ -55,3 +55,12 @@ test('preview shows one bounce, then stops at the next contact', () => {
   assert.equal(p.stopped, false);
   assert.equal(p.points.length, 3);
 });
+
+test('an enemy in the way bends the preview like a wall', () => {
+  const start = { x: 1.5, z: 1.5, radius: hero.radius };
+  const clear = previewPath(hall, start, 1, 0, 8);
+  const blocked = previewPath(hall, start, 1, 0, 8, [{ x: 5, z: 1.5, radius: hero.radius }]);
+  assert.equal(clear.bends, 0);
+  assert.equal(blocked.bends, 1);
+  assert.ok(blocked.points[1].x < 5 - hero.radius, 'bends at the enemy, not past it');
+});

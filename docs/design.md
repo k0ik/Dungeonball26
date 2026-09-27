@@ -98,7 +98,7 @@ D_{\text{enemy}} = \text{ATK} \qquad D_{\text{hero}} = \max(1,\; L - \text{DEF})
 | Hero max HP | 10 | Potions heal 3, capped at max |
 | Hero ATK | 1 | A sword raises it to 2 |
 | Hero DEF | 0 | A shield raises it to 1 |
-| Enemy level L | 1 to 3 in the MVP | Shown on the enemy |
+| Enemy level L | 1 to 3 in the MVP | Shown as a small number beside the enemy's HP bar, which has one notch per HP |
 | Kill reward | 10 × L gold | Drops as coins where it died |
 
 Combo example: with ATK 1, you hit enemy A and it slides into enemy B. A takes 2 damage in total and B takes 1. A level-1 enemy has 2 HP, so A dies and B is left at 1 HP if it is also level 1.
@@ -189,11 +189,11 @@ Barrel loot is random by default. Per-barrel overrides can be added later withou
 
 The five MVP levels ramp one idea at a time. Sizes are suggestions in tiles.
 
-Until the other levels exist (M6–M7), Long Hall is the only level and reaching its exit sends the hero straight back to its start.
+Until the other levels exist (M6–M7), Long Hall is the only level and reaching its exit starts it over: the hero goes back to its start and the enemies reset.
 
 | # | Name | Size | Enemies | Keys and doors | Teaches |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Long Hall | 12×32 | One level-1 | None | Aiming, bouncing, hitting an enemy, the exit |
+| 1 | Long Hall | 12×32 | Eight, levels 1 to 3 (a touching pair blocks the first doorway) | None | Aiming, bouncing, hitting enemies, combos, the exit |
 | 2 | Breakables | 9×20 | Two level-1 | None | Barrels, chest, potions, sightlines |
 | 3 | One Key | 12×20 | Level 1 and level 2 | Red | Keys, doors, hiding from sight |
 | 4 | Two Keys | 14×24 | Four, levels 1 to 3 | Red, blue | Routing, combos, using enemies as blockers |
@@ -210,7 +210,7 @@ The camera is a true orthographic projection at a fixed isometric angle matched 
 - **Dynamic zoom:** the frustum widens as the hero speeds up, so a hard shot pulls the camera out to reveal more of its path, then eases back to the base 9-tile width once every ball is at rest. Default range: 9 tiles at rest up to about 13 tiles at max launch speed (9 tiles/s).
 - **Walls:** short, so they never hide a ball behind them. The mockup's walls stand a little taller than the ball; the build uses 0.55 tile (`render.wallHeight`) so a ball resting just behind a wall stays visible.
 - **Lighting:** one ambient light plus one directional light, no dynamic shadows for the MVP.
-- **HUD:** a dark top bar as in your mock, with gold on the left, lives in the middle and key slots on the right. HP bars sit above the hero and each enemy, rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The aim preview is different: it's drawn in the 3D scene itself, on the ground plane, so they land exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
+- **HUD:** a dark top bar as in your mock, with gold on the left, lives in the middle and key slots on the right. HP bars sit above the hero and each enemy, rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The aim preview is different: it's drawn in the 3D scene itself, on the ground plane, so it lands exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
 - **Art:** procedural 3D primitives matching your mockup: extruded boxes for walls, cylinders for barrels, boxes for chests, spheres for hero and enemies. Walls and floor are flat greys with no outlines, shaded per face (light tops, darker sides); balls and props are toon-shaded with outlines.
 
 ## Audio
@@ -223,7 +223,7 @@ Sound is MVP scope, not a later pass — a game about impacts needs impacts to s
 
 **Implementation:** Three.js's built-in `THREE.AudioListener` and `THREE.Audio` cover both layers without adding a library. Non-positional playback is enough given the MVP's small view; simple stereo panning by world x-position is a nice-to-have, not required. For the MVP, source SFX and the ambient loop from a free, CC0 pack (for example, Kenney's audio assets) rather than composing original audio. Swapping in custom or licensed audio later doesn't change any of the event hookups.
 
-Feedback to add once the loop is fun: a short hit-stop on damaging hits, floating damage numbers, a small screen shake, crack decals on barrels, ball squash on impact, and simple synthesized sounds.
+Feedback to add once the loop is fun: a short hit-stop on damaging hits, a small screen shake, crack decals on barrels, and ball squash on impact. (Floating damage numbers and simple synthesized sounds are already in: pink "-1" for your hits, gold for combos.)
 
 ## Tech and build order
 

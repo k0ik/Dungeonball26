@@ -1,12 +1,16 @@
-// M0–M2: render a level, shoot the hero around it, camera follows.
+// M0–M3: render a level, shoot the hero around it, camera follows, and
+// knock enemies around for damage and combos.
 
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
 import { parseLevel, tileCenter, tileAt } from './level.js';
 import { createWorld, createBall, stepWorld, isAtRest, speedOf } from './physics.js';
+import { createCombat, createEnemy } from './combat.js';
 import { shotFromDrag, canGrab, previewPath } from './aim.js';
 import { buildLevelView } from './render/levelView.js';
 import { createBallView } from './render/ballView.js';
+import { createEnemyView } from './render/enemyView.js';
+import { createOverlay } from './render/overlay.js';
 import { createAimView } from './render/aimView.js';
 import { createCameraRig } from './render/cameraRig.js';
 import { createAudio } from './audio.js';
@@ -30,6 +34,7 @@ export function createGame(container, levels, startIndex = 0) {
 
   // The hero persists across levels; the level, its world and its view don't.
   const hero = createBall({ x: 0, z: 0, kind: 'hero', id: 'hero' });
+  hero.atk = CONFIG.hero.atk;
   const heroView = createBallView(hero, { color: CONFIG.colors.hero, stripe: CONFIG.colors.heroStripe });
   scene.add(heroView.object);
 
@@ -41,6 +46,9 @@ export function createGame(container, levels, startIndex = 0) {
   let world = null;
   let start = null;
   let levelView = null;
+  const enemyViews = new Map(); // enemy ball -> view
+  const combat = createCombat();
+  const overlay = createOverlay(container, rig.camera);
 
   function loadLevel(i) {
     levelIndex = (i + levels.length) % levels.length;
@@ -51,6 +59,22 @@ export function createGame(container, levels, startIndex = 0) {
     scene.add(levelView);
     world = createWorld(level);
     world.balls.push(hero);
+
+    for (const view of enemyViews.values()) {
+      scene.remove(view.object);
+      view.dispose();
+    }
+    enemyViews.clear();
+    overlay.clearBars();
+    level.enemies.forEach((e, i) => {
+      const enemy = createEnemy({ ...tileCenter(e), level: e.level, id: `enemy${i}` });
+      world.balls.push(enemy);
+      const view = createEnemyView(enemy, rig.toCamera);
+      scene.add(view.object);
+      enemyViews.set(enemy, view);
+      overlay.addBar(enemy);
+    });
+
     start = tileCenter(level.start);
     rig.setBounds(0, level.width, 0, level.height);
     respawn();
@@ -106,17 +130,18 @@ export function createGame(container, levels, startIndex = 0) {
     hero.vz = shot.dirZ * shot.speed;
     state.phase = 'rolling';
     state.shots++;
+    combat.beginShot();
     sfx.play('launch', 0.4 + 0.6 * shot.fill, { pitch: 0.9 + 0.2 * shot.fill });
   }
   canvas.addEventListener('pointerup', (e) => endAim(e, true));
   canvas.addEventListener('pointercancel', (e) => endAim(e, false));
 
   // Reaching the exit ends the run at once, even mid-roll. For now there is
-  // one level, so the hero goes straight back to its start.
+  // one level, so it starts over: hero back at the start, enemies reset.
   function reachExit() {
     state.clears++;
     sfx.play('exit', 0.8);
-    respawn();
+    loadLevel(levelIndex);
   }
 
   function respawn() {
@@ -155,17 +180,35 @@ export function createGame(container, levels, startIndex = 0) {
   resize();
 
   // --- Loop --------------------------------------------------------------------
-  function handleEvents() {
+  function handleEvents(outcomes) {
     const A = CONFIG.audio;
+    const damaging = new Set(outcomes.map((o) => o.event).filter(Boolean));
     for (const ev of world.events) {
       const loud = Math.min(1, ev.speed / CONFIG.aim.maxLaunchSpeed);
       if (ev.type === 'wall' && ev.speed >= A.minWallSoundSpeed) {
         sfx.play('wall', 0.25 + 0.75 * loud, { pitch: 0.9 + Math.random() * 0.2, minInterval: A.minWallSoundInterval });
-      } else if (ev.type === 'ball') {
+      } else if (ev.type === 'ball' && !damaging.has(ev)) {
         sfx.play('ball', 0.3 + 0.7 * loud);
       }
     }
     world.events.length = 0;
+
+    const floatAt = (ball, text, cls) => overlay.float(text, ball.x, ball.z, ball.radius * 2 + 0.2, cls);
+    let comboSounded = false;
+    for (const o of outcomes) {
+      if (o.type === 'hit') {
+        sfx.play('hit', 0.9, { pitch: 0.95 + Math.random() * 0.1 });
+        floatAt(o.target, `-${o.amount}`);
+      } else if (o.type === 'combo') {
+        if (!comboSounded) sfx.play('combo', 0.9);
+        comboSounded = true;
+        floatAt(o.target, `-${o.amount}`, 'combo');
+      } else if (o.type === 'kill') {
+        sfx.play('kill', 0.9);
+        enemyViews.get(o.target)?.die();
+        overlay.removeBar(o.target);
+      }
+    }
   }
 
   let acc = 0;
@@ -182,7 +225,7 @@ export function createGame(container, levels, startIndex = 0) {
     let steps = 0;
     while (acc >= step && steps < CONFIG.physics.maxStepsPerFrame) {
       stepWorld(world, step);
-      handleEvents();
+      handleEvents(combat.resolve(world, hero));
       if (tileAt(level, Math.floor(hero.x), Math.floor(hero.z)) === 'exit') {
         reachExit();
         break;
@@ -196,13 +239,23 @@ export function createGame(container, levels, startIndex = 0) {
 
     if (state.aiming) {
       const shot = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z });
-      aimView.show(hero, shot, shot.cancel ? null : previewPath(level, hero, shot.dirX, shot.dirZ, shot.speed));
+      const others = world.balls.filter((b) => b !== hero);
+      aimView.show(hero, shot, shot.cancel ? null : previewPath(level, hero, shot.dirX, shot.dirZ, shot.speed, others));
     }
 
     heroView.update();
+    for (const [enemy, view] of enemyViews) {
+      view.update(dt);
+      if (view.gone) {
+        scene.remove(view.object);
+        view.dispose();
+        enemyViews.delete(enemy);
+      }
+    }
     rig.updateZoom(speedOf(hero), dt);
     rig.follow(hero.x, hero.z, dt);
     renderer.render(scene, rig.camera);
+    overlay.update();
 
     if (!debug.hidden) {
       debug.textContent = [
@@ -212,6 +265,7 @@ export function createGame(container, levels, startIndex = 0) {
         `speed  ${speedOf(hero).toFixed(2)} tiles/s`,
         `view   ${rig.viewWidth.toFixed(2)} units`,
         `shots  ${state.shots}   exits  ${state.clears}`,
+        `enemies ${world.balls.filter((b) => b.kind === 'enemy').length} left`,
         `[d] debug  [r] respawn  [n] next level`,
       ].join('\n');
     }

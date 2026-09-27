@@ -11,7 +11,7 @@ export function createBall({ x, z, radius = CONFIG.ball.diameter / 2, kind = 'ba
 }
 
 export function createWorld(level) {
-  return { level, balls: [], events: [] };
+  return { level, balls: [], events: [], time: 0 };
 }
 
 export function speedOf(ball) {
@@ -25,6 +25,7 @@ export function isAtRest(world) {
 /** Advance the world one fixed step. Collision events are appended to world.events. */
 export function stepWorld(world, dt = P.step) {
   const { balls } = world;
+  world.time += dt;
 
   for (const b of balls) {
     const speed = speedOf(b);

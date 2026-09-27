@@ -53,6 +53,8 @@ export function createCameraRig() {
     camera,
     /** Yaw in radians, for ground-plane visuals that must stay screen-aligned. */
     yaw,
+    /** Unit vector from the scene toward the camera. */
+    toCamera: offset.clone().normalize(),
     get viewWidth() {
       return viewWidth;
     },

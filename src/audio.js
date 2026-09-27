@@ -45,6 +45,28 @@ const SYNTHS = {
       const ring = Math.sin(2 * Math.PI * 610 * t) * Math.exp(-t * 70) * 0.3;
       return (click * 0.5 + body + ring) * 0.8;
     }),
+  // Hero hits an enemy: a punchy, rubbery thock with a pitch drop.
+  hit: (ctx) =>
+    synth(ctx, 0.18, (t) => {
+      const punch = Math.sin(2 * Math.PI * (320 - 900 * t) * t) * Math.exp(-t * 28);
+      const smack = (Math.random() * 2 - 1) * Math.exp(-t * 300) * 0.5;
+      const knock = Math.sin(2 * Math.PI * 1200 * t) * Math.exp(-t * 90) * 0.3;
+      return (punch + smack + knock) * 0.6;
+    }),
+  // Enemy-on-enemy combo: two quick bright clacks.
+  combo: (ctx) =>
+    synth(ctx, 0.2, (t) => {
+      const clack = (u) =>
+        u < 0 ? 0 : (Math.sin(2 * Math.PI * 1500 * u) * 0.6 + Math.sin(2 * Math.PI * 2300 * u) * 0.4) * Math.exp(-u * 70);
+      return (clack(t) + clack(t - 0.07) * 0.8) * 0.5;
+    }),
+  // Enemy defeated: a falling "bloop" with a puff of noise.
+  kill: (ctx) =>
+    synth(ctx, 0.35, (t) => {
+      const bloop = Math.sin(2 * Math.PI * (700 - 1400 * t) * t) * Math.exp(-t * 9);
+      const puff = (Math.random() * 2 - 1) * Math.exp(-t * 25) * 0.25;
+      return (bloop + puff) * 0.55;
+    }),
   // Two billiard balls: bright and short.
   ball: (ctx) =>
     synth(ctx, 0.08, (t) => {

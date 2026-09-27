@@ -245,7 +245,12 @@ Two habits keep tuning cheap. Put every number from this doc in one config file.
 
 ## To-do
 
-Changes agreed during development that aren't built yet. (None right now: framing the action and visiting each enemy's turn are built; see the camera section.)
+Changes agreed during development that aren't built yet.
+
+- **Hit flash:** when an enemy hits you, your ball flashes red for a moment (about a quarter of a second), on top of the HP loss and "-1".
+- **"Combo!" labels:** within a single shot, the first enemy you damage shows the usual "-1"; every further enemy damaged in the same shot (the second, third, fourth and so on) also shows "Combo!" above it.
+- **"Combo Kill!":** if more than one enemy dies in a single shot, "Combo Kill!" appears in the centre of the screen.
+- **Bonus turn:** a combo kill earns an immediate extra turn. The enemy phase is skipped and you shoot again straight away, with a short banner saying so.
 
 ## Out of scope for the MVP
 

@@ -1,7 +1,8 @@
 // Aim preview drawn on the ground plane in the 3D scene: a dashed path that
 // ends where the shot would stop. The dash pattern encodes power, so there is
 // no power ring. While aiming, a faint circle and an "x" under the ball mark
-// the cancel zone. Small rings mark where the path bends.
+// the cancel zone. Small hoops mark each bounce and where the path ends,
+// whether the ball comes to rest there or hits something.
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
@@ -9,7 +10,7 @@ import { CONFIG } from '../config.js';
 const A = CONFIG.aim;
 const Y = 0.02; // just above the floor
 const MAX_DASHES = 400;
-const MAX_BENDS = 4;
+const MAX_HOOPS = 6;
 
 export function createAimView(yaw = 0) {
   const group = new THREE.Group();
@@ -60,12 +61,12 @@ export function createAimView(yaw = 0) {
   }
   group.add(cancelMark);
 
-  const bendRings = [];
-  for (let i = 0; i < MAX_BENDS; i++) {
+  const hoops = [];
+  for (let i = 0; i < MAX_HOOPS; i++) {
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.14, 0.2, 24), material);
     ring.rotation.x = -Math.PI / 2;
     ring.visible = false;
-    bendRings.push(ring);
+    hoops.push(ring);
     pathGroup.add(ring);
   }
 
@@ -127,8 +128,9 @@ export function createAimView(yaw = 0) {
       dashes.count = n;
       dashes.instanceMatrix.needsUpdate = true;
 
-      bendRings.forEach((ring, i) => {
-        const p = i < path.bends ? path.points[i + 1] : null;
+      // Every point after the start: each bounce, then the end of the path.
+      hoops.forEach((ring, i) => {
+        const p = path.points[i + 1] ?? null;
         ring.visible = !!p;
         if (p) ring.position.set(p.x, Y + 0.001, p.z);
       });

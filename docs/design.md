@@ -81,9 +81,10 @@ Who takes damage depends on whose phase it is, never on ball speed. Speed only d
 | --- | --- | --- |
 | Hero hits enemy | Enemy loses ATK HP on each fresh contact | No damage |
 | Knocked enemy hits enemy | Both lose 1 HP, once per pair per shot | No damage |
-| Enemy hits hero | No damage to hero | Hero loses HP, from the attacker only |
+| Enemy hits hero | No damage to hero | Hero loses HP, only from the enemy whose turn it is (lunging or patrolling) |
 | Anything hits a wall | No damage | No damage |
 | Hero hits barrel or chest | Counts | Counts (recoil hits too) |
+| Hero or enemy hits red barrel | That ball takes 1 flat damage | That ball takes 1 flat damage |
 
 Damage and health formulas, with L as the enemy's level:
 
@@ -165,7 +166,7 @@ Each level is a plain text file with one character per tile. The screen shows 9�
 | `1` to `5` | Enemy of that level |
 | `r` `b` `y` | Key: red, blue, yellow |
 | `R` `B` `Y` | Door matching that key |
-| E | Explosive barrel (red) |
+| `E` | Explosive barrel (red) |
 
 An illustrative level in this format, with one enemy, two barrels, a chest, a red key and a red door in front of the exit:
 
@@ -197,13 +198,13 @@ The five MVP levels ramp one idea at a time. Sizes are suggestions in tiles.
 
 ## Camera, HUD and presentation
 
-The camera is a true orthographic projection at a fixed isometric angle, close to your mockup's roughly 30–35° tilt, so parallel lines never converge and scale stays constant with distance. It only pans, never rotates or zooms in the MVP, and pans the same way as before: only when the hero nears the edge of its view, using a deadzone follow.
+The camera is a true orthographic projection at a fixed isometric angle, close to your mockup's roughly 30–35° tilt, so parallel lines never converge and scale stays constant with distance. It never rotates and has no manual zoom; its only zoom is the automatic speed-based zoom below. It pans the same way as before: only when the hero nears the edge of its view, using a deadzone follow.
 
-- **Camera type:** `THREE.OrthographicCamera`, fixed isometric angle, no rotation or zoom in the MVP.
+- **Camera type:** `THREE.OrthographicCamera`, fixed isometric angle, no rotation or manual zoom in the MVP. The build currently tilts the camera 40° away from straight down (`camera.tiltDeg` in the config), which keeps the portrait board large while still showing wall faces; tune by feel.
 - **Deadzone:** about 60% of the view width and 50% of its height, with a gentle lerp. The camera is clamped to the level bounds.
 - **Enemy phase:** if an attacker is off screen, the camera pans to it briefly, then returns to the hero.
 - **View size:** the orthographic frustum has a base width of about 9 tiles, adjusted for aspect ratio, and scales to fit the browser window.
-- **Dynamic zoom:** the frustum widens as the fastest moving ball on screen speeds up, so a hard shot pulls the camera out to reveal more of its path, then eases back to the base 9-tile width once every ball is at rest. Default range: 9 tiles at rest up to about 13 tiles at max launch speed (9 tiles/s).
+- **Dynamic zoom:** the frustum widens as the hero speeds up, so a hard shot pulls the camera out to reveal more of its path, then eases back to the base 9-tile width once every ball is at rest. Default range: 9 tiles at rest up to about 13 tiles at max launch speed (9 tiles/s).
 - **Walls:** short, as in your mockup, so they never block the isometric view.
 - **Lighting:** one ambient light plus one directional light, no dynamic shadows for the MVP.
 - **HUD:** a dark top bar as in your mock, with gold on the left, lives in the middle and key slots on the right. HP bars sit above the hero and each enemy, rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The power ring and the aim preview are different: they're drawn in the 3D scene itself, on the ground plane, so they land exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
@@ -258,14 +259,15 @@ The rules above use these defaults where your answers left a gap. Change any tha
 
 - Knocked enemies that collide on your shot cost each other a flat 1 HP, not your ATK.
 - Your hits on an enemy have no per-shot limit, so pinning one against a wall lands several hits. A pair of enemies trades damage at most once per shot, which stops grinding in tight rooms.
-- Each enemy attacks at most once per round, and only the attacker can damage the hero.
+- Each enemy attacks at most once per round, and only the attacker (the enemy whose turn it is) can damage the hero. Red barrels are the exception: they damage whichever ball touches them, hero included, in any phase.
+- If the hero dies mid-round, the round ends there: the remaining enemies skip their turn and the hero respawns with the first move.
 - Sight range is 6 tiles, not the screen width, because a portrait screen is only 9 tiles wide. Other enemies also block sight, so they can shield you.
 - Gear is one sword (ATK 2) and one shield (DEF 1), so the maximum is the one in hand and a duplicate pickup changes nothing.
 - Barrel loot and chest gold are granted at once with a floating label. Keys and enemy coins lie on the floor.
 - Respawn restores full HP, and keys you hold are kept.
 - Aiming is a slingshot pull-back rather than dragging toward the target.
 - An explosive barrel deals a flat 1 damage regardless of stats, ignores the normal 1.5 tiles/s hit threshold, and drops no loot.
-- Zoom tracks the fastest moving ball on screen, whether that's the hero's shot or a lunging enemy, and only that one ball drives it even if several are still rolling.
+- Zoom tracks the hero's speed only. Enemy lunges and patrols don't drive it.
 - Patrol speed is 1–3 tiles/s, well under the 6 tiles/s lunge speed, so a patrolling enemy always reads as calmer than an attacking one.
 - A patrol move follows normal physics, so if it happens to collide with the hero it still deals damage, the same as a lunge would. Contact is what matters, not intent.
 - The "nearest first" turn order from the original attack-only design now covers every enemy, sighted or not, so a patrolling enemy can still block or reveal sightlines for the ones after it.

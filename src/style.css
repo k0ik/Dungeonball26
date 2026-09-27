@@ -1,0 +1,34 @@
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #0c0a10;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+#game {
+  position: relative;
+  margin: 0 auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+#game canvas {
+  display: block;
+}
+
+.debug {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  margin: 0;
+  padding: 6px 8px;
+  font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace;
+  color: #d8f3dc;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 4px;
+  pointer-events: none;
+}

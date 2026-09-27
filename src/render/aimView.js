@@ -51,13 +51,26 @@ export function createAimView(yaw = 0) {
       cancelMat,
     ),
   );
+  // Centre the "x" on screen between the ball's lower edge and the near side
+  // of the circle. The ball's silhouette bottom sits r(1 - cos e) below its
+  // ground point on screen, which is that / sin e along the ground toward the camera.
+  const elev = THREE.MathUtils.degToRad(CONFIG.camera.elevationDeg);
+  const r = CONFIG.ball.diameter / 2;
+  const ballEdge = (r * (1 - Math.cos(elev))) / Math.sin(elev);
+  const xOffset = (ballEdge + A.cancelRadius) / 2; // local +z points toward the camera
+  // Stretch along the view direction to undo the tilt's foreshortening, so
+  // the "x" reads upright on screen instead of squashed.
+  const xMark = new THREE.Group();
+  xMark.position.z = xOffset;
+  xMark.scale.z = 1 / Math.sin(elev);
+  cancelMark.add(xMark);
   for (const angle of [Math.PI / 4, -Math.PI / 4]) {
     const arm = new THREE.Mesh(
       new THREE.PlaneGeometry(A.cancelXHalfLength * 2, A.cancelXWidth).rotateX(-Math.PI / 2),
       cancelMat,
     );
     arm.rotation.y = angle;
-    cancelMark.add(arm);
+    xMark.add(arm);
   }
   group.add(cancelMark);
 

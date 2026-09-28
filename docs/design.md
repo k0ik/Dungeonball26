@@ -293,6 +293,7 @@ These are good ideas that wait until the five-level loop is fun.
 - Spin, curved shots or steering mid-roll
 - Saved progress, a level editor and a level-select screen
 - Real art: modeled assets and textures, as opposed to the procedural primitives
+- **Skins for the player:** alternative looks for the hero ball, with the polished silver ball as the default. A skin changes only the look (the ball's material and colour, its band and outline), never size, physics or stats, and it keeps the same face and expressions (confident, determined, ouch) so the ball always reads as you. Open questions: how skins are unlocked (bought with gold, earned for milestones such as clearing all five levels, or all available from the start), and where you choose one (a title screen, or between levels next to the card pick).
 - Native packaging for phones, for example with Capacitor
 
 ## Assumptions and open questions

@@ -6,9 +6,9 @@
 // - Hero hits enemy: the enemy loses ATK HP on each fresh contact.
 // - A knocked enemy hits another enemy: both lose 1 HP, once per pair per shot.
 // Enemy phase:
-// - Only the enemy whose turn it is can hurt the hero: 1 HP per hit, whatever
-//   its level, at most once per turn. A held shield cancels that hit instead
-//   and is used up. No other contact deals damage.
+// - Only the enemies moving this round (they all move at once) can hurt the
+//   hero: 1 HP per hit, whatever its level, at most once each per round. A
+//   held shield cancels one hit instead and is used up. No other contact deals damage.
 // Red barrels (any phase): the ball that set one off takes 1 flat damage,
 // ignoring ATK. A held shield absorbs it instead and is used up.
 // Walls never deal damage.
@@ -40,8 +40,8 @@ export function createCombat() {
   // Per shot, for combo feedback: enemies damaged so far (in order) and kills.
   let damagedThisShot = new Set();
   let killsThisShot = 0;
-  let actor = null; // the enemy whose turn it is; null during your shot
-  let actorHasHit = false;
+  let actors = null; // the enemies moving this enemy phase; null during your shot
+  const haveHit = new Set(); // actors that already hurt the hero this phase
 
   function canTakeHit(enemy, time) {
     return enemy.hp > 0 && time - enemy.lastHit >= E.hitCooldown;
@@ -73,7 +73,7 @@ export function createCombat() {
       pairsThisShot = new Set();
       damagedThisShot = new Set();
       killsThisShot = 0;
-      actor = null;
+      actors = null;
     },
     /**
      * A red barrel went off on `victim`: 1 flat damage, ignoring ATK. If the
@@ -97,10 +97,14 @@ export function createCombat() {
       }
       return out;
     },
-    /** Call as each enemy starts its turn (lunge or patrol). */
-    beginEnemyTurn(enemy) {
-      actor = enemy;
-      actorHasHit = false;
+    /**
+     * Call as the enemy phase starts, with the enemies that move this round
+     * (one, or a list: they all move at once). Each can hurt the hero at most
+     * once.
+     */
+    beginEnemyTurn(enemies) {
+      actors = new Set([].concat(enemies));
+      haveHit.clear();
     },
     /**
      * Apply one physics step's events. `hero` carries `atk` and `hp`.
@@ -111,12 +115,12 @@ export function createCombat() {
     resolve(world, hero) {
       const out = [];
       const time = world.time;
-      if (actor) {
+      if (actors) {
         for (const ev of world.events) {
-          if (actorHasHit || ev.type !== 'ball' || ev.speed < E.hitMinSpeed) continue;
-          const pair = (ev.a === hero && ev.b === actor) || (ev.b === hero && ev.a === actor);
-          if (!pair || hero.hp <= 0) continue;
-          actorHasHit = true;
+          if (ev.type !== 'ball' || ev.speed < E.hitMinSpeed) continue;
+          const actor = ev.a === hero ? ev.b : ev.b === hero ? ev.a : null;
+          if (!actors.has(actor) || haveHit.has(actor) || hero.hp <= 0) continue;
+          haveHit.add(actor);
           if (hero.shield) {
             hero.shield = false;
             out.push({ type: 'blocked', target: hero, source: actor, event: ev });

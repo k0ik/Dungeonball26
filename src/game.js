@@ -1,15 +1,15 @@
 // The game loop and turn manager (design doc: "Core loop and turn structure").
 //
-// A round: you aim and shoot; once everything is at rest, each living enemy
-// takes one turn, nearest to you first. An enemy that can see you lunges;
-// otherwise it patrols. Everything settles between moves. If your HP hits 0
-// you lose a life and respawn at the start, and the round ends there.
+// A round: you aim and shoot; once everything is at rest, the enemies move,
+// all at once: any that can see you lunge, a random half of the rest patrol.
+// Then everything settles and it's your shot again. If your HP hits 0 you
+// lose a life and respawn at the start, and the round ends there.
 //
 // Phases:
 //   aim        at rest, input open
 //   shot       your ball (and whatever it knocked) is rolling
-//   enemyWait  the acting enemy's short telegraph before it moves
-//   enemyMove  the acting enemy's move is rolling
+//   enemyWait  the enemies' short telegraph before they all move at once
+//   enemyMove  the enemies' moves are rolling
 //   down       you were knocked out; waiting to respawn
 //   won        you cleared the last level; the run-complete screen is up
 //
@@ -22,7 +22,7 @@ import { parseLevel, tileCenter, tileAt } from './level.js';
 import { createWorld, createBall, stepWorld, isAtRest, speedOf } from './physics.js';
 import { createCombat, createEnemy } from './combat.js';
 import { canSee } from './sight.js';
-import { nextActor, lungeVelocity, patrolMove, pickPatrollers } from './turns.js';
+import { lungeVelocity, patrolMove, pickPatrollers } from './turns.js';
 import { shotFromDrag, canGrab, previewPath } from './aim.js';
 import { buildLevelView } from './render/levelView.js';
 import { createBallView } from './render/ballView.js';
@@ -68,9 +68,8 @@ export function createGame(container, levels, startIndex = 0) {
 
   const aimView = createAimView(rig.yaw);
   scene.add(aimView.object);
-  // Red dashed ring under the enemy whose turn it is, so you know where to look.
-  const actorRing = createTurnRing(CONFIG.colors.enemyTurnRing);
-  scene.add(actorRing.object);
+  // Red dashed rings under the enemies about to move, so you know where to look.
+  const actorRings = new Map(); // enemy -> ring
 
   const combat = createCombat();
   const objectsView = createObjectsView(scene);
@@ -90,11 +89,7 @@ export function createGame(container, levels, startIndex = 0) {
     gold: 0, // the score
     keys: [], // colours of the keys you hold; this level only
     entry: null, // HP, gear and gold when this level was entered; game over restores them
-    taken: new Set(), // enemies that have acted this round
-    acting: new Set(), // enemies that take part this round: on screen when your shot stopped
-    patrollers: new Set(), // enemies allowed to patrol this round
-    actor: null, // the enemy whose turn it is
-    plan: null, // its move: { kind: 'lunge' } or { kind: 'patrol', vx, vz, target }
+    moves: [], // this enemy phase: { enemy, kind: 'lunge' } or { enemy, kind: 'patrol', vx, vz, target }
     timer: 0,
     waited: 0, // seconds the acting enemy has waited for the camera
     comboKillAt: -Infinity, // when the last "Combo Kill!" banner showed
@@ -156,7 +151,7 @@ export function createGame(container, levels, startIndex = 0) {
     heroView.snap();
     state.phase = 'aim';
     state.aiming = false;
-    state.actor = null;
+    state.moves = [];
     aimView.hide();
   }
 
@@ -218,65 +213,50 @@ export function createGame(container, levels, startIndex = 0) {
   canvas.addEventListener('pointercancel', (e) => endAim(e, false));
 
   // --- Turns -----------------------------------------------------------------
-  // Only enemies on screen the moment your ball stops take part this round
-  // (lunging or patrolling); the camera revealing others later doesn't add
-  // them. Keeps rounds short in big levels. Off by config: every enemy acts.
-  const ndcPoint = new THREE.Vector3();
-  function onScreen(ball) {
-    ndcPoint.set(ball.x, ball.radius, ball.z).project(rig.camera);
-    return Math.abs(ndcPoint.x) <= 1 && Math.abs(ndcPoint.y) <= 1;
-  }
-
+  // The enemy phase is simultaneous. Once your shot is at rest, every enemy
+  // decides at once from the board as your shot left it: any that can see you
+  // will lunge, a random half of the rest patrol, and the others stay put.
+  // After a short telegraph (red rings, "!"), they all launch together, and
+  // it's your turn again once everything is at rest.
   function startEnemyPhase() {
-    state.taken = new Set();
-    state.acting = new Set(enemies().filter((e) => !CONFIG.enemy.onlyOnScreenAct || onScreen(e)));
-    state.patrollers = pickPatrollers(state.acting);
-    nextTurn();
-  }
-
-  /** Hand the turn to the nearest enemy that hasn't acted; back to you when none are left. */
-  function nextTurn() {
-    for (;;) {
-      if (state.phase === 'down') return;
-      const actor = nextActor(enemies().filter((e) => state.acting.has(e)), hero, state.taken);
-      state.actor = actor;
-      if (!actor) {
-        state.phase = 'aim';
-        return;
+    const patrollers = pickPatrollers(enemies());
+    const moves = [];
+    const claimed = []; // patrol destinations already taken this round
+    for (const enemy of enemies()) {
+      if (canSee(level, enemy, hero, world.balls, world.statics)) {
+        moves.push({ enemy, kind: 'lunge' });
+      } else if (patrollers.has(enemy)) {
+        const move = patrolMove(level, enemy, [...world.balls, ...claimed], Math.random, world.statics);
+        if (!move) continue; // boxed in: it stays put
+        moves.push({ enemy, kind: 'patrol', ...move });
+        claimed.push({ x: move.target.x, z: move.target.z, radius: enemy.radius });
       }
-      state.taken.add(actor);
-      combat.beginEnemyTurn(actor);
-
-      // Sight is rechecked now, since earlier moves this round can change it.
-      if (canSee(level, actor, hero, world.balls, world.statics)) {
-        state.plan = { kind: 'lunge' };
-        state.phase = 'enemyWait';
-        state.timer = Math.max(CONFIG.enemy.lungeTelegraph, CONFIG.enemy.turnRingBeat);
-        state.waited = 0;
-        return;
-      }
-
-      // Only this round's chosen half patrol; the rest sit it out, unseen.
-      if (!state.patrollers.has(actor)) continue;
-      const move = patrolMove(level, actor, world.balls, Math.random, world.statics);
-      if (!move) continue; // boxed in: it stays put this turn
-      state.plan = { kind: 'patrol', ...move };
-      state.phase = 'enemyWait';
-      state.timer = Math.max(CONFIG.enemy.patrolDelay, CONFIG.enemy.turnRingBeat);
-      state.waited = 0;
+    }
+    state.moves = moves;
+    if (!moves.length) {
+      state.phase = 'aim';
       return;
     }
+    combat.beginEnemyTurn(moves.map((m) => m.enemy));
+    const lunge = moves.some((m) => m.kind === 'lunge');
+    state.phase = 'enemyWait';
+    state.timer = Math.max(lunge ? CONFIG.enemy.lungeTelegraph : CONFIG.enemy.patrolDelay, CONFIG.enemy.turnRingBeat);
+    state.waited = 0;
   }
 
-  function launchActor() {
-    const { actor, plan } = state;
-    if (plan.kind === 'lunge') {
-      Object.assign(actor, lungeVelocity(actor, hero));
-      sfx.play('lunge', 0.9);
-    } else {
-      actor.vx = plan.vx;
-      actor.vz = plan.vz;
+  function launchEnemies() {
+    let lunged = false;
+    for (const m of state.moves) {
+      if (m.enemy.hp <= 0) continue;
+      if (m.kind === 'lunge') {
+        Object.assign(m.enemy, lungeVelocity(m.enemy, hero));
+        lunged = true;
+      } else {
+        m.enemy.vx = m.vx;
+        m.enemy.vz = m.vz;
+      }
     }
+    if (lunged) sfx.play('lunge', 0.9);
     state.phase = 'enemyMove';
   }
 
@@ -487,12 +467,12 @@ export function createGame(container, levels, startIndex = 0) {
    */
   function framingPoints() {
     const moving = world.balls.filter((b) => b.vx !== 0 || b.vz !== 0);
-    const { actor, plan } = state;
     switch (state.phase) {
       case 'enemyWait':
-        return plan.kind === 'lunge' ? [actor, hero] : [actor, plan.target];
+        // You, every enemy about to move, and where the patrols are heading.
+        return [hero, ...state.moves.flatMap((m) => (m.kind === 'patrol' ? [m.enemy, m.target] : [m.enemy]))];
       case 'enemyMove':
-        return moving.includes(actor) ? moving : [actor, ...moving];
+        return [hero, ...moving];
       case 'shot':
         return moving.length ? moving : [hero];
       default:
@@ -583,10 +563,13 @@ export function createGame(container, levels, startIndex = 0) {
         // on screen for its telegraph before it moves.
         state.waited += dt;
         if (rig.settled || state.waited >= CONFIG.enemy.enemyTurnMaxWait) state.timer -= dt;
-        if (state.timer <= 0) launchActor();
+        if (state.timer <= 0) launchEnemies();
         break;
       case 'enemyMove':
-        if (isAtRest(world)) nextTurn();
+        if (isAtRest(world)) {
+          state.moves = [];
+          state.phase = 'aim';
+        }
         break;
       case 'down':
         state.timer -= dt;
@@ -608,9 +591,24 @@ export function createGame(container, levels, startIndex = 0) {
     } else {
       aimView.hide();
     }
-    // The acting enemy's red ring: from its telegraph until its move ends.
-    if ((state.phase === 'enemyWait' || state.phase === 'enemyMove') && state.actor) actorRing.show(state.actor, dt);
-    else actorRing.hide();
+    // Red rings under every enemy moving this round, from the telegraph until the moves end.
+    const ringed = new Set(state.phase === 'enemyWait' || state.phase === 'enemyMove' ? state.moves.map((m) => m.enemy) : []);
+    for (const enemy of ringed) {
+      if (enemy.hp <= 0) continue;
+      if (!actorRings.has(enemy)) {
+        const ring = createTurnRing(CONFIG.colors.enemyTurnRing);
+        scene.add(ring.object);
+        actorRings.set(enemy, ring);
+      }
+      // Grown with the zoom so they keep their size on screen when the camera pulls out.
+      actorRings.get(enemy).object.scale.setScalar(Math.max(1, rig.viewWidth / CONFIG.camera.baseViewWidth));
+      actorRings.get(enemy).show(enemy, dt);
+    }
+    for (const [enemy, ring] of actorRings) {
+      if (ringed.has(enemy) && enemy.hp > 0) continue;
+      scene.remove(ring.object);
+      actorRings.delete(enemy);
+    }
 
     // Face: ouch just after a hit (and while down), determined while you aim
     // and while your shot rolls, confident otherwise.
@@ -634,9 +632,11 @@ export function createGame(container, levels, startIndex = 0) {
     }
 
     // "!" over every enemy that can see you right now, even mid-shot.
-    const acting = state.phase === 'enemyWait' || state.phase === 'enemyMove' ? state.actor : null;
+    const lungers = new Set(
+      state.phase === 'enemyWait' || state.phase === 'enemyMove' ? state.moves.filter((m) => m.kind === 'lunge').map((m) => m.enemy) : [],
+    );
     for (const enemy of enemies()) {
-      const lunging = enemy === acting && state.plan?.kind === 'lunge';
+      const lunging = lungers.has(enemy);
       const aware = lunging || canSee(level, enemy, hero, world.balls, world.statics);
       overlay.setAlert(enemy, aware, lunging);
       enemyViews.get(enemy)?.setAngry(aware);
@@ -665,7 +665,7 @@ export function createGame(container, levels, startIndex = 0) {
     if (!debug.hidden) {
       debug.textContent = [
         `${level.name}  ${fps.toFixed(0)} fps`,
-        `phase  ${state.aiming ? 'aiming' : state.phase}${state.actor ? ` (${state.actor.id})` : ''}`,
+        `phase  ${state.aiming ? 'aiming' : state.phase}${state.moves.length ? ` (${state.moves.length} moving)` : ''}`,
         `hero   ${hero.x.toFixed(2)}, ${hero.z.toFixed(2)}  hp ${hero.hp}/${hero.maxHp}  lives ${state.lives}`,
         `speed  ${speedOf(hero).toFixed(2)} tiles/s`,
         `view   ${rig.viewWidth.toFixed(2)} units`,

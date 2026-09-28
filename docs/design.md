@@ -20,33 +20,30 @@ Target: a true orthographic 3D view at a fixed isometric angle, rendered with Th
 
 ## Core loop and turn structure
 
-A round is one shot by you, then a lunge from each enemy that can see you, one at a time, with everything settling between moves.
+A round is one shot by you, then one enemy move in which every enemy acts at the same time: those that can see you lunge, a random half of the rest patrol, and the others stay put. (This simultaneous phase is an experiment; before it, enemies took turns one at a time, nearest first, with the camera visiting each.)
 
 ```mermaid
 flowchart TD
   A[Player aims and shoots] --> B[Balls roll until all at rest]
-  B --> C{Any enemy left to act this round?}
-  C -- yes --> D{Nearest untaken enemy sees the hero?}
-  D -- yes --> E[It lunges at the hero]
-  D -- no --> F[It patrols toward a random nearby point]
+  B --> C[Every enemy decides at once: lunge if it sees the hero, else maybe patrol, else stay put]
+  C --> D[Short telegraph: red rings, "!" over lungers]
+  D --> E[All the moving enemies launch together]
   E --> G[Balls roll until all at rest]
-  F --> G
   G --> H{Hero HP is 0?}
-  H -- no --> C
+  H -- no --> A
   H -- yes --> I[Lose a life, respawn at start]
   I --> A
-  C -- no --> A
 ```
 
 The loop repeats until the hero touches the exit, which ends the level at once, even mid-roll.
 
-- **Who acts:** only the enemies on screen at the moment your ball comes to rest take part in that round. Enemies the camera reveals later, while it follows the others, don't join in, and off-screen enemies sit the round out even if they can see you (config `enemy.onlyOnScreenAct`; off means every enemy acts). This keeps rounds short in big levels and means every move happens where you can see it.
-- **Order:** of those, enemies act nearest-to-hero first, whether they end up attacking or patrolling. Sight is rechecked before each enemy's turn, since earlier moves this round can create or break sightlines.
-- **Once per round:** each enemy acts exactly once per round, either lunging at the hero or patrolling, then the turn passes to the next enemy.
+- **All at once:** every enemy decides from the board exactly as your shot left it (sight is checked once, for all of them), then all the moving ones launch together after a short telegraph. Their moves can collide with each other on the way, like any pool balls.
+- **Once per round:** each enemy acts at most once per round: a lunge, a patrol, or nothing.
+- **Pace:** a whole enemy phase takes about as long as one move (around 3 to 4 seconds in Long Hall), however many enemies there are. (An earlier trial let only the enemies on screen when your shot stopped take part; the simultaneous phase replaces it.)
 - **At rest:** the next launch, lunge or patrol move waits until every ball is below the stop threshold, so positions are always stable before the next move. Nothing moves outside a shot or a turn.
-- **Patrol:** each round, a random half of the acting enemies (rounded up) are picked to patrol; the rest sit the round out unless they can see the hero, in which case they still lunge. A picked enemy that does not currently see the hero picks a random open floor tile within about 3 tiles (one it can roll to in a straight line, with no ball on it) and rolls toward it at the modest speed (1 to 3 tiles/s) that friction brings to rest there. It behaves like any pool ball on the way, so it can still bounce off walls, barrels and other enemies. If no open tile is available, it stays put for that turn. Every move is shown: the camera visits each enemy on its turn (see the camera section).
+- **Patrol:** each round, a random half of the enemies (rounded up) are picked to patrol; the rest sit the round out unless they can see the hero, in which case they still lunge. A picked enemy that does not currently see the hero picks a random open floor tile within about 3 tiles (one it can roll to in a straight line, with no ball on it) and rolls toward it at the modest speed (1 to 3 tiles/s) that friction brings to rest there. It behaves like any pool ball on the way, so it can still bounce off walls, barrels and other enemies. Two patrols never pick the same tile. If no open tile is available, it stays put this round. Every move is shown: the camera pulls out to frame them all (see the camera section).
 - **Exit:** enemies never follow you out. Killing everything is not required.
-- **Enemy lunge:** an enemy that currently sees the hero launches in a straight line at it at a fixed speed instead of patrolling. Its "!" pulses for about half a second first, with a growl, so the attack never comes out of nowhere. Like any pool ball, it stays wherever it stops, which becomes its new position. Its hit only counts at an impact of at least 0.4 tiles/s, and it can hurt the hero at most once per turn.
+- **Enemy lunge:** an enemy that currently sees the hero launches in a straight line at it at a fixed speed instead of patrolling. Its "!" pulses for about half a second first, with a growl, so the attack never comes out of nowhere. Like any pool ball, it stays wherever it stops, which becomes its new position. Its hit only counts at an impact of at least 0.4 tiles/s, and it can hurt the hero at most once per round. Several lunges can land in the same round, one HP each.
 
 ## Ball physics and input
 
@@ -85,7 +82,7 @@ Who takes damage depends on whose phase it is, never on ball speed. Speed only d
 | --- | --- | --- |
 | Hero hits enemy | Enemy loses ATK HP on each fresh contact | No damage |
 | Knocked enemy hits enemy | Both lose 1 HP, once per pair per shot | No damage |
-| Enemy hits hero | No damage to hero | Hero loses HP, only from the enemy whose turn it is (lunging or patrolling) |
+| Enemy hits hero | No damage to hero | Hero loses HP, only from enemies moving this round (lunging or patrolling), at most once each |
 | Anything hits a wall | No damage | No damage |
 | Hero hits barrel or chest | Counts | Counts (recoil hits too) |
 | Enemy hits barrel (e.g. one you knocked into it) | Cracks it | Cracks it |
@@ -242,12 +239,12 @@ The camera is a true orthographic projection at a fixed isometric angle matched 
 - **Camera type:** `THREE.OrthographicCamera`, fixed isometric angle, no rotation or manual zoom in the MVP. Angles live in the config as `camera.yawDeg` (30) and `camera.elevationDeg` (37).
 - **Frame the action:** the camera eases its centre and zoom to fit whatever matters right now, with about 2 tiles of padding, so no collision or combo happens out of view. While balls are moving, that's every moving ball (not every enemy, only the ones in motion); at rest on your turn, it's the hero, centred. It zooms out at most to 22 tiles across, and it keeps its view inside the level's on-screen outline wherever the level is big enough to fill the screen, so it doesn't show empty space past the level's edge (near an edge, the hero sits off-centre as a result).
 - **Aiming:** while you drag, the zoom follows shot power: from the resting width at no power out to 13 tiles across at full power, easing smoothly and anchored on the ball (no panning), so pulling harder shows more of where the shot will go. The drag is measured in screen terms from the moment you pressed, so the zoom never feeds back into the shot's power, and the cancel marker keeps its size on screen so it always matches where releasing cancels.
-- **Enemy phase:** the camera visits each enemy on its turn, patrols included. Before a lunge it frames the attacker and the hero; before a patrol, the enemy and the tile it's heading for; while it moves, the enemy and every ball in motion. An enemy waits for the camera to arrive (up to 1.5 s) before it moves. The enemy whose turn it is gets a red dashed, slowly turning ring on the floor, like your green turn ring, from the moment its turn starts until its move ends; once the camera has arrived, the ring (and the "!" for a lunge) stays on screen for at least 0.6 s (`enemy.turnRingBeat`) before the enemy moves, so it's always clear which ball to watch.
+- **Enemy phase:** the camera zooms out to cover the whole action: you, every enemy about to move and the tiles the patrols are heading for; then, while they move, you and every ball in motion (up to the usual 22-tile framing limit). The enemies wait for the camera to arrive (up to 1.5 s) before they move. Every enemy that will move gets a red dashed, slowly turning ring on the floor, like your green turn ring, from the telegraph until the moves end, grown with the zoom so it keeps its size on screen; once the camera has arrived, the rings (and the "!" over lungers) stay up for at least 0.6 s (`enemy.turnRingBeat`) before they all launch. When everything is at rest, the camera eases back in on you for your shot.
 - **View size:** the orthographic frustum has a base width of 9 tiles measured across the screen (with the grid turned, that is not the same as 9 columns), adjusted for aspect ratio, and scales to fit the browser window.
 - **Dynamic zoom:** the frustum widens as the hero speeds up, so a hard shot pulls the camera out to reveal more of its path, then eases back to the base 9-tile width once every ball is at rest. Default range: 9 tiles at rest up to about 13 tiles at max launch speed (9 tiles/s). This is the minimum width; framing several moving balls can widen it further.
 - **Walls:** short, so they never hide a ball behind them. The mockup's walls stand a little taller than the ball; the build uses 0.55 tile (`render.wallHeight`) so a ball resting just behind a wall stays visible.
 - **Lighting:** one ambient light plus one directional light, no dynamic shadows for the MVP.
-- **Turn label:** a small pill below the gold, at the top centre, always shows whose turn it is: "Player Turn" (green) while you aim and while your shot rolls, "Enemy Turn" (magenta) from the first enemy move until it's your move again. It pulses when it changes, and sits apart from the centre banners, so it never covers "Combo Kill!".
+- **Turn label:** a small pill below the gold, at the top centre, always shows whose turn it is: "Player Turn" (green) while you aim and while your shot rolls, "Enemy Turn" (magenta) from the enemies' telegraph until it's your move again. It pulses when it changes, and sits apart from the centre banners, so it never covers "Combo Kill!".
 - **Pickups through walls:** a floor pickup (coins, a potion, gear) hidden behind a wall shows through it as a flat see-through silhouette in its own colour (`render.itemXrayOpacity`), only where a wall or closed door covers it (a stencil mask), never through a ball standing on it, so loot is never lost from view. Keys are drawn 1.5× the size of other pickups.
 - **See-through chests:** while you aim, any chest within about 2 tiles of the ball fades to 30% opacity, so an open lid never hides the ball; it turns solid again when you release.
 - **HUD:** no bar behind it (the mockup's dark bar was dropped): gold (the score, next to a coin) sits on the left with a dark outline and drop shadow so it reads over any floor, and the keys you hold sit on the right as small key icons in their colours. Lives aren't shown; the death screen says how many remain. Gear isn't in the bar: its icons sit beside the hero ball instead (sword to the right, shield to the left). HP bars sit above the hero (green) and each enemy (pink), rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The aim preview is different: it's drawn in the 3D scene itself, on the ground plane, so it lands exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
@@ -317,8 +314,8 @@ The rules above use these defaults where your answers left a gap. Change any tha
 
 - Knocked enemies that collide on your shot cost each other a flat 1 HP, not your ATK.
 - Your hits on an enemy have no per-shot limit, so pinning one against a wall lands several hits. A pair of enemies trades damage at most once per shot, which stops grinding in tight rooms.
-- Each enemy attacks at most once per round, and only the attacker (the enemy whose turn it is) can damage the hero. Red barrels are the exception: they damage whichever ball touches them, hero included, in any phase.
-- If the hero dies mid-round, the round ends there: the remaining enemies skip their turn and the hero respawns with the first move.
+- Each enemy attacks at most once per round, and only enemies moving that round can damage the hero. Red barrels are the exception: they damage whichever ball touches them, hero included, in any phase.
+- If the hero dies mid-round, the round ends there: anything still rolling stops under the death screen and the hero respawns with the first move.
 - Sight range is 6 tiles, not the screen width, because a portrait screen is only 9 tiles wide. Other enemies also block sight, so they can shield you.
 - Gear is the shield, a one-hit consumable held until an enemy hit or a red-barrel blast uses it up (they don't stack), and the sword, +3 ATK for two hits on enemies (combo and blast damage don't use it up).
 - Chest gold is granted at once with a floating label. Barrel loot, keys and enemy coins lie on the floor until you roll over them.
@@ -328,7 +325,6 @@ The rules above use these defaults where your answers left a gap. Change any tha
 - Zoom tracks the hero's speed only. Enemy lunges and patrols don't drive it.
 - Patrol speed is 1–3 tiles/s, well under the 6 tiles/s lunge speed, so a patrolling enemy always reads as calmer than an attacking one.
 - A patrol move follows normal physics, so if it happens to collide with the hero it still deals damage, the same as a lunge would. Contact is what matters, not intent.
-- The "nearest first" turn order from the original attack-only design now covers every enemy, sighted or not, so a patrolling enemy can still block or reveal sightlines for the ones after it.
 
 Open questions:
 

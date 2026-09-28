@@ -57,10 +57,7 @@ export const CONFIG = {
     patrolSpeedMin: 1,
     patrolSpeedMax: 3,
     patrolRadius: 3,
-    // Only enemies on screen when your ball comes to rest act that round
-    // (lunge or patrol); the rest sit it out. false: every enemy acts.
-    onlyOnScreenAct: true,
-    patrolShare: 0.5, // fraction of the acting enemies (picked at random each round) that patrol; the rest sit it out
+    patrolShare: 0.5, // fraction of enemies (picked at random each round) that patrol; the rest stay put unless they can see you
     sightRange: 6,
     hpPerLevel: 2, // HP = 2 × level
     // Impacts below this don't count. Just above the stop threshold, so any
@@ -70,10 +67,10 @@ export const CONFIG = {
     hitCooldown: 0.15, // seconds, per enemy
     lungeTelegraph: 0.45, // seconds the "!" pulses before a lunge launches
     patrolDelay: 0.2, // seconds before a patrol move
-    // The acting enemy's red turn ring stays on screen at least this long,
-    // counted once the camera has reached it, before the enemy moves.
+    // The enemies' red turn rings stay on screen at least this long, counted
+    // once the camera has framed them all, before they move together.
     turnRingBeat: 0.6,
-    enemyTurnMaxWait: 1.5, // seconds an enemy waits at most for the camera to reach it
+    enemyTurnMaxWait: 1.5, // seconds the enemies wait at most for the camera to frame them
   },
 
   // Barrels, chests and red barrels (design doc: "Objects").

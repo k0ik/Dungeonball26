@@ -147,3 +147,21 @@ test('combo kill: kills are counted per shot and reset on the next shot', () => 
   ctx.combat.beginShot();
   assert.equal(ctx.combat.shotKills, 0);
 });
+
+test('enemies moving together can each hurt the hero once; a bystander cannot', () => {
+  const hero = Object.assign(createBall({ x: 5, z: 5, kind: 'hero', id: 'hero' }), { hp: 10, maxHp: 10, atk: 1, shield: false });
+  const a = createEnemy({ x: 4, z: 5, level: 1, id: 'a' });
+  const b = createEnemy({ x: 6, z: 5, level: 3, id: 'b' });
+  const idle = createEnemy({ x: 5, z: 4, level: 2, id: 'idle' });
+  const world = { balls: [hero, a, b, idle], events: [], time: 0 };
+  const combat = createCombat();
+  combat.beginEnemyTurn([a, b]);
+  const hit = (x) => world.events.push({ type: 'ball', a: x, b: hero, speed: 5 });
+  hit(a);
+  hit(b);
+  hit(a); // a already hit this round
+  hit(idle); // not moving this round
+  const out = combat.resolve(world, hero);
+  assert.deepEqual(out.map((o) => `${o.type}:${o.source.id}`), ['hurt:a', 'hurt:b']);
+  assert.equal(hero.hp, 8);
+});

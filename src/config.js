@@ -149,6 +149,9 @@ export const CONFIG = {
     // enemy has a visibly longer bar. Pixels.
     hpBarPxPerHp: 6,
     hitFlashSeconds: 0.28, // the hero glows red this long when an enemy hits it
+    // Labels about you (gold, health, gear...) ride along above the ball.
+    // false: they stay at the spot where they were earned, like enemy labels.
+    heroLabelsFollowBall: true,
     bonusReminderAfter: 1.5, // s after "Combo Kill!" before a separate "Bonus turn!" banner is worth showing
     hpBarMinPx: 14,
   },

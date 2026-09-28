@@ -300,13 +300,16 @@ export function createGame(container, levels, startIndex = 0) {
     else world.items.push(item);
   }
 
+  /** The ball labels about you should follow, or null to leave them in place (config). */
+  const heroFollow = () => (CONFIG.render.heroLabelsFollowBall ? hero : null);
+
   const PICKUP_SOUND = { gold: 'coin', coins: 'coin', potion: 'potion', superPotion: 'potion', shield: 'gear', sword: 'gear', oneUp: 'oneUp' };
   const PICKUP_STYLE = { gold: 'gold', coins: 'gold', potion: 'heal', superPotion: 'heal', shield: 'gear', sword: 'gear', oneUp: 'gear' };
 
   function pickUp(item) {
     const label = collect(item, hero, state);
     sfx.play(PICKUP_SOUND[item.kind], 0.8);
-    overlay.float(label, hero.x, hero.z, hero.radius * 2 + 0.8, PICKUP_STYLE[item.kind], hero);
+    overlay.float(label, hero.x, hero.z, hero.radius * 2 + 0.8, PICKUP_STYLE[item.kind], heroFollow());
     hud.setLives(state.lives, CONFIG.hero.lives);
   }
 
@@ -336,7 +339,7 @@ export function createGame(container, levels, startIndex = 0) {
         objectsView.openChest(obj);
         state.gold += o.gold;
         // Over the ball (always on screen), not the chest, which may not be.
-        overlay.float(`+${o.gold}`, hero.x, hero.z, hero.radius * 2 + 0.8, 'gold', hero);
+        overlay.float(`+${o.gold}`, hero.x, hero.z, hero.radius * 2 + 0.8, 'gold', heroFollow());
       } else if (o.type === 'explode') {
         sfx.play('explode', 1);
         objectsView.remove(obj);
@@ -367,7 +370,7 @@ export function createGame(container, levels, startIndex = 0) {
   function handleOutcomes(outcomes) {
     // Labels about you ride along above your ball; labels over enemies stay put.
     const floatAt = (ball, text, cls, lift = 0) =>
-      overlay.float(text, ball.x, ball.z, ball.radius * 2 + 0.2 + lift, cls, ball === hero ? hero : null);
+      overlay.float(text, ball.x, ball.z, ball.radius * 2 + 0.2 + lift, cls, ball === hero ? heroFollow() : null);
     let comboSounded = false;
     for (const o of outcomes) {
       if (o.type === 'hit' || o.type === 'combo') {

@@ -168,6 +168,7 @@ export const CONFIG = {
     // The hero's face: confident at rest, determined while aiming and during
     // its shot, and an "ouch" face for this long after taking a hit.
     heroOuchSeconds: 0.8,
+    dangerHp: 1, // at this HP or less, a soft red glow pulses around the screen edge
     // Labels about you (gold, health, gear...) ride along above the ball.
     // false: they stay at the spot where they were earned, like enemy labels.
     heroLabelsFollowBall: true,

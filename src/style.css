@@ -329,7 +329,7 @@ body {
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
 }
 
-.enemy-edge {
+.danger-edge {
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -339,8 +339,16 @@ body {
   z-index: 1;
 }
 
-.enemy-edge.on {
+/* A slow heartbeat while shown. */
+.danger-edge.on {
   opacity: 1;
+  animation: danger-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes danger-pulse {
+  50% {
+    opacity: 0.55;
+  }
 }
 
 .turn-label {
@@ -463,7 +471,8 @@ body {
   .alert.acting span,
   .hud-gold.bump,
   .turn-label.show,
-  .banner.show {
+  .banner.show,
+  .danger-edge.on {
     animation: none;
   }
 }

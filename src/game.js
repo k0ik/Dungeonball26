@@ -663,6 +663,7 @@ export function createGame(container, levels, startIndex = 0) {
     overlay.update();
     hud.setGold(state.gold);
     hud.setKeys(state.keys);
+    hud.setDanger(hero.hp > 0 && hero.hp <= CONFIG.render.dangerHp && state.phase !== 'down');
     // Whose turn it is, always shown: yours while you aim and your shot rolls,
     // the enemies' from the first enemy move until it's back to you.
     hud.setTurn(['enemyWait', 'enemyMove', 'down'].includes(state.phase) ? 'enemy' : 'player');

@@ -16,11 +16,12 @@ export function createHud(container) {
   let shownKeys = null;
   let shownGold = -1;
 
-  // Enemy turn: a soft red glow around the screen's edge, fading in and out
-  // with the "Enemy Turn" label.
+  // Low HP: a soft red glow around the screen's edge, slowly pulsing, while
+  // you're one hit from a knockout.
   const edge = document.createElement('div');
-  edge.className = 'enemy-edge';
+  edge.className = 'danger-edge';
   container.appendChild(edge);
+  let shownDanger = false;
 
   // "Player Turn" / "Enemy Turn": a small pill under the bar, always shown,
   // separate from the centre banner so the two never cover each other.
@@ -70,7 +71,6 @@ export function createHud(container) {
       shownTurn = who;
       turn.textContent = who === 'enemy' ? 'Enemy Turn' : 'Player Turn';
       turn.dataset.who = who;
-      edge.classList.toggle('on', who === 'enemy');
       turn.classList.remove('show');
       void turn.offsetWidth;
       turn.classList.add('show');
@@ -98,6 +98,12 @@ export function createHud(container) {
         .map((c) => `<span class="key-slot" title="${c} key">${keyIcon(`#${CONFIG.colors.keys[c].toString(16).padStart(6, '0')}`)}</span>`)
         .join('');
       keySlots.setAttribute('aria-label', keys.length ? `Keys: ${keys.join(', ')}` : 'No keys');
+    },
+    /** Red screen edge on or off (low HP). */
+    setDanger(on) {
+      if (on === shownDanger) return;
+      shownDanger = on;
+      edge.classList.toggle('on', on);
     },
     /** Centred message for `seconds`; a second line is optional. */
     banner(title, sub = '', seconds = 1.6) {

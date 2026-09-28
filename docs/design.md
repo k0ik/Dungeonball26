@@ -151,6 +151,24 @@ Starting cards (numbers are defaults to tune):
 
 Defaults assumed until you say otherwise: an offer never includes a card you already hold, and a card you replace goes back into the pool. Cards carry over between levels like HP and gold, and a game over restores the cards you entered the level with.
 
+## Trick shots
+
+Trick shots are special one-shot combos, tracked as achievements. Each one pays a gold bonus the first time you land it, with a big centre banner naming it, like "Trick shot: Double Kill! +10". After that it still shows its name, but pays nothing extra. All of them happen within a single shot of yours; the enemy turn never counts.
+
+| Trick shot | How to land it | First-time bonus |
+| --- | --- | --- |
+| Pit Stop | Collect a potion or super potion, then kill an enemy, in the same shot | +10 gold |
+| Double Kill | Kill 2 enemies in one shot (this also earns the combo-kill bonus turn) | +10 gold |
+| Triple Kill | Kill 3 enemies in one shot | +25 gold |
+| Barrel Roll | Knock an enemy into a barrel: you hit it and it cracks or breaks a barrel | +10 gold |
+| Bank Shot | Combo an enemy into a barrel: an enemy you knocked hits another enemy, which then hits a barrel | +20 gold |
+| Drop Shot | Knock an enemy into a bottomless pit (needs pits) | +15 gold |
+| Long Drop | Combo an enemy into a pit: it falls in after being hit by another knocked enemy, not by you directly (needs pits) | +30 gold |
+
+The names and bonus amounts are placeholders to tune.
+- **Tracking:** credit for a hit passes along a chain. An enemy you hit is "knocked by you", and an enemy it hits is "combo-knocked". Whatever a knocked enemy touches next (a barrel, a pit, another enemy) is credited to the chain for the rest of the shot.
+- **Bigger combos:** Triple Kill replaces Double Kill for that shot; you don't get both.
+
 ## Objects
 
 Barrels, chests, keys and doors are the level's furniture. Chest gold is granted immediately with a short floating label above the hero; barrel loot lands on the floor for you to roll over.
@@ -244,7 +262,8 @@ The camera is a true orthographic projection at a fixed isometric angle matched 
 - **Dynamic zoom:** the frustum widens as the hero speeds up, so a hard shot pulls the camera out to reveal more of its path, then eases back to the base 9-tile width once every ball is at rest. Default range: 9 tiles at rest up to about 13 tiles at max launch speed (9 tiles/s). This is the minimum width; framing several moving balls can widen it further.
 - **Walls:** short, so they never hide a ball behind them. The mockup's walls stand a little taller than the ball; the build uses 0.55 tile (`render.wallHeight`) so a ball resting just behind a wall stays visible.
 - **Lighting:** one ambient light plus one directional light, no dynamic shadows for the MVP.
-- **Turn label:** a small pill below the gold, at the top centre, always shows whose turn it is: "Player Turn" (green) while you aim and while your shot rolls, "Enemy Turn" (magenta) from the enemies' telegraph until it's your move again. It pulses when it changes, and sits apart from the centre banners, so it never covers "Combo Kill!". During the enemy turn a soft red glow also fades in around the edge of the screen, and fades out when it's your turn again.
+- **Turn label:** a small pill below the gold, at the top centre, always shows whose turn it is: "Player Turn" (green) while you aim and while your shot rolls, "Enemy Turn" (magenta) from the enemies' telegraph until it's your move again. It pulses when it changes, and sits apart from the centre banners, so it never covers "Combo Kill!".
+- **Low HP:** at 1 HP (`render.dangerHp`) a soft red glow pulses slowly around the edge of the screen, like a heartbeat, until you heal or respawn. (It was first tried as the enemy-turn cue, but it read as "you're hurt", so it moved here.)
 - **Pickups through walls:** a floor pickup (coins, a potion, gear) hidden behind a wall shows through it as a flat see-through silhouette in its own colour (`render.itemXrayOpacity`), only where a wall or closed door covers it (a stencil mask), never through a ball standing on it, so loot is never lost from view. Keys are drawn 1.5× the size of other pickups.
 - **See-through chests:** while you aim, any chest within about 2 tiles of the ball fades to 30% opacity, so an open lid never hides the ball; it turns solid again when you release.
 - **HUD:** no bar behind it (the mockup's dark bar was dropped): gold (the score, next to a coin) sits on the left with a dark outline and drop shadow so it reads over any floor, and the keys you hold sit on the right as small key icons in their colours. Lives aren't shown; the death screen says how many remain. Gear isn't in the bar: its icons sit beside the hero ball instead (sword to the right, shield to the left). HP bars sit above the hero (green) and each enemy (pink), rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The aim preview is different: it's drawn in the 3D scene itself, on the ground plane, so it lands exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
@@ -284,6 +303,10 @@ Two habits keep tuning cheap. Put every number from this doc in one config file.
 ## To-do
 
 Changes agreed during development that aren't built yet. (Trait cards are scheduled as M7.)
+
+- **Trick shots:** the achievements in the section above, with their first-time gold bonuses. Most can be built now; the two pit shots need the bottomless pit.
+- **Red barrel blast push:** a red barrel's explosion also shoves nearby balls. Every ball, hero or enemy, within 2 tiles of the barrel's centre is pushed straight away from it with a quick burst of speed, up to 6 tiles/s at the centre, falling off to nothing at the edge. Only balls the blast can reach get pushed: a wall between the barrel and a ball shields it, using the same line check as sight. The push deals no damage by itself; only the ball that touched the barrel takes the 1 damage. A push that sends an enemy into another enemy counts as a combo, and one that sends an enemy into a barrel counts as your knock during your shot. Blasts can chain into other red barrels.
+- **A clearer turn cue:** the small turn label is easy to miss (see the Camera, HUD and presentation section for the options being weighed).
 
 - **Bottomless pit:** a new tile that any ball, the hero or an enemy, can fall into, dying instantly.
   - **Falling in:** a ball falls when its centre passes over the pit, so it can graze the edge and roll on. It drops out of sight with a short fall.
@@ -332,3 +355,4 @@ Open questions:
 - **Doppleganger when replaced:** do you lose the extra life you gained from it, or keep it?
 - **Locksmith and keys:** with Locksmith, do keys still appear (and count for anything), or are they skipped?
 - **Athletic:** 25% less friction is the starting guess; should it also raise your launch speed?
+- **Trick shots, "first time":** first time per run, or first time ever? "Ever" needs saved progress, which is out of scope for the MVP, so it's assumed per run for now.

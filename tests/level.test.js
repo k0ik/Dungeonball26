@@ -13,20 +13,20 @@ test('every shipped level parses', () => {
   }
 });
 
-test('level 1 matches the design doc: 12x32, enemies of levels 1 to 3', () => {
+test('level 1 matches the design doc: 12x33, enemies of levels 1 to 3', () => {
   const level = parseLevel(readFileSync(new URL('long-hall.txt', levelsDir), 'utf8'));
   assert.equal(level.width, 12);
-  assert.equal(level.height, 32);
+  assert.equal(level.height, 33);
   assert.deepEqual([...new Set(level.enemies.map((e) => e.level))].sort(), [1, 2, 3]);
 });
 
 test('levels 2 and 3 match the design doc', () => {
   const b = parseLevel(readFileSync(new URL('breakables.txt', levelsDir), 'utf8'));
-  assert.deepEqual([b.width, b.height], [9, 20]);
+  assert.deepEqual([b.width, b.height], [9, 21]);
   assert.deepEqual(b.enemies.map((e) => e.level), [1, 1]);
   assert.equal(b.doors.length + b.keys.length, 0);
   const k = parseLevel(readFileSync(new URL('one-key.txt', levelsDir), 'utf8'));
-  assert.deepEqual([k.width, k.height], [12, 20]);
+  assert.deepEqual([k.width, k.height], [12, 21]);
   assert.deepEqual(k.enemies.map((e) => e.level).sort(), [1, 2]);
   assert.deepEqual(k.doors.map((d) => d.color), ['red']);
   assert.deepEqual(k.keys.map((d) => d.color), ['red']);
@@ -34,7 +34,8 @@ test('levels 2 and 3 match the design doc', () => {
 
 test('parses the illustrative level from the design doc', () => {
   const level = parseLevel(`#########
-#...X...#
+####X####
+#.......#
 #.......#
 ###R#####
 #.......#
@@ -44,12 +45,12 @@ test('parses the illustrative level from the design doc', () => {
 #.......#
 #...S...#
 #########`);
-  assert.deepEqual(level.start, { col: 4, row: 9 });
-  assert.deepEqual(level.doors, [{ col: 3, row: 3, color: 'red' }]);
-  assert.deepEqual(level.keys, [{ col: 4, row: 7, color: 'red' }]);
+  assert.deepEqual(level.start, { col: 4, row: 10 });
+  assert.deepEqual(level.doors, [{ col: 3, row: 4, color: 'red' }]);
+  assert.deepEqual(level.keys, [{ col: 4, row: 8, color: 'red' }]);
   assert.equal(level.barrels.length, 2);
   assert.equal(level.chests.length, 1);
-  assert.ok(isSolid(level, 3, 3), 'closed door is solid');
+  assert.ok(isSolid(level, 3, 4), 'closed door is solid');
   assert.ok(isSolid(level, -1, 0), 'out of bounds is solid');
   assert.ok(!isSolid(level, 4, 9), 'start is floor');
 });
@@ -88,6 +89,16 @@ test('every shipped level can be finished: keys first, then doors, then the exit
     for (const e of level.exits) assert.ok(after.has(`${e.col},${e.row}`), `${file}: exit reachable`);
     if (level.doors.length) {
       assert.ok(!level.exits.some((e) => before.has(`${e.col},${e.row}`)), `${file}: the doors really guard the exit`);
+    }
+  }
+});
+
+test('every exit is tucked into a one-tile alcove, open on one side only', () => {
+  for (const file of readdirSync(levelsDir).filter((f) => f.endsWith('.txt'))) {
+    const level = parseLevel(readFileSync(new URL(file, levelsDir), 'utf8'), file);
+    for (const { col, row } of level.exits) {
+      const open = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dc, dr]) => !isSolid(level, col + dc, row + dr));
+      assert.equal(open.length, 1, `${file}: exit at ${col},${row} has ${open.length} open sides`);
     }
   }
 });

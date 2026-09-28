@@ -201,11 +201,12 @@ Each level is a plain text file with one character per tile. The screen shows ab
 | `R` `B` `Y` | Door matching that key |
 | `E` | Explosive barrel (red) |
 
-An illustrative level in this format, with one enemy, two barrels, a chest, a red key and a red door in front of the exit:
+An illustrative level in this format, with one enemy, two barrels, a chest, a red key and a red door in front of the exit, which sits in its alcove at the top:
 
 ```text
 #########
-#...X...#
+####X####
+#.......#
 #.......#
 ###R#####
 #.......#
@@ -217,6 +218,8 @@ An illustrative level in this format, with one enemy, two barrels, a chest, a re
 #########
 ```
 
+Every exit is tucked into a one-tile alcove in the outer wall (walls on three sides, open to the room on one), so you only leave on purpose, by aiming into the gap, never by rolling across it by accident. A test enforces this for every shipped level.
+
 Barrel loot is random by default. Per-barrel overrides can be added later without changing the format.
 
 The five MVP levels ramp one idea at a time. Sizes are suggestions in tiles.
@@ -225,9 +228,9 @@ Levels 1 to 3 are built (M6); a run is those three in order until levels 4 and 5
 
 | # | Name | Size | Enemies | Keys and doors | Teaches |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Long Hall | 12×32 | Eight, levels 1 to 3 (a touching pair blocks the first doorway), plus six barrels, three chests and two red barrels | None | Aiming, bouncing, hitting enemies, combos, the exit |
-| 2 | Breakables | 9×20 | Two level-1, plus seven barrels and a chest among pillars | None | Barrels, chest, potions, sightlines |
-| 3 | One Key | 12×20 | Level 1 and level 2 (the level 2 guards the door), plus barrels, two chests and a red barrel | Red: the key sits in a nook out of the guard's sight; the door seals the exit room | Keys, doors, hiding from sight |
+| 1 | Long Hall | 12×33 | Eight, levels 1 to 3 (a touching pair blocks the first doorway), plus six barrels, three chests and two red barrels | None | Aiming, bouncing, hitting enemies, combos, the exit |
+| 2 | Breakables | 9×21 | Two level-1, plus seven barrels and a chest among pillars | None | Barrels, chest, potions, sightlines |
+| 3 | One Key | 12×21 | Level 1 and level 2 (the level 2 guards the door), plus barrels, two chests and a red barrel | Red: the key sits in a nook out of the guard's sight; the door seals the exit room | Keys, doors, hiding from sight |
 | 4 | Two Keys | 14×24 | Four, levels 1 to 3 | Red, blue | Routing, combos, using enemies as blockers |
 | 5 | Gauntlet | 16×32 | Seven, levels 1 to 3 | Red, blue, yellow | Scrolling, risk against greed, everything together |
 

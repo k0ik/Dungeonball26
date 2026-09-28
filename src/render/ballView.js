@@ -1,9 +1,12 @@
 // A toon ball with an inverted-hull outline, a blob shadow, and a stripe so
-// rolling reads visually. It can flash red when hit.
+// rolling reads visually (`silver` swaps the toon shading for polished
+// chrome). It can flash red when hit. Given `toCamera`, it also
+// wears a camera-facing face (the hero's expressions, see faces.js).
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
-import { toonMaterial, outlineHullMaterial } from './materials.js';
+import { toonMaterial, silverMaterial, outlineHullMaterial } from './materials.js';
+import { heroFaces, faceSprite } from './faces.js';
 
 const shadowMaterial = new THREE.MeshBasicMaterial({
   color: CONFIG.colors.shadow,
@@ -26,13 +29,13 @@ function stripedSphere(radius, base, stripe) {
   return geo;
 }
 
-export function createBallView(ball, { color, stripe }) {
+export function createBallView(ball, { color, stripe, silver = false, toCamera = null }) {
   const r = ball.radius;
   const group = new THREE.Group();
 
   const body = new THREE.Mesh(
     stripe != null ? stripedSphere(r, color, stripe) : new THREE.SphereGeometry(r, 32, 20),
-    toonMaterial(stripe != null ? 0xffffff : color, { vertexColors: stripe != null }),
+    (silver ? silverMaterial : toonMaterial)(stripe != null ? 0xffffff : color, { vertexColors: stripe != null }),
   );
   body.position.y = r;
   // Tilt the stripe so it doesn't start edge-on to the camera.
@@ -46,6 +49,11 @@ export function createBallView(ball, { color, stripe }) {
   shadow.position.y = 0.005;
 
   group.add(shadow, outline, body);
+
+  // The face doesn't roll with the body: it always looks at the camera.
+  const face = toCamera ? faceSprite(heroFaces.confident(), r, toCamera) : null;
+  if (face) group.add(face);
+  let expression = 'confident';
 
   const axis = new THREE.Vector3();
   const q = new THREE.Quaternion();
@@ -64,6 +72,16 @@ export function createBallView(ball, { color, stripe }) {
     object: group,
     flash() {
       flashLeft = CONFIG.render.hitFlashSeconds;
+    },
+    /** Show an expression: 'confident', 'determined' or 'ouch'. */
+    setExpression(name) {
+      if (!face || name === expression) return;
+      expression = name;
+      face.material.map = heroFaces[name]();
+      face.material.needsUpdate = true;
+    },
+    get expression() {
+      return expression;
     },
     /** Current flash strength, 0..1 (for debugging and tests). */
     get flashLevel() {

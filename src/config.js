@@ -153,6 +153,9 @@ export const CONFIG = {
     // enemy has a visibly longer bar. Pixels.
     hpBarPxPerHp: 6,
     hitFlashSeconds: 0.28, // the hero glows red this long when an enemy hits it
+    // The hero's face: confident at rest, determined while aiming and during
+    // its shot, and an "ouch" face for this long after taking a hit.
+    heroOuchSeconds: 0.8,
     // Labels about you (gold, health, gear...) ride along above the ball.
     // false: they stay at the spot where they were earned, like enemy labels.
     heroLabelsFollowBall: true,
@@ -176,8 +179,8 @@ export const CONFIG = {
     enemyFace: 0x111111,
     hpFill: 0xe8336f,
     hpTrack: 0x2a2b2e,
-    hero: 0xd6d7da,
-    heroStripe: 0x3a86ff,
+    hero: 0xffffff, // tint over the hero's chrome (silver) shading
+    heroStripe: 0xb4bac4, // a faint darker band on the silver, so rolling still reads
     aim: 0xffffff,
     turnRing: 0x5ad16a, // matches the hero's HP bar
     hitFlash: 0xff2a2a,
@@ -193,6 +196,7 @@ export const CONFIG = {
     potion: 0xe8336f,
     superPotion: 0x9b5cff,
     shieldItem: 0x3a86ff,
+    oneUpItem: 0xc9cdd4, // a little silver hero ball
     sword: 0xd4d7dc,
     shadow: 0x000000,
   },

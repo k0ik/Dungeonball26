@@ -77,7 +77,7 @@ function itemMesh(kind) {
       break;
     }
     case 'oneUp': {
-      const ball = outlined(new THREE.SphereGeometry(0.12, 16, 12), C.hero);
+      const ball = outlined(new THREE.SphereGeometry(0.12, 16, 12), C.oneUpItem);
       ball.position.y = 0.12;
       g.add(ball);
       break;

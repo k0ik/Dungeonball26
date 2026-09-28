@@ -55,7 +55,7 @@ export function createGame(container, levels, startIndex = 0) {
   // The hero persists across levels; the level, its world and its view don't.
   const hero = createBall({ x: 0, z: 0, kind: 'hero', id: 'hero' });
   Object.assign(hero, { atk: CONFIG.hero.atk, maxHp: CONFIG.hero.maxHp, hp: CONFIG.hero.maxHp, shield: false, swordHits: 0 });
-  const heroView = createBallView(hero, { color: CONFIG.colors.hero, stripe: CONFIG.colors.heroStripe });
+  const heroView = createBallView(hero, { color: CONFIG.colors.hero, stripe: CONFIG.colors.heroStripe, silver: true, toCamera: rig.toCamera });
   scene.add(heroView.object);
   overlay.addBar(hero, 'hero');
 
@@ -70,6 +70,7 @@ export function createGame(container, levels, startIndex = 0) {
   const state = {
     phase: 'aim',
     aiming: false,
+    ouch: 0, // seconds left on the hero's "ouch" face
     pointerId: null,
     pointer: new THREE.Vector3(),
     shots: 0,
@@ -135,6 +136,7 @@ export function createGame(container, levels, startIndex = 0) {
     hero.z = start.z;
     hero.vx = hero.vz = 0;
     if (heal) hero.hp = hero.maxHp;
+    state.ouch = 0;
     heroView.snap();
     state.phase = 'aim';
     state.aiming = false;
@@ -406,6 +408,7 @@ export function createGame(container, levels, startIndex = 0) {
       } else if (o.type === 'hurt') {
         sfx.play('hurt', 1);
         heroView.flash();
+        state.ouch = CONFIG.render.heroOuchSeconds;
         floatAt(hero, `-${o.amount}`, 'hurt');
         if (hero.hp <= 0 && state.phase !== 'down') knockedOut();
       } else if (o.type === 'blocked') {
@@ -536,6 +539,12 @@ export function createGame(container, levels, startIndex = 0) {
       aimView.hide();
     }
 
+    // Face: ouch just after a hit (and while down), determined while you aim
+    // and while your shot rolls, confident otherwise.
+    state.ouch = Math.max(0, state.ouch - dt);
+    heroView.setExpression(
+      state.ouch > 0 || state.phase === 'down' ? 'ouch' : state.aiming || state.phase === 'shot' ? 'determined' : 'confident',
+    );
     heroView.update(dt);
     objectsView.update(dt);
     objectsView.fadeChests(hero, state.aiming, dt);

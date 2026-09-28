@@ -44,15 +44,28 @@ test('a barrel cracks on each hero hit and breaks on the second', () => {
   assert.ok(!world.statics.includes(barrel), 'a broken barrel leaves the board');
 });
 
-test('only the hero cracks barrels, and not within the cooldown', () => {
+test('barrels do not crack again within the cooldown', () => {
   const { world, hero, get } = setup();
   const barrel = get('barrel');
-  const enemy = createEnemy({ x: 3, z: 2.5, level: 1, id: 'e' });
-  touch(world, enemy, barrel);
   touch(world, hero, barrel);
   touch(world, hero, barrel); // same instant: inside the cooldown
   resolveObjects(world, hero);
   assert.equal(barrel.hits, 1);
+});
+
+test('an enemy knocked into a barrel cracks and breaks it too', () => {
+  const { world, hero, get } = setup();
+  const barrel = get('barrel');
+  const enemy = createEnemy({ x: 3, z: 2.5, level: 1, id: 'e' });
+  const types = [];
+  for (let i = 0; i < 2; i++) {
+    touch(world, enemy, barrel);
+    types.push(...resolveObjects(world, hero).map((o) => o.type));
+    world.events.length = 0;
+    world.time += 0.2;
+  }
+  assert.deepEqual(types, ['crack', 'break']);
+  assert.ok(!world.statics.includes(barrel));
 });
 
 test('a chest opens once, for 8 to 24 gold', () => {

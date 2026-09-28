@@ -2,8 +2,9 @@
 // bumpers in the physics world; this module turns contacts with them into
 // game outcomes. Pure logic over physics events, unit tested.
 //
-// - Barrel: each hero contact at >= hitMinSpeed cracks it one stage (with a
-//   short cooldown); the third breaks it and it drops loot. Enemies just bounce.
+// - Barrel: each contact at >= hitMinSpeed, from the hero or an enemy (say
+//   one you knocked into it), cracks it one stage (with a short cooldown);
+//   the second breaks it and its loot lands on the floor.
 // - Chest: the hero's first contact opens it for 8-24 gold. It stays a bumper.
 // - Red barrel: any contact, from the hero or an enemy, at any speed,
 //   detonates it; the ball that touched it takes 1 flat damage.
@@ -34,7 +35,7 @@ export function createObjects(level) {
 /**
  * Turn this step's bumper contacts into outcomes, and remove broken barrels
  * and detonated red barrels from the world. Outcomes:
- *   { type: 'crack', obj, stage }   a barrel cracked (stage 1, 2)
+ *   { type: 'crack', obj, stage }   a barrel cracked (stage 1)
  *   { type: 'break', obj }          a barrel broke (roll its loot)
  *   { type: 'open', obj, gold }     a chest opened
  *   { type: 'explode', obj, victim } a red barrel went off on `victim`
@@ -49,7 +50,7 @@ export function resolveObjects(world, hero, rng = Math.random) {
       gone.add(s);
       out.push({ type: 'explode', obj: s, victim: ev.ball });
     } else if (s.kind === 'barrel') {
-      if (ev.ball !== hero || ev.speed < CONFIG.enemy.hitMinSpeed) continue;
+      if (ev.speed < CONFIG.enemy.hitMinSpeed) continue;
       if (world.time - s.lastHit < O.barrelCooldown) continue;
       s.lastHit = world.time;
       s.hits++;

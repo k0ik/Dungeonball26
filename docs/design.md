@@ -87,6 +87,7 @@ Who takes damage depends on whose phase it is, never on ball speed. Speed only d
 | Enemy hits hero | No damage to hero | Hero loses HP, only from the enemy whose turn it is (lunging or patrolling) |
 | Anything hits a wall | No damage | No damage |
 | Hero hits barrel or chest | Counts | Counts (recoil hits too) |
+| Enemy hits barrel (e.g. one you knocked into it) | Cracks it | Cracks it |
 | Hero or enemy hits red barrel | That ball takes 1 flat damage | That ball takes 1 flat damage |
 
 Damage and health formulas, with L as the enemy's level:
@@ -155,7 +156,7 @@ Barrels, chests, keys and doors are the level's furniture. Chest gold is granted
 
 | Object | Behavior |
 | --- | --- |
-| Barrel | Solid bumper. Each contact above 0.4 tiles/s cracks it one stage, with a 0.15 s cooldown per barrel. The second hit breaks it and leaves random loot on the floor where it stood, collected like enemy coins by rolling over it (so taking the loot is the "third hit"). The crack is obvious at a glance: the barrel gets darker, shorter and more faceted, and leans. |
+| Barrel | Solid bumper. Each contact above 0.4 tiles/s, from the hero or an enemy (say one you knocked into it), cracks it one stage, with a 0.15 s cooldown per barrel. The second hit breaks it and leaves random loot on the floor where it stood, collected like enemy coins by rolling over it (so taking the loot is the "third hit"). The crack is obvious at a glance: the barrel gets darker, shorter and more faceted, and leans. |
 | Chest | Solid bumper. The first contact opens it and grants a random 8 to 24 gold. |
 | Key | Floor pickup, collected by rolling over it. Color-matched to one door and shown in a HUD slot. |
 | Door | Solid and opaque until the hero is within half a tile while holding the matching key. Then it opens for good and the key is consumed. Enemies can pass through an open door. |
@@ -174,7 +175,7 @@ Every barrel drops something, left on the floor where the barrel was. You collec
 | Sword | 5% | +3 ATK (ATK 4) for two hits on enemies: after the first it shows as a broken half-blade, after the second it's gone |
 | 1-up | 5% | +1 life |
 
-There is no inventory. Each pickup floats above the hero, for example "+1 HP", "+5 HP", "+3", "Shield", "Sword" or "1-up". Like every floating value (damage numbers, "Combo!", labels), it's set large (about twice the HUD text size), rises for about half a second and then holds still for another half second before fading, so it can be read. Anything about you (gold, including a chest's, health, gear, "Blocked!", damage you take) floats above your ball and rides along with it; labels about an enemy stay where they were earned. (A config switch, `render.heroLabelsFollowBall`, leaves your labels in place instead, if that reads better.) Floating values are always kept inside the visible screen. While you hold gear, its icon sits beside your ball: the sword (whole or broken) to the right, the shield to the left. Only the hero cracks barrels and opens chests.
+There is no inventory. Each pickup floats above the hero, for example "+1 HP", "+5 HP", "+3", "Shield", "Sword" or "1-up". Like every floating value (damage numbers, "Combo!", labels), it's set large (about twice the HUD text size), rises for about half a second and then holds still for another half second before fading, so it can be read. Anything about you (gold, including a chest's, health, gear, "Blocked!", damage you take) floats above your ball and rides along with it; labels about an enemy stay where they were earned. (A config switch, `render.heroLabelsFollowBall`, leaves your labels in place instead, if that reads better.) Floating values are always kept inside the visible screen. While you hold gear, its icon sits beside your ball: the sword (whole or broken) to the right, the shield to the left. Barrels crack from any ball, so knocking an enemy into one breaks it too; only the hero opens chests.
 
 A red barrel is a hazard, not a reward: it can hurt an enemy that bumps it as easily as it can hurt you, so it's worth luring enemies into one.
 

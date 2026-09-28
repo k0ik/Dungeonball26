@@ -29,7 +29,7 @@ import { createAimView } from './render/aimView.js';
 import { createCameraRig } from './render/cameraRig.js';
 import { createAudio } from './audio.js';
 import { createObjects, resolveObjects } from './objects.js';
-import { rollLoot, canCollect, collect } from './loot.js';
+import { rollLoot, canCollect, collect, useSwordHit } from './loot.js';
 import { createObjectsView } from './render/objectsView.js';
 import { createItemsView } from './render/itemsView.js';
 
@@ -54,7 +54,7 @@ export function createGame(container, levels, startIndex = 0) {
 
   // The hero persists across levels; the level, its world and its view don't.
   const hero = createBall({ x: 0, z: 0, kind: 'hero', id: 'hero' });
-  Object.assign(hero, { atk: CONFIG.hero.atk, maxHp: CONFIG.hero.maxHp, hp: CONFIG.hero.maxHp, shield: false, sword: false });
+  Object.assign(hero, { atk: CONFIG.hero.atk, maxHp: CONFIG.hero.maxHp, hp: CONFIG.hero.maxHp, shield: false, swordHits: 0 });
   const heroView = createBallView(hero, { color: CONFIG.colors.hero, stripe: CONFIG.colors.heroStripe });
   scene.add(heroView.object);
   overlay.addBar(hero, 'hero');
@@ -124,7 +124,7 @@ export function createGame(container, levels, startIndex = 0) {
 
     start = tileCenter(level.start);
     rig.setBounds(0, level.width, 0, level.height);
-    state.entry = { hp: hero.hp, atk: hero.atk, shield: hero.shield, sword: hero.sword, gold: state.gold };
+    state.entry = { hp: hero.hp, atk: hero.atk, shield: hero.shield, swordHits: hero.swordHits, gold: state.gold };
     respawn();
     rig.snapTo(hero.x, hero.z);
     hud.setLives(state.lives, CONFIG.hero.lives);
@@ -272,8 +272,8 @@ export function createGame(container, levels, startIndex = 0) {
       // Game over: the level starts from scratch, with the HP, gear and gold
       // you entered it with.
       state.lives = CONFIG.hero.lives;
-      const { hp, atk, shield, sword, gold } = state.entry;
-      Object.assign(hero, { hp, atk, shield, sword });
+      const { hp, atk, shield, swordHits, gold } = state.entry;
+      Object.assign(hero, { hp, atk, shield, swordHits });
       state.gold = gold;
       sfx.play('gameover', 0.9);
       loadLevel(levelIndex);
@@ -368,7 +368,16 @@ export function createGame(container, levels, startIndex = 0) {
     let comboSounded = false;
     for (const o of outcomes) {
       if (o.type === 'hit' || o.type === 'combo') {
-        if (o.type === 'hit') sfx.play('hit', 0.9, { pitch: 0.95 + Math.random() * 0.1 });
+        if (o.type === 'hit') {
+          sfx.play('hit', 0.9, { pitch: 0.95 + Math.random() * 0.1 });
+          // Each of your hits wears the sword: whole -> broken -> gone.
+          const sword = useSwordHit(hero);
+          if (sword === 'broken') floatAt(hero, 'Sword cracked', 'gear', 0.45);
+          else if (sword === 'gone') {
+            floatAt(hero, 'Sword broke!', 'gear', 0.45);
+            sfx.play('blocked', 0.6, { pitch: 0.8 });
+          }
+        }
         else if (!comboSounded) {
           sfx.play('combo', 0.9);
           comboSounded = true;
@@ -553,7 +562,10 @@ export function createGame(container, levels, startIndex = 0) {
     renderer.render(scene, rig.camera);
     overlay.update();
     hud.setGold(state.gold);
-    hud.setGear(hero);
+    overlay.setGear(hero, {
+      sword: hero.swordHits >= CONFIG.loot.swordUses ? 'whole' : hero.swordHits > 0 ? 'broken' : null,
+      shield: hero.shield,
+    });
 
     if (!debug.hidden) {
       debug.textContent = [
@@ -563,7 +575,7 @@ export function createGame(container, levels, startIndex = 0) {
         `speed  ${speedOf(hero).toFixed(2)} tiles/s`,
         `view   ${rig.viewWidth.toFixed(2)} units`,
         `shots  ${state.shots}   exits  ${state.clears}`,
-        `enemies ${enemies().length} left   gold ${state.gold}   atk ${hero.atk}${hero.shield ? '  shield' : ''}`,
+        `enemies ${enemies().length} left   gold ${state.gold}   atk ${hero.atk}${hero.swordHits ? ` (sword ${hero.swordHits})` : ''}${hero.shield ? '  shield' : ''}`,
         `[d] debug  [r] respawn  [n] next level`,
       ].join('\n');
     }

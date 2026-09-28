@@ -1,11 +1,13 @@
 // HTML layer over the canvas for things that must always face the viewer:
 // HP bars (one notch per HP; enemies' grow with max HP), "!" markers over
 // enemies that can see the hero (pinned to the screen edge when the enemy is
-// off screen), and floating damage numbers. Positions come from projecting
+// off screen), floating damage numbers, and the hero's gear icons (sword on
+// the right, shield on the left). Positions come from projecting
 // world points through the camera each frame.
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
+import { SWORD_ICON, SWORD_BROKEN_ICON, SHIELD_ICON } from './icons.js';
 
 const BAR_HEIGHT = 0.3; // tiles above the top of the ball
 const ALERT_HEIGHT = 0.75; // tiles above the top of the ball
@@ -21,6 +23,17 @@ export function createOverlay(container, camera) {
   const alerts = new Map(); // ball -> { el, on, acting }
   const floats = new Set(); // { el, x, y, z }: re-placed each frame so they stay on the world spot
   const v = new THREE.Vector3();
+  const side = new THREE.Vector3();
+
+  // Gear beside the hero: one slot each side.
+  const gear = { ball: null, sword: makeGear('gear-icon sword'), shield: makeGear('gear-icon shield'), shown: '' };
+  function makeGear(className) {
+    const el = document.createElement('div');
+    el.className = className;
+    el.hidden = true;
+    layer.appendChild(el);
+    return el;
+  }
 
   function toScreen(x, y, z) {
     v.set(x, y, z).project(camera);
@@ -100,8 +113,31 @@ export function createOverlay(container, camera) {
         floats.delete(f);
       });
     },
+    /** Show the hero's gear: sword 'whole' | 'broken' | null, shield true/false. */
+    setGear(ball, { sword, shield }) {
+      gear.ball = ball;
+      const key = `${sword}|${shield}`;
+      if (key === gear.shown) return;
+      gear.shown = key;
+      gear.sword.hidden = !sword;
+      gear.sword.innerHTML = sword === 'broken' ? SWORD_BROKEN_ICON : sword ? SWORD_ICON : '';
+      gear.sword.title = sword === 'broken' ? 'Broken sword: +3 attack for one more hit' : 'Sword: +3 attack for two hits';
+      gear.shield.hidden = !shield;
+      gear.shield.innerHTML = shield ? SHIELD_ICON : '';
+      gear.shield.title = 'Shield: blocks the next enemy hit';
+    },
     update() {
       for (const f of floats) place(f.el, f.x, f.y, f.z);
+      if (gear.ball && (!gear.sword.hidden || !gear.shield.hidden)) {
+        // Beside the ball at its centre height, just clear of its edge on screen.
+        const b = gear.ball;
+        const c = toScreen(b.x, b.radius, b.z);
+        side.setFromMatrixColumn(camera.matrixWorld, 0).multiplyScalar(b.radius);
+        const e = toScreen(b.x + side.x, b.radius + side.y, b.z + side.z);
+        const gap = Math.abs(e.left - c.left) + 13;
+        gear.sword.style.transform = `translate(${(c.left + gap).toFixed(1)}px, ${c.top.toFixed(1)}px) translate(-50%, -50%)`;
+        gear.shield.style.transform = `translate(${(c.left - gap).toFixed(1)}px, ${c.top.toFixed(1)}px) translate(-50%, -50%)`;
+      }
       for (const [ball, bar] of bars) {
         place(bar.el, ball.x, ball.radius * 2 + BAR_HEIGHT, ball.z);
         if (bar.shown !== ball.hp) {

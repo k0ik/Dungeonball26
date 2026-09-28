@@ -97,7 +97,8 @@ export const CONFIG = {
     goldMax: 5,
     potionHeal: 1,
     superPotionHeal: 5,
-    swordAtk: 3, // added to ATK, for good
+    swordAtk: 3, // added to ATK while you hold a sword
+    swordUses: 2, // hits on enemies before it breaks: whole -> broken half -> gone
     killGoldPerLevel: 1, // a kill drops coins worth the enemy's level
   },
 

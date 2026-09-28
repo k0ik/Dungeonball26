@@ -11,16 +11,30 @@ const BARREL_HEIGHT = 0.62;
 const CHEST_HEIGHT = 0.4;
 const LID_HEIGHT = 0.2;
 
+// Barrel look per crack stage: each stage is darker, shorter and more
+// faceted (fewer, flat-shaded sides), and the last one leans, so damage reads
+// at a glance.
+const BARREL_STAGES = [
+  { sides: 20, height: BARREL_HEIGHT, shade: 1, flat: false, lean: 0 },
+  { sides: 9, height: BARREL_HEIGHT * 0.88, shade: 0.68, flat: true, lean: 0.06 },
+  { sides: 6, height: BARREL_HEIGHT * 0.74, shade: 0.45, flat: true, lean: 0.16 },
+];
+
+function barrelGeometry(stage) {
+  const { sides, height } = BARREL_STAGES[stage];
+  return new THREE.CylinderGeometry(O.barrelRadius, O.barrelRadius * 0.9, height, sides);
+}
+
 function barrelMesh(side, top) {
   const group = new THREE.Group();
-  const geo = new THREE.CylinderGeometry(O.barrelRadius, O.barrelRadius * 0.9, BARREL_HEIGHT, 20);
+  const geo = barrelGeometry(0);
   const body = new THREE.Mesh(geo, [toonMaterial(side), toonMaterial(top), toonMaterial(side)]);
   body.position.y = BARREL_HEIGHT / 2;
   const hull = new THREE.Mesh(geo, outlineHullMaterial);
   hull.scale.setScalar(1.06);
   hull.position.y = BARREL_HEIGHT / 2;
   group.add(hull, body);
-  return { group, body };
+  return { group, body, hull };
 }
 
 function chestMesh() {
@@ -42,8 +56,10 @@ function chestMesh() {
   const lid = new THREE.Mesh(lidGeo, mat);
   lid.position.set(0, LID_HEIGHT / 2, d / 2);
   lid.add(new THREE.LineSegments(new THREE.EdgesGeometry(lidGeo), outlineLineMaterial));
+  // The band wraps the lid just above its bottom edge. It must not share a
+  // plane with any lid face, or the open lid's underside flickers (z-fighting).
   const strap = new THREE.Mesh(new THREE.BoxGeometry(w + 0.02, 0.06, d + 0.02), band);
-  strap.position.y = -LID_HEIGHT / 2 + 0.03;
+  strap.position.y = -LID_HEIGHT / 2 + 0.03 + 0.012;
   lid.add(strap);
   hinge.add(lid);
 
@@ -76,15 +92,25 @@ export function createObjectsView(scene) {
         views.set(s, v);
       }
     },
-    /** A barrel cracked: shake it and darken it a stage. */
+    /** A barrel cracked: shake it and move it to the next damage stage. */
     crack(s, stage) {
       const v = views.get(s);
       if (!v) return;
+      const look = BARREL_STAGES[Math.min(stage, BARREL_STAGES.length - 1)];
       v.shake = 0.25;
-      const k = 1 - 0.18 * stage;
-      v.body.material[0].color.setHex(C.barrel).multiplyScalar(k);
-      v.body.material[1].color.setHex(C.barrelTop).multiplyScalar(k);
-      v.body.rotation.z = (Math.random() - 0.5) * 0.12 * stage;
+      const geo = barrelGeometry(Math.min(stage, BARREL_STAGES.length - 1));
+      v.body.geometry.dispose();
+      v.body.geometry = geo;
+      v.hull.geometry = geo;
+      v.body.position.y = v.hull.position.y = look.height / 2;
+      v.body.material.forEach((m, i) => {
+        m.color.setHex(i === 1 ? C.barrelTop : C.barrel).multiplyScalar(look.shade);
+        m.flatShading = look.flat;
+        m.needsUpdate = true;
+      });
+      // Lean in a random direction, pivoting at the base.
+      const a = Math.random() * Math.PI * 2;
+      v.group.rotation.set(Math.cos(a) * look.lean, 0, Math.sin(a) * look.lean);
     },
     /** A barrel broke or a red barrel went off: pop it out of the scene. */
     remove(s) {

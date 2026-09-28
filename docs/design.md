@@ -97,7 +97,7 @@ D_{\text{enemy}} = \text{ATK} \qquad D_{\text{hero}} = 1 \qquad \text{HP}_{\text
 | Stat | Start value | Notes |
 | --- | --- | --- |
 | Hero max HP | 10 | A health potion heals 1 and a super health potion 5, capped at max |
-| Hero ATK | 1 | A sword adds 3, for ATK 4 |
+| Hero ATK | 1 | A sword adds 3 (ATK 4) for your next two hits on enemies |
 | Shield | None held | A held shield cancels the next enemy hit on you and is used up by it (replaces DEF, now that every hit costs 1 HP) |
 | Enemy level L | 1 to 3 in the MVP | Read from the enemy's HP bar: one notch per HP, and the bar grows longer for tougher enemies |
 | Kill reward | L gold | Drops as coins where it died |
@@ -108,7 +108,7 @@ Combos are called out so you can see them land. Within a single shot, the first 
 
 Pinning works too. Trap an enemy between you and a wall and your rebound can hit it again within the same shot. A hit counts only at an impact speed of at least 0.4 tiles/s (just above the stop threshold, so any visible contact lands; it was 1.5 until halving friction made slow roll-ins common), with a 0.15 s cooldown per enemy, so a ball resting against another cannot grind it down.
 
-Every enemy that currently sees the hero shows a "!" above it, updated live even mid-shot, so you can steer toward a safe stopping spot. Sight range is 6 tiles. Walls, barrels, closed doors and other enemies block sight, and sight is a hero-width sweep so a lunge can really reach you. Watchers off screen get an edge marker. A patrolling enemy shows no marker and a calm expression; a sighted one shows the "!" now, and swapping to an alert expression (as in your sketch) is a good post-MVP addition.
+Every enemy that currently sees the hero shows a "!" above it, updated live even mid-shot, so you can steer toward a safe stopping spot. Sight range is 6 tiles. Walls, barrels, closed doors and other enemies block sight, and sight is a hero-width sweep so a lunge can really reach you. Watchers off screen get an edge marker. A patrolling enemy shows no marker and a calm expression; a sighted one shows the "!" (and, per the to-do list, an angry expression).
 
 ## Lives, death and progression
 
@@ -130,7 +130,7 @@ Barrels, chests, keys and doors are the level's furniture, and barrel and chest 
 
 | Object | Behavior |
 | --- | --- |
-| Barrel | Solid bumper. Each contact above 0.4 tiles/s cracks it one stage, with a 0.15 s cooldown per barrel. The third hit breaks it and drops random loot, picked up automatically. |
+| Barrel | Solid bumper. Each contact above 0.4 tiles/s cracks it one stage, with a 0.15 s cooldown per barrel. The third hit breaks it and drops random loot, picked up automatically. Each crack is obvious at a glance: the barrel gets darker, shorter and more faceted, and the last stage leans. |
 | Chest | Solid bumper. The first contact opens it and grants a random 8 to 24 gold. |
 | Key | Floor pickup, collected by rolling over it. Color-matched to one door and shown in a HUD slot. |
 | Door | Solid and opaque until the hero is within half a tile while holding the matching key. Then it opens for good and the key is consumed. Enemies can pass through an open door. |
@@ -146,14 +146,14 @@ Every barrel drops something. You collect it automatically the moment the barrel
 | Health potion | 25% | +1 HP, capped at max |
 | Super health potion | 8% | +5 HP, capped at max |
 | Shield | 12% | You now hold a shield: it cancels the next enemy hit on you, then is used up. Shields don't stack |
-| Sword | 5% | +3 ATK (ATK 4), for good |
+| Sword | 5% | +3 ATK (ATK 4) for two hits on enemies: after the first it shows as a broken half-blade, after the second it's gone |
 | 1-up | 5% | +1 life |
 
-There is no inventory. Each pickup floats above the hero for about a second, for example "+1 HP", "+5 HP", "+3", "Shield", "Sword" or "1-up". Only the hero cracks barrels and opens chests.
+There is no inventory. Each pickup floats above the hero, for example "+1 HP", "+5 HP", "+3", "Shield", "Sword" or "1-up". Like every floating value (damage numbers, "Combo!", labels), it rises for about half a second and then holds still for another half second before fading, so it can be read. While you hold gear, its icon sits beside your ball: the sword (whole or broken) to the right, the shield to the left. Only the hero cracks barrels and opens chests.
 
 A red barrel is a hazard, not a reward: it can hurt an enemy that bumps it as easily as it can hurt you, so it's worth luring enemies into one.
 
-You hold at most one shield; while you hold one, another shield stays on the floor until yours is used up. A second sword changes nothing (see assumptions).
+You hold at most one shield; while you hold one, another shield stays on the floor until yours is used up. Likewise, a sword stays on the floor while you hold an unbroken one; picking one up over a broken sword restores it to two hits.
 
 ## Levels
 
@@ -214,7 +214,7 @@ The camera is a true orthographic projection at a fixed isometric angle matched 
 - **Dynamic zoom:** the frustum widens as the hero speeds up, so a hard shot pulls the camera out to reveal more of its path, then eases back to the base 9-tile width once every ball is at rest. Default range: 9 tiles at rest up to about 13 tiles at max launch speed (9 tiles/s). This is the minimum width; framing several moving balls can widen it further.
 - **Walls:** short, so they never hide a ball behind them. The mockup's walls stand a little taller than the ball; the build uses 0.55 tile (`render.wallHeight`) so a ball resting just behind a wall stays visible.
 - **Lighting:** one ambient light plus one directional light, no dynamic shadows for the MVP.
-- **HUD:** a dark top bar as in your mock, with gold (the score, next to a coin) on the left, lives in the middle (one small hero ball per life) and gear on the right: a sword icon once you have one and a shield icon while you hold one (key slots join them in M6). HP bars sit above the hero (green) and each enemy (pink), rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The aim preview is different: it's drawn in the 3D scene itself, on the ground plane, so it lands exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
+- **HUD:** a dark top bar as in your mock, with gold (the score, next to a coin) on the left, lives in the middle (one small hero ball per life) and key slots on the right (M6). Gear isn't in the bar: its icons sit beside the hero ball instead (sword to the right, shield to the left). HP bars sit above the hero (green) and each enemy (pink), rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The aim preview is different: it's drawn in the 3D scene itself, on the ground plane, so it lands exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
 - **Art:** procedural 3D primitives matching your mockup: extruded boxes for walls, cylinders for barrels, boxes for chests, spheres for hero and enemies. Walls and floor are flat greys with no outlines, shaded per face (light tops, darker sides); balls and props are toon-shaded with outlines.
 
 ## Audio
@@ -227,7 +227,7 @@ Sound is MVP scope, not a later pass — a game about impacts needs impacts to s
 
 **Implementation:** Three.js's built-in `THREE.AudioListener` and `THREE.Audio` cover both layers without adding a library. Non-positional playback is enough given the MVP's small view; simple stereo panning by world x-position is a nice-to-have, not required. For the MVP, source SFX and the ambient loop from a free, CC0 pack (for example, Kenney's audio assets) rather than composing original audio. Swapping in custom or licensed audio later doesn't change any of the event hookups.
 
-Feedback to add once the loop is fun: a short hit-stop on damaging hits, a small screen shake, crack decals on barrels, and ball squash on impact. (Floating damage numbers and simple synthesized sounds are already in: pink "-1" for your hits, gold for combos.)
+Feedback to add once the loop is fun: a short hit-stop on damaging hits, a small screen shake, and ball squash on impact. (Floating damage numbers and simple synthesized sounds are already in: pink "-1" for your hits, gold for combos.)
 
 ## Tech and build order
 
@@ -248,7 +248,9 @@ Two habits keep tuning cheap. Put every number from this doc in one config file.
 
 ## To-do
 
-Changes agreed during development that aren't built yet. (None right now: the hit flash, combo labels, combo kill and bonus turn are built; see the combat section.)
+Changes agreed during development that aren't built yet.
+
+- **Enemy expressions follow awareness:** an enemy that can't see the hero wears a dumb, calm face (as now); the moment it can see the hero, its face turns angry, alongside the "!". It switches back when it loses sight of you.
 
 ## Out of scope for the MVP
 
@@ -273,7 +275,7 @@ The rules above use these defaults where your answers left a gap. Change any tha
 - Each enemy attacks at most once per round, and only the attacker (the enemy whose turn it is) can damage the hero. Red barrels are the exception: they damage whichever ball touches them, hero included, in any phase.
 - If the hero dies mid-round, the round ends there: the remaining enemies skip their turn and the hero respawns with the first move.
 - Sight range is 6 tiles, not the screen width, because a portrait screen is only 9 tiles wide. Other enemies also block sight, so they can shield you.
-- Gear is the shield, a one-hit consumable held until an enemy hit uses it up (they don't stack), and the sword, +3 ATK for good. A second sword is assumed to change nothing, since there are no gear tiers.
+- Gear is the shield, a one-hit consumable held until an enemy hit uses it up (they don't stack), and the sword, +3 ATK for two hits on enemies (combo and blast damage don't use it up).
 - Barrel loot and chest gold are granted at once with a floating label, except a shield or potion you can't use yet, which waits on the floor. Keys and enemy coins lie on the floor.
 - Respawn restores full HP, and keys you hold are kept.
 - Aiming is a slingshot pull-back rather than dragging toward the target.

@@ -2,7 +2,7 @@
 // whether you can use a pickup right now, and what collecting it does.
 //
 // `run` is the player's run state: { gold, lives }. The hero ball carries
-// hp, maxHp, atk, shield (bool) and sword (bool).
+// hp, maxHp, atk, shield (bool) and swordHits (uses left: 2 whole, 1 broken, 0 none).
 
 import { CONFIG } from './config.js';
 
@@ -32,7 +32,21 @@ export function rollLoot(rng = Math.random) {
 export function canCollect(item, hero) {
   if (item.kind === 'potion' || item.kind === 'superPotion') return hero.hp < hero.maxHp;
   if (item.kind === 'shield') return !hero.shield;
+  // A new sword waits on the floor while you hold an unbroken one.
+  if (item.kind === 'sword') return hero.swordHits < L.swordUses;
   return true;
+}
+
+/**
+ * Your hit on an enemy used the sword (if you hold one). Returns 'broken'
+ * when it's down to its last hit, 'gone' when it's used up, or null.
+ */
+export function useSwordHit(hero) {
+  if (!hero.swordHits) return null;
+  hero.swordHits--;
+  if (hero.swordHits > 0) return 'broken';
+  hero.atk -= L.swordAtk;
+  return 'gone';
 }
 
 /** Apply a pickup. Returns the short label that floats above the hero. */
@@ -52,11 +66,9 @@ export function collect(item, hero, run) {
       hero.shield = true;
       return 'Shield';
     case 'sword':
-      // One sword, no tiers: a second one changes nothing.
-      if (!hero.sword) {
-        hero.sword = true;
-        hero.atk += L.swordAtk;
-      }
+      // A fresh sword; picking one up over a broken one restores it.
+      if (hero.swordHits === 0) hero.atk += L.swordAtk;
+      hero.swordHits = L.swordUses;
       return 'Sword';
     case 'oneUp':
       run.lives += 1;

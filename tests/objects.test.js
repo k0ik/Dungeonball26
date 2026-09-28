@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { parseLevel } from '../src/level.js';
 import { createWorld, createBall, stepWorld, isAtRest } from '../src/physics.js';
 import { createObjects, resolveObjects } from '../src/objects.js';
-import { rollLoot, canCollect, collect } from '../src/loot.js';
+import { rollLoot, canCollect, collect, useSwordHit } from '../src/loot.js';
 import { createCombat, createEnemy } from '../src/combat.js';
 import { CONFIG } from '../src/config.js';
 
@@ -17,7 +17,7 @@ const level = parseLevel(`
 
 function setup() {
   const world = createWorld(level);
-  const hero = Object.assign(createBall({ x: 1.5, z: 4.5, kind: 'hero', id: 'hero' }), { hp: 10, maxHp: 10, atk: 1, shield: false, sword: false });
+  const hero = Object.assign(createBall({ x: 1.5, z: 4.5, kind: 'hero', id: 'hero' }), { hp: 10, maxHp: 10, atk: 1, shield: false, swordHits: 0 });
   world.balls.push(hero);
   world.statics = createObjects(level);
   return { world, hero, get: (kind) => world.statics.find((s) => s.kind === kind) };
@@ -132,8 +132,8 @@ test('loot rolls follow the table and gold is 1 to 5', () => {
   assert.ok(counts.oneUp > 0 && counts.sword > 0 && counts.superPotion > 0 && counts.shield > 0);
 });
 
-test('pickup rules: potions wait at full HP, shields do not stack, sword adds 3 ATK once', () => {
-  const hero = { hp: 10, maxHp: 10, atk: 1, shield: false, sword: false };
+test('pickup rules: potions wait at full HP, shields do not stack', () => {
+  const hero = { hp: 10, maxHp: 10, atk: 1, shield: false, swordHits: 0 };
   const run = { gold: 0, lives: 3 };
   assert.equal(canCollect({ kind: 'potion' }, hero), false);
   hero.hp = 4;
@@ -143,9 +143,6 @@ test('pickup rules: potions wait at full HP, shields do not stack, sword adds 3 
   assert.equal(hero.hp, 10, 'capped at max');
   assert.equal(collect({ kind: 'shield' }, hero, run), 'Shield');
   assert.equal(canCollect({ kind: 'shield' }, hero), false, 'no stacking');
-  collect({ kind: 'sword' }, hero, run);
-  collect({ kind: 'sword' }, hero, run);
-  assert.equal(hero.atk, 4);
   collect({ kind: 'gold', value: 3 }, hero, run);
   collect({ kind: 'coins', value: 2 }, hero, run);
   collect({ kind: 'oneUp' }, hero, run);
@@ -165,4 +162,23 @@ test('a real shot cracks a barrel through the physics', () => {
     world.events.length = 0;
   }
   assert.ok(out.some((o) => o.type === 'crack' && o.obj === barrel));
+});
+
+test('a sword gives +3 ATK for two hits: whole, then broken, then gone', () => {
+  const hero = { hp: 10, maxHp: 10, atk: 1, shield: false, swordHits: 0 };
+  const run = { gold: 0, lives: 3 };
+  assert.equal(useSwordHit(hero), null, 'no sword, nothing to use');
+  collect({ kind: 'sword' }, hero, run);
+  assert.equal(hero.atk, 4);
+  assert.equal(canCollect({ kind: 'sword' }, hero), false, 'a second sword waits while this one is whole');
+  assert.equal(useSwordHit(hero), 'broken');
+  assert.equal(hero.atk, 4, 'still +3 for the last hit');
+  assert.equal(canCollect({ kind: 'sword' }, hero), true, 'a broken sword can be replaced');
+  assert.equal(useSwordHit(hero), 'gone');
+  assert.equal(hero.atk, 1);
+  collect({ kind: 'sword' }, hero, run);
+  useSwordHit(hero);
+  collect({ kind: 'sword' }, hero, run); // replace the broken one
+  assert.equal(hero.swordHits, 2);
+  assert.equal(hero.atk, 4, 'replacing a broken sword does not stack ATK');
 });

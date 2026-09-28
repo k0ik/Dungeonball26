@@ -132,7 +132,37 @@ const ouchFace = () =>
     g.fill();
   });
 
-export const heroFaces = { confident: confidentFace, determined: determinedFace, ouch: ouchFace };
+/** Enemy turn: worried: brows pinched up in the middle, wide eyes, a wobbly mouth, a bead of sweat. */
+const worriedFace = () =>
+  faceTexture('worried', (g) => {
+    for (const x of [46, 82]) {
+      g.beginPath();
+      g.ellipse(x, 56, 7, 12, 0, 0, Math.PI * 2);
+      g.fill();
+    }
+    g.lineWidth = 6;
+    g.beginPath();
+    g.moveTo(33, 40);
+    g.lineTo(56, 31); // inner ends raised: the opposite of the angry slant
+    g.moveTo(95, 40);
+    g.lineTo(72, 31);
+    g.stroke();
+    g.lineWidth = 6;
+    g.beginPath();
+    g.moveTo(46, 94);
+    g.bezierCurveTo(52, 86, 58, 86, 64, 92);
+    g.bezierCurveTo(70, 98, 76, 98, 82, 90);
+    g.stroke();
+    // Sweat drop at the temple.
+    g.fillStyle = '#6ec6ff';
+    g.beginPath();
+    g.moveTo(106, 30);
+    g.quadraticCurveTo(114, 44, 106, 48);
+    g.quadraticCurveTo(98, 44, 106, 30);
+    g.fill();
+  });
+
+export const heroFaces = { confident: confidentFace, determined: determinedFace, ouch: ouchFace, worried: worriedFace };
 
 /** A camera-facing face sprite for a ball of radius `r`. */
 export function faceSprite(texture, r, toCamera) {

@@ -16,6 +16,12 @@ export function createHud(container) {
   let shownKeys = null;
   let shownGold = -1;
 
+  // Enemy turn: a soft red glow around the screen's edge, fading in and out
+  // with the "Enemy Turn" label.
+  const edge = document.createElement('div');
+  edge.className = 'enemy-edge';
+  container.appendChild(edge);
+
   // "Player Turn" / "Enemy Turn": a small pill under the bar, always shown,
   // separate from the centre banner so the two never cover each other.
   const turn = document.createElement('div');
@@ -64,6 +70,7 @@ export function createHud(container) {
       shownTurn = who;
       turn.textContent = who === 'enemy' ? 'Enemy Turn' : 'Player Turn';
       turn.dataset.who = who;
+      edge.classList.toggle('on', who === 'enemy');
       turn.classList.remove('show');
       void turn.offsetWidth;
       turn.classList.add('show');

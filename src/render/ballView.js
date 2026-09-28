@@ -74,7 +74,7 @@ export function createBallView(ball, { color, stripe, silver = false, toCamera =
     flash() {
       flashLeft = CONFIG.render.hitFlashSeconds;
     },
-    /** Show an expression: 'confident', 'determined' or 'ouch'. */
+    /** Show an expression: 'confident', 'determined', 'worried' or 'ouch'. */
     setExpression(name) {
       if (!face || name === expression) return;
       expression = name;

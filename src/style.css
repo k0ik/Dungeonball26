@@ -329,6 +329,20 @@ body {
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
 }
 
+.enemy-edge {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 40px 6px rgba(230, 20, 50, 0.38);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  z-index: 1;
+}
+
+.enemy-edge.on {
+  opacity: 1;
+}
+
 .turn-label {
   position: absolute;
   left: 50%;

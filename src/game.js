@@ -606,11 +606,18 @@ export function createGame(container, levels, startIndex = 0) {
       actorRings.delete(enemy);
     }
 
-    // Face: ouch just after a hit (and while down), determined while you aim
-    // and while your shot rolls, confident otherwise.
+    // Face: ouch just after a hit (and while down), worried through the enemy
+    // turn, determined while you aim and while your shot rolls, confident otherwise.
     state.ouch = Math.max(0, state.ouch - dt);
+    const enemyTurn = state.phase === 'enemyWait' || state.phase === 'enemyMove';
     heroView.setExpression(
-      state.ouch > 0 || state.phase === 'down' ? 'ouch' : state.aiming || state.phase === 'shot' ? 'determined' : 'confident',
+      state.ouch > 0 || state.phase === 'down'
+        ? 'ouch'
+        : enemyTurn
+          ? 'worried'
+          : state.aiming || state.phase === 'shot'
+            ? 'determined'
+            : 'confident',
     );
     heroView.update(dt);
     objectsView.update(dt);

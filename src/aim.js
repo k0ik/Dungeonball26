@@ -26,18 +26,19 @@ export function canGrab(hero, pointer) {
 /**
  * Aim preview: run the shot through the real physics on a ghost ball, so the
  * path ends where the ball would stop, with the same friction and bounce
- * losses. Other balls (enemies) are copied in as obstacles, so contacts with
- * them bend the path like walls. It keeps up to `previewBounces` bounces and
+ * losses. Other balls (enemies) are copied in as obstacles, and barrels and
+ * chests are shared in, so contacts with them bend the path like walls. It keeps up to `previewBounces` bounces and
  * ends at the next contact.
  * Returns { points: [start, ...bends, end], bends: count, stopped }.
  */
-export function previewPath(level, hero, dirX, dirZ, speed, others = []) {
+export function previewPath(level, hero, dirX, dirZ, speed, others = [], statics = []) {
   const world = createWorld(level);
   const ghost = createBall({ x: hero.x, z: hero.z, radius: hero.radius });
   ghost.vx = dirX * speed;
   ghost.vz = dirZ * speed;
   world.balls.push(ghost);
   for (const o of others) world.balls.push(createBall({ x: o.x, z: o.z, radius: o.radius }));
+  world.statics = statics; // bumpers never move, so the ghost can share them
   const touchesGhost = (ev) => ev.ball === ghost || ev.a === ghost || ev.b === ghost;
 
   const points = [{ x: hero.x, z: hero.z }];

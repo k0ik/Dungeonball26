@@ -70,6 +70,37 @@ export const CONFIG = {
     enemyTurnMaxWait: 1.5, // seconds an enemy waits at most for the camera to reach it
   },
 
+  // Barrels, chests and red barrels (design doc: "Objects").
+  objects: {
+    barrelRadius: 0.34,
+    barrelHits: 3, // the third hit breaks it
+    barrelCooldown: 0.15, // seconds between cracks, per barrel
+    chestHalfX: 0.36, // chest footprint, half-size along x and z
+    chestHalfZ: 0.28,
+    chestGoldMin: 8,
+    chestGoldMax: 24,
+    explosiveDamage: 1, // flat, ignores ATK and the shield
+    itemRadius: 0.25, // floor pickups (coins, loot you couldn't use yet)
+  },
+
+  // Barrel loot (design doc: "Objects"). Weights are relative.
+  loot: {
+    table: [
+      { kind: 'gold', weight: 45 },
+      { kind: 'potion', weight: 25 },
+      { kind: 'superPotion', weight: 8 },
+      { kind: 'shield', weight: 12 },
+      { kind: 'sword', weight: 5 },
+      { kind: 'oneUp', weight: 5 },
+    ],
+    goldMin: 1,
+    goldMax: 5,
+    potionHeal: 1,
+    superPotionHeal: 5,
+    swordAtk: 3, // added to ATK, for good
+    killGoldPerLevel: 1, // a kill drops coins worth the enemy's level
+  },
+
   hero: {
     downPause: 1.0, // seconds after a knockout before you respawn
     maxHp: 10,
@@ -137,6 +168,19 @@ export const CONFIG = {
     aim: 0xffffff,
     turnRing: 0x5ad16a, // matches the hero's HP bar
     hitFlash: 0xff2a2a,
+    // Objects and pickups, after the mockup.
+    barrel: 0xa87c40,
+    barrelTop: 0xfcc062,
+    explosive: 0xd01818,
+    explosiveTop: 0xf06a6a,
+    chest: 0xd79a3c,
+    chestBand: 0xffd84a,
+    explosion: 0xff9a2a,
+    coin: 0xffc24a,
+    potion: 0xe8336f,
+    superPotion: 0x9b5cff,
+    shieldItem: 0x3a86ff,
+    sword: 0xd4d7dc,
     shadow: 0x000000,
   },
 

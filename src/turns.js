@@ -3,7 +3,7 @@
 
 import { CONFIG } from './config.js';
 import { tileAt } from './level.js';
-import { overlapsSolid } from './physics.js';
+import { overlapsSolid, staticContact } from './physics.js';
 
 const E = CONFIG.enemy;
 
@@ -44,12 +44,14 @@ export function lungeVelocity(enemy, hero) {
   return { vx: (dx / d) * E.lungeSpeed, vz: (dz / d) * E.lungeSpeed };
 }
 
-function pathClear(level, x0, z0, x1, z1, r) {
+function pathClear(level, statics, x0, z0, x1, z1, r) {
   const d = Math.hypot(x1 - x0, z1 - z0);
   const steps = Math.ceil(d / 0.1);
   for (let i = 1; i <= steps; i++) {
     const t = i / steps;
-    if (overlapsSolid(level, x0 + (x1 - x0) * t, z0 + (z1 - z0) * t, r)) return false;
+    const p = { x: x0 + (x1 - x0) * t, z: z0 + (z1 - z0) * t };
+    if (overlapsSolid(level, p.x, p.z, r)) return false;
+    if (statics.some((s) => staticContact(p, s, r))) return false;
   }
   return true;
 }
@@ -60,7 +62,7 @@ function pathClear(level, x0, z0, x1, z1, r) {
  * that friction brings to rest there (clamped to the patrol speed range).
  * Returns { vx, vz, target } or null to stay put.
  */
-export function patrolMove(level, enemy, balls, rng = Math.random) {
+export function patrolMove(level, enemy, balls, rng = Math.random, statics = []) {
   const R = E.patrolRadius;
   const col0 = Math.floor(enemy.x);
   const row0 = Math.floor(enemy.z);
@@ -74,7 +76,7 @@ export function patrolMove(level, enemy, balls, rng = Math.random) {
       const d = Math.hypot(x - enemy.x, z - enemy.z);
       if (d > R) continue;
       if (balls.some((b) => b !== enemy && Math.hypot(b.x - x, b.z - z) < b.radius + enemy.radius)) continue;
-      if (!pathClear(level, enemy.x, enemy.z, x, z, enemy.radius - 1e-3)) continue;
+      if (!pathClear(level, statics, enemy.x, enemy.z, x, z, enemy.radius - 1e-3)) continue;
       options.push({ x, z, d });
     }
   }

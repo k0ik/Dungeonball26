@@ -196,7 +196,7 @@ Until the other levels exist (M6–M7), Long Hall is the only level and reaching
 
 | # | Name | Size | Enemies | Keys and doors | Teaches |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Long Hall | 12×32 | Eight, levels 1 to 3 (a touching pair blocks the first doorway) | None | Aiming, bouncing, hitting enemies, combos, the exit |
+| 1 | Long Hall | 12×32 | Eight, levels 1 to 3 (a touching pair blocks the first doorway), plus six barrels, three chests and two red barrels | None | Aiming, bouncing, hitting enemies, combos, the exit |
 | 2 | Breakables | 9×20 | Two level-1 | None | Barrels, chest, potions, sightlines |
 | 3 | One Key | 12×20 | Level 1 and level 2 | Red | Keys, doors, hiding from sight |
 | 4 | Two Keys | 14×24 | Four, levels 1 to 3 | Red, blue | Routing, combos, using enemies as blockers |
@@ -214,7 +214,7 @@ The camera is a true orthographic projection at a fixed isometric angle matched 
 - **Dynamic zoom:** the frustum widens as the hero speeds up, so a hard shot pulls the camera out to reveal more of its path, then eases back to the base 9-tile width once every ball is at rest. Default range: 9 tiles at rest up to about 13 tiles at max launch speed (9 tiles/s). This is the minimum width; framing several moving balls can widen it further.
 - **Walls:** short, so they never hide a ball behind them. The mockup's walls stand a little taller than the ball; the build uses 0.55 tile (`render.wallHeight`) so a ball resting just behind a wall stays visible.
 - **Lighting:** one ambient light plus one directional light, no dynamic shadows for the MVP.
-- **HUD:** a dark top bar as in your mock, with gold on the left, lives in the middle (one small hero ball per life) and key slots on the right. HP bars sit above the hero (green) and each enemy (pink), rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The aim preview is different: it's drawn in the 3D scene itself, on the ground plane, so it lands exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
+- **HUD:** a dark top bar as in your mock, with gold (the score, next to a coin) on the left, lives in the middle (one small hero ball per life) and gear on the right: a sword icon once you have one and a shield icon while you hold one (key slots join them in M6). HP bars sit above the hero (green) and each enemy (pink), rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The aim preview is different: it's drawn in the 3D scene itself, on the ground plane, so it lands exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
 - **Art:** procedural 3D primitives matching your mockup: extruded boxes for walls, cylinders for barrels, boxes for chests, spheres for hero and enemies. Walls and floor are flat greys with no outlines, shaded per face (light tops, darker sides); balls and props are toon-shaded with outlines.
 
 ## Audio

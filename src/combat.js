@@ -7,7 +7,10 @@
 // - A knocked enemy hits another enemy: both lose 1 HP, once per pair per shot.
 // Enemy phase:
 // - Only the enemy whose turn it is can hurt the hero: 1 HP per hit, whatever
-//   its level, at most once per turn. No other contact deals damage.
+//   its level, at most once per turn. A held shield cancels that hit instead
+//   and is used up. No other contact deals damage.
+// Red barrels (any phase): the ball that set one off takes 1 flat damage,
+// ignoring ATK and the shield.
 // Walls never deal damage.
 // A hit only counts at an impact speed of at least `hitMinSpeed`, and each
 // enemy has a short cooldown so a ball resting against it can't grind it down.
@@ -72,6 +75,24 @@ export function createCombat() {
       killsThisShot = 0;
       actor = null;
     },
+    /**
+     * A red barrel went off on `victim`: 1 flat damage, ignoring ATK and the
+     * shield. Returns outcomes like resolve(); a killed enemy leaves the board.
+     */
+    explosion(world, victim, hero) {
+      const out = [];
+      const amount = CONFIG.objects.explosiveDamage;
+      if (victim === hero) {
+        if (hero.hp > 0) {
+          hero.hp = Math.max(0, hero.hp - amount);
+          out.push({ type: 'hurt', target: hero, amount, source: 'explosion' });
+        }
+      } else if (victim.kind === 'enemy' && victim.hp > 0) {
+        damage(victim, amount, world.time, out, null, 'blast');
+        if (victim.hp === 0) world.balls = world.balls.filter((b) => b !== victim);
+      }
+      return out;
+    },
     /** Call as each enemy starts its turn (lunge or patrol). */
     beginEnemyTurn(enemy) {
       actor = enemy;
@@ -92,6 +113,11 @@ export function createCombat() {
           const pair = (ev.a === hero && ev.b === actor) || (ev.b === hero && ev.a === actor);
           if (!pair || hero.hp <= 0) continue;
           actorHasHit = true;
+          if (hero.shield) {
+            hero.shield = false;
+            out.push({ type: 'blocked', target: hero, source: actor, event: ev });
+            continue;
+          }
           const amount = heroDamage();
           hero.hp = Math.max(0, hero.hp - amount);
           out.push({ type: 'hurt', target: hero, amount, source: actor, event: ev });

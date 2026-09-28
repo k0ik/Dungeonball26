@@ -1,7 +1,7 @@
 // Line of sight (design doc: "Combat rules and formulas"). An enemy sees the
 // hero when the hero is within sight range and a hero-width sweep from the
-// enemy to the hero touches no wall and no other ball, so anything it can see
-// it could really reach with a lunge.
+// enemy to the hero touches no wall, no other ball and no barrel or chest, so
+// anything it can see it could really reach with a lunge.
 
 import { CONFIG } from './config.js';
 import { overlapsSolid } from './physics.js';
@@ -17,11 +17,16 @@ function distToSegment(px, pz, ax, az, bx, bz) {
   return Math.hypot(px - (ax + dx * t), pz - (az + dz * t));
 }
 
+/** Rough radius of a static bumper for sight and path checks. */
+function staticRadius(s) {
+  return s.shape === 'circle' ? s.radius : Math.hypot(s.halfX, s.halfZ);
+}
+
 /**
  * Does `enemy` see `hero`? `balls` is every ball on the board; any ball other
- * than these two that the sweep would hit blocks sight.
+ * than these two that the sweep would hit blocks sight, as do `statics`.
  */
-export function canSee(level, enemy, hero, balls) {
+export function canSee(level, enemy, hero, balls, statics = []) {
   const dx = hero.x - enemy.x;
   const dz = hero.z - enemy.z;
   const dist = Math.hypot(dx, dz);
@@ -40,6 +45,9 @@ export function canSee(level, enemy, hero, balls) {
   for (const b of balls) {
     if (b === enemy || b === hero) continue;
     if (distToSegment(b.x, b.z, enemy.x, enemy.z, hero.x, hero.z) < b.radius + hero.radius) return false;
+  }
+  for (const s of statics) {
+    if (distToSegment(s.x, s.z, enemy.x, enemy.z, hero.x, hero.z) < staticRadius(s) + hero.radius) return false;
   }
   return true;
 }

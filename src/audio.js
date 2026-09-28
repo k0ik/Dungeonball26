@@ -100,6 +100,54 @@ const SYNTHS = {
   respawn: (ctx) => notes(ctx, [392, 587], 0.12, 0.35),
   // Out of lives: a slow low fall.
   gameover: (ctx) => notes(ctx, [330, 262, 196, 131], 0.22, 0.5),
+  // Barrel crack: a dry wooden knock (pitched up per stage when played).
+  crack: (ctx) =>
+    synth(ctx, 0.14, (t) => {
+      const knock = Math.sin(2 * Math.PI * 330 * t) * Math.exp(-t * 40) + Math.sin(2 * Math.PI * 740 * t) * Math.exp(-t * 60) * 0.4;
+      const splinter = (Math.random() * 2 - 1) * Math.exp(-t * 90) * 0.5;
+      return (knock + splinter) * 0.6;
+    }),
+  // Barrel breaks: a splintering crash.
+  break: (ctx) =>
+    synth(ctx, 0.45, (t) => {
+      const crash = (Math.random() * 2 - 1) * Math.exp(-t * 9) * (0.6 + 0.4 * Math.sin(2 * Math.PI * 23 * t));
+      const thump = Math.sin(2 * Math.PI * (140 - 120 * t) * t) * Math.exp(-t * 14);
+      return (crash * 0.6 + thump * 0.6) * 0.8;
+    }),
+  // Chest opens: a creak, then coins.
+  chest: (ctx) =>
+    synth(ctx, 0.6, (t) => {
+      const creak = t < 0.18 ? Math.sign(Math.sin(2 * Math.PI * (180 + 260 * t) * t)) * 0.12 * Math.sin((Math.PI * t) / 0.18) : 0;
+      const coin = (u) => (u < 0 ? 0 : (Math.sin(2 * Math.PI * 2100 * u) + Math.sin(2 * Math.PI * 3150 * u) * 0.5) * Math.exp(-u * 30));
+      return creak + (coin(t - 0.2) + coin(t - 0.28) * 0.8 + coin(t - 0.36) * 0.6) * 0.25;
+    }),
+  // Red barrel: a low boom with a noisy blast.
+  explode: (ctx) =>
+    synth(ctx, 0.8, (t) => {
+      const boom = Math.sin(2 * Math.PI * (70 - 40 * t) * t) * Math.exp(-t * 5);
+      const blast = (Math.random() * 2 - 1) * Math.exp(-t * 7);
+      return (boom * 0.7 + blast * 0.5) * 0.85;
+    }),
+  // Gold or coins picked up: two bright pings.
+  coin: (ctx) => notes(ctx, [1568, 2093], 0.06, 0.35),
+  // Potion: a quick bubbly rise.
+  potion: (ctx) =>
+    synth(ctx, 0.3, (t) => Math.sin(2 * Math.PI * (500 + 900 * t + 60 * Math.sin(2 * Math.PI * 30 * t)) * t) * Math.exp(-t * 7) * 0.4),
+  // Sword or shield picked up: a metallic shing.
+  gear: (ctx) =>
+    synth(ctx, 0.5, (t) => {
+      const ring = Math.sin(2 * Math.PI * 1760 * t) * 0.5 + Math.sin(2 * Math.PI * 2640 * t) * 0.3 + Math.sin(2 * Math.PI * 3700 * t) * 0.2;
+      const scrape = (Math.random() * 2 - 1) * Math.exp(-t * 40) * 0.3;
+      return (ring * Math.exp(-t * 6) + scrape) * 0.4;
+    }),
+  // 1-up: a cheerful rising run.
+  oneUp: (ctx) => notes(ctx, [523, 659, 784, 1047, 1319], 0.07, 0.4),
+  // The shield takes a hit: a flat metal clang.
+  blocked: (ctx) =>
+    synth(ctx, 0.35, (t) => {
+      const clang = Math.sin(2 * Math.PI * 620 * t) * 0.5 + Math.sin(2 * Math.PI * 1370 * t) * 0.35 + Math.sin(2 * Math.PI * 2210 * t) * 0.2;
+      return (clang * Math.exp(-t * 10) + (Math.random() * 2 - 1) * Math.exp(-t * 80) * 0.4) * 0.55;
+    }),
   // Two billiard balls: bright and short.
   ball: (ctx) =>
     synth(ctx, 0.08, (t) => {

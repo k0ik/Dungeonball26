@@ -28,6 +28,10 @@ import { createHud } from './render/hud.js';
 import { createAimView } from './render/aimView.js';
 import { createCameraRig } from './render/cameraRig.js';
 import { createAudio } from './audio.js';
+import { createObjects, resolveObjects } from './objects.js';
+import { rollLoot, canCollect, collect } from './loot.js';
+import { createObjectsView } from './render/objectsView.js';
+import { createItemsView } from './render/itemsView.js';
 
 /** levels: [{ id, name, text }]. */
 export function createGame(container, levels, startIndex = 0) {
@@ -50,7 +54,7 @@ export function createGame(container, levels, startIndex = 0) {
 
   // The hero persists across levels; the level, its world and its view don't.
   const hero = createBall({ x: 0, z: 0, kind: 'hero', id: 'hero' });
-  Object.assign(hero, { atk: CONFIG.hero.atk, maxHp: CONFIG.hero.maxHp, hp: CONFIG.hero.maxHp });
+  Object.assign(hero, { atk: CONFIG.hero.atk, maxHp: CONFIG.hero.maxHp, hp: CONFIG.hero.maxHp, shield: false, sword: false });
   const heroView = createBallView(hero, { color: CONFIG.colors.hero, stripe: CONFIG.colors.heroStripe });
   scene.add(heroView.object);
   overlay.addBar(hero, 'hero');
@@ -59,6 +63,8 @@ export function createGame(container, levels, startIndex = 0) {
   scene.add(aimView.object);
 
   const combat = createCombat();
+  const objectsView = createObjectsView(scene);
+  const itemsView = createItemsView(scene);
   const enemyViews = new Map(); // enemy ball -> view
 
   const state = {
@@ -69,7 +75,8 @@ export function createGame(container, levels, startIndex = 0) {
     shots: 0,
     clears: 0,
     lives: CONFIG.hero.lives,
-    entryHp: hero.hp, // HP when this level was entered; game over restores it
+    gold: 0, // the score
+    entry: null, // HP, gear and gold when this level was entered; game over restores them
     taken: new Set(), // enemies that have acted this round
     patrollers: new Set(), // enemies allowed to patrol this round
     actor: null, // the enemy whose turn it is
@@ -96,6 +103,9 @@ export function createGame(container, levels, startIndex = 0) {
     scene.add(levelView);
     world = createWorld(level);
     world.balls.push(hero);
+    world.statics = createObjects(level);
+    world.items = []; // floor pickups: kill coins, and loot you couldn't use yet
+    objectsView.build(world.statics);
 
     for (const view of enemyViews.values()) {
       scene.remove(view.object);
@@ -114,7 +124,7 @@ export function createGame(container, levels, startIndex = 0) {
 
     start = tileCenter(level.start);
     rig.setBounds(0, level.width, 0, level.height);
-    state.entryHp = hero.hp;
+    state.entry = { hp: hero.hp, atk: hero.atk, shield: hero.shield, sword: hero.sword, gold: state.gold };
     respawn();
     rig.snapTo(hero.x, hero.z);
     hud.setLives(state.lives, CONFIG.hero.lives);
@@ -211,7 +221,7 @@ export function createGame(container, levels, startIndex = 0) {
       combat.beginEnemyTurn(actor);
 
       // Sight is rechecked now, since earlier moves this round can change it.
-      if (canSee(level, actor, hero, world.balls)) {
+      if (canSee(level, actor, hero, world.balls, world.statics)) {
         state.plan = { kind: 'lunge' };
         state.phase = 'enemyWait';
         state.timer = CONFIG.enemy.lungeTelegraph;
@@ -221,7 +231,7 @@ export function createGame(container, levels, startIndex = 0) {
 
       // Only this round's chosen half patrol; the rest sit it out, unseen.
       if (!state.patrollers.has(actor)) continue;
-      const move = patrolMove(level, actor, world.balls);
+      const move = patrolMove(level, actor, world.balls, Math.random, world.statics);
       if (!move) continue; // boxed in: it stays put this turn
       state.plan = { kind: 'patrol', ...move };
       state.phase = 'enemyWait';
@@ -259,9 +269,12 @@ export function createGame(container, levels, startIndex = 0) {
       sfx.play('respawn', 0.8);
       hud.banner(`${state.lives} ${state.lives === 1 ? 'life' : 'lives'} left`, 'The board stays as you left it', 1.4);
     } else {
-      // Game over: the level starts from scratch, with the HP you entered it with.
+      // Game over: the level starts from scratch, with the HP, gear and gold
+      // you entered it with.
       state.lives = CONFIG.hero.lives;
-      hero.hp = state.entryHp;
+      const { hp, atk, shield, sword, gold } = state.entry;
+      Object.assign(hero, { hp, atk, shield, sword });
+      state.gold = gold;
       sfx.play('gameover', 0.9);
       loadLevel(levelIndex);
       hud.banner('Game over', 'The level starts over', 2);
@@ -280,19 +293,77 @@ export function createGame(container, levels, startIndex = 0) {
   }
 
   // --- Events ------------------------------------------------------------------
-  function handleEvents(outcomes) {
+  /** Barrel loot: collect it now if you can use it, otherwise leave it on the floor. */
+  function dropLoot(x, z) {
+    const item = { ...rollLoot(), x, z };
+    if (canCollect(item, hero)) pickUp(item);
+    else world.items.push(item);
+  }
+
+  const PICKUP_SOUND = { gold: 'coin', coins: 'coin', potion: 'potion', superPotion: 'potion', shield: 'gear', sword: 'gear', oneUp: 'oneUp' };
+  const PICKUP_STYLE = { gold: 'gold', coins: 'gold', potion: 'heal', superPotion: 'heal', shield: 'gear', sword: 'gear', oneUp: 'gear' };
+
+  function pickUp(item) {
+    const label = collect(item, hero, state);
+    sfx.play(PICKUP_SOUND[item.kind], 0.8);
+    overlay.float(label, hero.x, hero.z, hero.radius * 2 + 0.45, PICKUP_STYLE[item.kind]);
+    hud.setLives(state.lives, CONFIG.hero.lives);
+  }
+
+  /** Roll over a floor item to take it, once you can use it. */
+  function checkPickups() {
+    const reach = hero.radius + CONFIG.objects.itemRadius;
+    for (const item of [...world.items]) {
+      if (Math.hypot(item.x - hero.x, item.z - hero.z) > reach || !canCollect(item, hero)) continue;
+      world.items.splice(world.items.indexOf(item), 1);
+      pickUp(item);
+    }
+  }
+
+  /** Barrels, chests and red barrels. */
+  function handleObjects(outcomes) {
+    for (const o of outcomes) {
+      const { obj } = o;
+      if (o.type === 'crack') {
+        sfx.play('crack', 0.8, { pitch: 0.9 + 0.15 * o.stage });
+        objectsView.crack(obj, o.stage);
+      } else if (o.type === 'break') {
+        sfx.play('break', 0.9);
+        objectsView.remove(obj);
+        dropLoot(obj.x, obj.z);
+      } else if (o.type === 'open') {
+        sfx.play('chest', 0.9);
+        objectsView.openChest(obj);
+        state.gold += o.gold;
+        overlay.float(`+${o.gold}`, obj.x, obj.z, 0.9, 'gold');
+      } else if (o.type === 'explode') {
+        sfx.play('explode', 1);
+        objectsView.remove(obj);
+        objectsView.blast(obj.x, obj.z);
+        handleOutcomes(combat.explosion(world, o.victim, hero));
+      }
+    }
+  }
+
+  function handleEvents(outcomes, objectOutcomes = []) {
     const A = CONFIG.audio;
     const damaging = new Set(outcomes.map((o) => o.event).filter(Boolean));
+    const objectHits = new Set(objectOutcomes.map((o) => o.obj));
     for (const ev of world.events) {
       const loud = Math.min(1, ev.speed / CONFIG.aim.maxLaunchSpeed);
-      if (ev.type === 'wall' && ev.speed >= A.minWallSoundSpeed) {
+      const bump = ev.type === 'wall' || (ev.type === 'static' && !objectHits.has(ev.obj));
+      if (bump && ev.speed >= A.minWallSoundSpeed) {
         sfx.play('wall', 0.25 + 0.75 * loud, { pitch: 0.9 + Math.random() * 0.2, minInterval: A.minWallSoundInterval });
       } else if (ev.type === 'ball' && !damaging.has(ev)) {
         sfx.play('ball', 0.3 + 0.7 * loud);
       }
     }
     world.events.length = 0;
+    handleOutcomes(outcomes);
+    handleObjects(objectOutcomes);
+  }
 
+  function handleOutcomes(outcomes) {
     const floatAt = (ball, text, cls, lift = 0) => overlay.float(text, ball.x, ball.z, ball.radius * 2 + 0.2 + lift, cls);
     let comboSounded = false;
     for (const o of outcomes) {
@@ -305,11 +376,15 @@ export function createGame(container, levels, startIndex = 0) {
         floatAt(o.target, `-${o.amount}`, o.type === 'combo' ? 'combo' : '');
         // Every enemy after the first one damaged this shot is a combo.
         if (o.chain >= 2) floatAt(o.target, 'Combo!', 'combo-label', 0.45);
+      } else if (o.type === 'blast') {
+        floatAt(o.target, `-${o.amount}`, 'hurt');
       } else if (o.type === 'kill') {
         sfx.play('kill', 0.9);
         enemyViews.get(o.target)?.die();
         overlay.removeBar(o.target);
-        if (o.shotKills >= 2) {
+        // A kill drops coins worth the enemy's level where it died.
+        world.items.push({ kind: 'coins', value: o.target.level * CONFIG.loot.killGoldPerLevel, x: o.target.x, z: o.target.z });
+        if (o.shotKills >= 2 && state.phase === 'shot') {
           sfx.play('comboKill', 0.9);
           state.comboKillAt = performance.now();
           hud.banner(o.shotKills > 2 ? `Combo Kill ×${o.shotKills}!` : 'Combo Kill!', 'Bonus turn: shoot again', 2);
@@ -318,7 +393,10 @@ export function createGame(container, levels, startIndex = 0) {
         sfx.play('hurt', 1);
         heroView.flash();
         floatAt(hero, `-${o.amount}`, 'hurt');
-        if (hero.hp <= 0) knockedOut();
+        if (hero.hp <= 0 && state.phase !== 'down') knockedOut();
+      } else if (o.type === 'blocked') {
+        sfx.play('blocked', 1);
+        floatAt(hero, 'Blocked!', 'gear');
       }
     }
   }
@@ -386,7 +464,10 @@ export function createGame(container, levels, startIndex = 0) {
     let steps = 0;
     while (acc >= step && steps < CONFIG.physics.maxStepsPerFrame) {
       stepWorld(world, step);
-      handleEvents(combat.resolve(world, hero));
+      // Both read this step's events before handleEvents clears them.
+      const outcomes = combat.resolve(world, hero);
+      handleEvents(outcomes, resolveObjects(world, hero));
+      checkPickups();
       if (state.phase !== 'down' && tileAt(level, Math.floor(hero.x), Math.floor(hero.z)) === 'exit') {
         reachExit();
         break;
@@ -433,7 +514,7 @@ export function createGame(container, levels, startIndex = 0) {
     if (state.aiming) {
       const shot = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z });
       const others = world.balls.filter((b) => b !== hero);
-      const preview = shot.cancel ? null : previewPath(level, hero, shot.dirX, shot.dirZ, shot.speed, others);
+      const preview = shot.cancel ? null : previewPath(level, hero, shot.dirX, shot.dirZ, shot.speed, others, world.statics);
       aimView.show(hero, shot, preview, rig.viewWidth / rig.aimStartWidth);
     } else if (state.phase === 'aim') {
       aimView.showTurn(hero, dt);
@@ -442,6 +523,9 @@ export function createGame(container, levels, startIndex = 0) {
     }
 
     heroView.update(dt);
+    objectsView.update(dt);
+    itemsView.sync(world.items);
+    itemsView.update(dt);
     for (const [enemy, view] of enemyViews) {
       view.update(dt);
       if (view.gone) {
@@ -455,7 +539,7 @@ export function createGame(container, levels, startIndex = 0) {
     const acting = state.phase === 'enemyWait' || state.phase === 'enemyMove' ? state.actor : null;
     for (const enemy of enemies()) {
       const lunging = enemy === acting && state.plan?.kind === 'lunge';
-      overlay.setAlert(enemy, lunging || canSee(level, enemy, hero, world.balls), lunging);
+      overlay.setAlert(enemy, lunging || canSee(level, enemy, hero, world.balls, world.statics), lunging);
     }
 
     if (state.aiming) {
@@ -468,6 +552,8 @@ export function createGame(container, levels, startIndex = 0) {
     }
     renderer.render(scene, rig.camera);
     overlay.update();
+    hud.setGold(state.gold);
+    hud.setGear(hero);
 
     if (!debug.hidden) {
       debug.textContent = [
@@ -477,7 +563,7 @@ export function createGame(container, levels, startIndex = 0) {
         `speed  ${speedOf(hero).toFixed(2)} tiles/s`,
         `view   ${rig.viewWidth.toFixed(2)} units`,
         `shots  ${state.shots}   exits  ${state.clears}`,
-        `enemies ${enemies().length} left`,
+        `enemies ${enemies().length} left   gold ${state.gold}   atk ${hero.atk}${hero.shield ? '  shield' : ''}`,
         `[d] debug  [r] respawn  [n] next level`,
       ].join('\n');
     }
@@ -497,6 +583,7 @@ export function createGame(container, levels, startIndex = 0) {
     },
     hero,
     heroView,
+    objectsView,
     state,
     rig,
     respawn,

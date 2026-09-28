@@ -6,7 +6,7 @@ Rendered as a true orthographic 3D isometric view in [Three.js](https://threejs.
 
 ## Status
 
-M0–M4 done: the full core loop. You shoot, then every enemy takes a turn, nearest first: ones that can see you (marked "!") lunge at you, the rest patrol. You have HP, 3 lives and respawns; enemies take damage from your hits and combos. The level (Long Hall) renders at the mockup's isometric angle with a slingshot aim, power-scaled path preview and a camera that follows the ball. Loot, score and more levels come next (M5–M7). See **[docs/design.md](docs/design.md)** for the full design doc: core loop, physics parameters, combat formulas, object behavior, level format, camera and audio design, and the milestone build order.
+M0–M5 done: the full core loop. You shoot, then every enemy takes a turn, nearest first: ones that can see you (marked "!") lunge at you, the rest patrol. You have HP, 3 lives and respawns; enemies take damage from your hits and combos. Barrels crack and drop loot (gold, potions, a shield, a sword, 1-ups), chests hold gold, red barrels explode on whoever touches them, and gold is the score. The level (Long Hall) renders at the mockup's isometric angle with a slingshot aim, power-scaled path preview and a camera that follows the ball. Keys, doors and more levels come next (M6–M7). See **[docs/design.md](docs/design.md)** for the full design doc: core loop, physics parameters, combat formulas, object behavior, level format, camera and audio design, and the milestone build order.
 
 ## Getting started
 
@@ -31,6 +31,7 @@ To test on a phone on the same network, run `npm run host` and open the printed 
 - `src/aim.js` — slingshot aim maths and the physics look-ahead preview
 - `src/combat.js` — damage rules for your shot and the enemy phase
 - `src/sight.js`, `src/turns.js` — line of sight, turn order, lunges and patrols
+- `src/objects.js`, `src/loot.js` — barrels, chests, red barrels, the loot table and pickup rules
 - `src/render/` — Three.js views: level geometry, hero and enemy balls, aim preview, camera rig, HUD bar, and the HTML overlay for HP bars, "!" markers and damage numbers
 - `src/audio.js` — SFX via `THREE.Audio` (synthesized placeholders for now)
 - `src/game.js` — wires input, simulation, rendering and audio together

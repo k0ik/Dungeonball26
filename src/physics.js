@@ -1,5 +1,7 @@
 // Custom 2D circle solver on the ground plane (x, z), fixed timestep.
 // Walls are the level's solid tiles, treated as axis-aligned unit boxes.
+// Statics are immovable bumpers inside the room (barrels, chests): circles or
+// boxes that keep `bumperRestitution` of a ball's speed.
 
 import { CONFIG } from './config.js';
 import { isSolid } from './level.js';
@@ -11,7 +13,17 @@ export function createBall({ x, z, radius = CONFIG.ball.diameter / 2, kind = 'ba
 }
 
 export function createWorld(level) {
-  return { level, balls: [], events: [], time: 0 };
+  return { level, balls: [], statics: [], events: [], time: 0 };
+}
+
+/** An immovable round bumper (a barrel). */
+export function createStaticCircle({ x, z, radius, kind, id }) {
+  return { id, kind, shape: 'circle', x, z, radius };
+}
+
+/** An immovable box bumper (a chest), `halfX` by `halfZ` around (x, z). */
+export function createStaticBox({ x, z, halfX, halfZ, kind, id }) {
+  return { id, kind, shape: 'box', x, z, halfX, halfZ };
 }
 
 export function speedOf(ball) {
@@ -47,7 +59,43 @@ export function stepWorld(world, dt = P.step) {
     for (let j = i + 1; j < balls.length; j++) resolveBallPair(world, balls[i], balls[j]);
   }
 
-  for (const b of balls) resolveWalls(world, b);
+  for (const b of balls) {
+    for (const s of world.statics) resolveStatic(world, b, s);
+    resolveWalls(world, b);
+  }
+}
+
+/** Contact normal and depth of a ball against a static, or null. */
+export function staticContact(b, s, r = b.radius) {
+  let cx = s.x;
+  let cz = s.z;
+  let reach = r;
+  if (s.shape === 'circle') {
+    reach = r + s.radius;
+  } else {
+    cx = Math.min(Math.max(b.x, s.x - s.halfX), s.x + s.halfX);
+    cz = Math.min(Math.max(b.z, s.z - s.halfZ), s.z + s.halfZ);
+  }
+  const dx = b.x - cx;
+  const dz = b.z - cz;
+  const d2 = dx * dx + dz * dz;
+  if (d2 >= reach * reach) return null;
+  const d = Math.sqrt(d2);
+  if (d < 1e-9) return { nx: 1, nz: 0, depth: reach }; // centre inside: push out along +x
+  return { nx: dx / d, nz: dz / d, depth: reach - d };
+}
+
+function resolveStatic(world, b, s) {
+  const c = staticContact(b, s);
+  if (!c) return;
+  b.x += c.nx * c.depth;
+  b.z += c.nz * c.depth;
+  const vn = b.vx * c.nx + b.vz * c.nz;
+  if (vn >= 0) return;
+  // Reflect, then keep a fraction of the total speed, like walls.
+  b.vx = (b.vx - 2 * vn * c.nx) * P.bumperRestitution;
+  b.vz = (b.vz - 2 * vn * c.nz) * P.bumperRestitution;
+  world.events.push({ type: 'static', ball: b, obj: s, speed: -vn });
 }
 
 function resolveBallPair(world, a, b) {

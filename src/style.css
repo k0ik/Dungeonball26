@@ -220,6 +220,50 @@ body {
   z-index: 2;
 }
 
+.hud-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The mockup's gold coin, with the score beside it. */
+.coin {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffc24a;
+  box-shadow: inset 0 0 0 2px #e0a02c;
+}
+
+.hud-gold {
+  font: 700 20px/1 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-variant-numeric: tabular-nums;
+  color: #f2f2f4;
+}
+
+.hud-gold.bump {
+  animation: gold-bump 0.3s ease-out;
+}
+
+@keyframes gold-bump {
+  40% {
+    scale: 1.25;
+    color: #ffd84a;
+  }
+}
+
+.hud-right {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.gear svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
 .hud-lives {
   display: flex;
   gap: 6px;
@@ -280,7 +324,41 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .alert.acting span,
+  .hud-gold.bump,
   .banner.show {
     animation: none;
   }
+}
+
+/* Pickup labels over the hero. */
+.float.gold {
+  color: #ffd84a;
+  text-shadow:
+    0 0 2px #4a3000,
+    0 1px 0 #4a3000,
+    0 -1px 0 #4a3000,
+    1px 0 0 #4a3000,
+    -1px 0 0 #4a3000;
+}
+
+.float.heal {
+  color: #7be08a;
+  text-shadow:
+    0 0 2px #0f3a16,
+    0 1px 0 #0f3a16,
+    0 -1px 0 #0f3a16,
+    1px 0 0 #0f3a16,
+    -1px 0 0 #0f3a16;
+}
+
+.float.gear {
+  font-size: 14px;
+  color: #d6e6ff;
+  text-shadow:
+    0 0 2px #0b2350,
+    0 1px 0 #0b2350,
+    0 -1px 0 #0b2350,
+    1px 0 0 #0b2350,
+    -1px 0 0 #0b2350;
+  animation-duration: 1.1s;
 }

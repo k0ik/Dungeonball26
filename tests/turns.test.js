@@ -157,3 +157,24 @@ test('half the enemies (rounded up) are picked to patrol each round, at random',
   assert.ok(picks.size > 1, 'the choice varies between rounds');
   assert.equal(pickPatrollers([], 0.5).size, 0);
 });
+
+import { createStaticCircle } from '../src/physics.js';
+
+test('sight: a barrel in the way blocks it', () => {
+  const h = hero(1.5, 1.5);
+  const e = enemy(6.5, 1.5);
+  const barrel = createStaticCircle({ x: 4, z: 1.5, radius: 0.34, kind: 'barrel', id: 'b' });
+  assert.equal(canSee(room, e, h, [h, e], [barrel]), false);
+  assert.equal(canSee(room, e, h, [h, e], []), true);
+});
+
+test('patrol never heads through or onto a barrel', () => {
+  const e = enemy(6.5, 2.5);
+  const barrels = [6.5, 7.5, 5.5].map((x, i) => createStaticCircle({ x, z: 1.5, radius: 0.34, kind: 'barrel', id: `b${i}` }));
+  let seed = 0.77;
+  const rng = () => (seed = (seed * 9301 + 0.49297) % 1);
+  for (let i = 0; i < 40; i++) {
+    const m = patrolMove(room, e, [e], rng, barrels);
+    for (const b of barrels) assert.ok(Math.hypot(m.target.x - b.x, m.target.z - b.z) > 0.6, 'target clear of barrels');
+  }
+});

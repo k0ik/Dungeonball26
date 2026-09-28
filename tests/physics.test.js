@@ -87,3 +87,37 @@ test('castCircle stops at the wall and reports its normal', () => {
   assert.ok(Math.abs(hit.x - (10 - r)) < 0.01, `stopped at x=${hit.x}`);
   assert.deepEqual({ x: Math.round(hit.normal.x), z: Math.round(hit.normal.z) }, { x: -1, z: 0 });
 });
+
+import { createStaticCircle, createStaticBox, staticContact } from '../src/physics.js';
+
+test('a ball bounces off a round bumper keeping 70% of its speed', () => {
+  const world = createWorld(room);
+  const b = createBall({ x: 3, z: 5.5 });
+  b.vx = 5;
+  world.balls.push(b);
+  const barrel = createStaticCircle({ x: 5.5, z: 5.5, radius: 0.34, kind: 'barrel', id: 'b0' });
+  world.statics.push(barrel);
+  let ev = null;
+  let before = 0;
+  for (let i = 0; i < 400 && !ev; i++) {
+    before = speedOf(b);
+    stepWorld(world);
+    ev = world.events.find((e) => e.type === 'static');
+  }
+  assert.ok(ev, 'hit the barrel');
+  assert.equal(ev.obj, barrel);
+  assert.ok(b.vx < 0, 'bounced back');
+  assert.ok(Math.abs(speedOf(b) / before - CONFIG.physics.bumperRestitution) < 0.03);
+  assert.equal(staticContact(b, barrel), null, 'pushed clear of it');
+});
+
+test('a ball bounces off a box bumper on the face it hits', () => {
+  const world = createWorld(room);
+  const b = createBall({ x: 5.5, z: 2 });
+  b.vz = 5;
+  world.balls.push(b);
+  world.statics.push(createStaticBox({ x: 5.5, z: 5.5, halfX: 0.35, halfZ: 0.25, kind: 'chest', id: 'c0' }));
+  for (let i = 0; i < 400 && !world.events.some((e) => e.type === 'static'); i++) stepWorld(world);
+  assert.ok(b.vz < 0 && Math.abs(b.vx) < 1e-9, 'straight back off the flat face');
+  assert.ok(b.z <= 5.5 - 0.25 - b.radius + 1e-9);
+});

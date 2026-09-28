@@ -64,3 +64,13 @@ test('an enemy in the way bends the preview like a wall', () => {
   assert.equal(blocked.bends, 1);
   assert.ok(blocked.points[1].x < 5 - hero.radius, 'bends at the enemy, not past it');
 });
+
+import { createStaticCircle } from '../src/physics.js';
+
+test('a barrel in the way bends the preview', () => {
+  const start = { x: 1.5, z: 1.5, radius: hero.radius };
+  const barrel = createStaticCircle({ x: 5, z: 1.5, radius: 0.34, kind: 'barrel', id: 'b' });
+  const p = previewPath(hall, start, 1, 0, 8, [], [barrel]);
+  assert.equal(p.bends, 1);
+  assert.ok(p.points[1].x < 5 - 0.34, 'bends at the barrel');
+});

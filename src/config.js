@@ -57,7 +57,10 @@ export const CONFIG = {
     patrolSpeedMin: 1,
     patrolSpeedMax: 3,
     patrolRadius: 3,
-    patrolShare: 0.5, // fraction of enemies (picked at random each round) that patrol; the rest sit it out
+    // Only enemies on screen when your ball comes to rest act that round
+    // (lunge or patrol); the rest sit it out. false: every enemy acts.
+    onlyOnScreenAct: true,
+    patrolShare: 0.5, // fraction of the acting enemies (picked at random each round) that patrol; the rest sit it out
     sightRange: 6,
     hpPerLevel: 2, // HP = 2 × level
     // Impacts below this don't count. Just above the stop threshold, so any

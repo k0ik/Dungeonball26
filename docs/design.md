@@ -40,10 +40,11 @@ flowchart TD
 
 The loop repeats until the hero touches the exit, which ends the level at once, even mid-roll.
 
-- **Order:** enemies act nearest-to-hero first, whether they end up attacking or patrolling. Sight is rechecked before each enemy's turn, since earlier moves this round can create or break sightlines.
+- **Who acts:** only the enemies on screen at the moment your ball comes to rest take part in that round. Enemies the camera reveals later, while it follows the others, don't join in, and off-screen enemies sit the round out even if they can see you (config `enemy.onlyOnScreenAct`; off means every enemy acts). This keeps rounds short in big levels and means every move happens where you can see it.
+- **Order:** of those, enemies act nearest-to-hero first, whether they end up attacking or patrolling. Sight is rechecked before each enemy's turn, since earlier moves this round can create or break sightlines.
 - **Once per round:** each enemy acts exactly once per round, either lunging at the hero or patrolling, then the turn passes to the next enemy.
 - **At rest:** the next launch, lunge or patrol move waits until every ball is below the stop threshold, so positions are always stable before the next move. Nothing moves outside a shot or a turn.
-- **Patrol:** each round, a random half of the enemies (rounded up) are picked to patrol; the rest sit the round out unless they can see the hero, in which case they still lunge. A picked enemy that does not currently see the hero picks a random open floor tile within about 3 tiles (one it can roll to in a straight line, with no ball on it) and rolls toward it at the modest speed (1 to 3 tiles/s) that friction brings to rest there. It behaves like any pool ball on the way, so it can still bounce off walls, barrels and other enemies. If no open tile is available, it stays put for that turn. Every move is shown: the camera visits each enemy on its turn (see the camera section).
+- **Patrol:** each round, a random half of the acting enemies (rounded up) are picked to patrol; the rest sit the round out unless they can see the hero, in which case they still lunge. A picked enemy that does not currently see the hero picks a random open floor tile within about 3 tiles (one it can roll to in a straight line, with no ball on it) and rolls toward it at the modest speed (1 to 3 tiles/s) that friction brings to rest there. It behaves like any pool ball on the way, so it can still bounce off walls, barrels and other enemies. If no open tile is available, it stays put for that turn. Every move is shown: the camera visits each enemy on its turn (see the camera section).
 - **Exit:** enemies never follow you out. Killing everything is not required.
 - **Enemy lunge:** an enemy that currently sees the hero launches in a straight line at it at a fixed speed instead of patrolling. Its "!" pulses for about half a second first, with a growl, so the attack never comes out of nowhere. Like any pool ball, it stays wherever it stops, which becomes its new position. Its hit only counts at an impact of at least 0.4 tiles/s, and it can hurt the hero at most once per turn.
 
@@ -285,7 +286,15 @@ Two habits keep tuning cheap. Put every number from this doc in one config file.
 
 ## To-do
 
-Changes agreed during development that aren't built yet. (None right now: enemy expressions, turn toasts and see-through chests are built. Trait cards are scheduled as M7.)
+Changes agreed during development that aren't built yet. (Trait cards are scheduled as M7.)
+
+- **Bottomless pit:** a new tile that any ball, the hero or an enemy, can fall into, dying instantly.
+  - **Falling in:** a ball falls when its centre passes over the pit, so it can graze the edge and roll on. It drops out of sight with a short fall.
+  - **The hero:** falling in is a death (the death screen, one life lost), whatever your HP. The shield doesn't save you.
+  - **Enemies:** an enemy that falls in dies and counts as a kill for combos and the "Combo Kill!" bonus turn, but its coins fall with it. Knocking enemies into pits is the reward for the risk.
+  - **Everything else:** patrols never pick a route over a pit, and a lunge can still end in one. The aim preview shows a path ending in a pit, which marks the end with a warning. Sight passes over pits, since they're holes, not walls.
+  - **Look:** a black hole in the floor with a darker rim.
+  - **Level format:** a proposed character, `_`, joins the legend and the loader when it's built.
 
 ## Out of scope for the MVP
 

@@ -91,6 +91,7 @@ export function createGame(container, levels, startIndex = 0) {
     keys: [], // colours of the keys you hold; this level only
     entry: null, // HP, gear and gold when this level was entered; game over restores them
     taken: new Set(), // enemies that have acted this round
+    acting: new Set(), // enemies that take part this round: on screen when your shot stopped
     patrollers: new Set(), // enemies allowed to patrol this round
     actor: null, // the enemy whose turn it is
     plan: null, // its move: { kind: 'lunge' } or { kind: 'patrol', vx, vz, target }
@@ -217,9 +218,19 @@ export function createGame(container, levels, startIndex = 0) {
   canvas.addEventListener('pointercancel', (e) => endAim(e, false));
 
   // --- Turns -----------------------------------------------------------------
+  // Only enemies on screen the moment your ball stops take part this round
+  // (lunging or patrolling); the camera revealing others later doesn't add
+  // them. Keeps rounds short in big levels. Off by config: every enemy acts.
+  const ndcPoint = new THREE.Vector3();
+  function onScreen(ball) {
+    ndcPoint.set(ball.x, ball.radius, ball.z).project(rig.camera);
+    return Math.abs(ndcPoint.x) <= 1 && Math.abs(ndcPoint.y) <= 1;
+  }
+
   function startEnemyPhase() {
     state.taken = new Set();
-    state.patrollers = pickPatrollers(enemies());
+    state.acting = new Set(enemies().filter((e) => !CONFIG.enemy.onlyOnScreenAct || onScreen(e)));
+    state.patrollers = pickPatrollers(state.acting);
     nextTurn();
   }
 
@@ -227,7 +238,7 @@ export function createGame(container, levels, startIndex = 0) {
   function nextTurn() {
     for (;;) {
       if (state.phase === 'down') return;
-      const actor = nextActor(enemies(), hero, state.taken);
+      const actor = nextActor(enemies().filter((e) => state.acting.has(e)), hero, state.taken);
       state.actor = actor;
       if (!actor) {
         state.phase = 'aim';

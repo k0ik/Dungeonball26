@@ -149,6 +149,7 @@ Starting cards (numbers are defaults to tune):
 | Locksmith | Doors open without keys |
 | Athletic | Your ball rolls faster and farther: 25% less friction on it (enemies unaffected; the aim preview includes it) |
 | Money Magnet | Gold on the floor (enemy coins and barrel gold) is collected from farther away: within 1.5 tiles of your ball's centre instead of just on contact (about 0.6 tiles), drawn in to you as you roll past. Other loot still needs contact |
+| Elasticity | Barrels, chests and enemies act like pinball bumpers for you: each time your ball bounces off one, it's kicked away with +1.5 tiles/s of extra speed along the bounce (never above the 9 tiles/s max launch speed). Walls bounce as normal. The aim preview includes the kick |
 
 Defaults assumed until you say otherwise: an offer never includes a card you already hold, and a card you replace goes back into the pool. Cards carry over between levels like HP and gold, and a game over restores the cards you entered the level with.
 
@@ -276,7 +277,7 @@ Two habits keep tuning cheap. Put every number from this doc in one config file.
 | M4 | Turn manager, line of sight, "!" markers, lunges, lives, respawn, lunge and hero-hit SFX | The full core loop |
 | M5 | Barrels, chests, loot table, coin drops, floating labels, HUD, pickup and break SFX | Loot and score |
 | M6 | Keys, doors, exit, carry-over between levels, door and key SFX | Finish a run of levels |
-| M7 | Trait cards: the end-of-level pick (offer 3, replace when full, skip), the eight starting cards, held cards in the HUD | A run you build as you go |
+| M7 | Trait cards: the end-of-level pick (offer 3, replace when full, skip), the nine starting cards, held cards in the HUD | A run you build as you go |
 | M8 | Five levels, tuning pass, feedback effects, ambient music, phone test | The MVP |
 
 ## To-do

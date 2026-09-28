@@ -8,11 +8,34 @@ import { toonMaterial, outlineHullMaterial } from './materials.js';
 
 const C = CONFIG.colors;
 
+// X-ray: wherever a wall stands between the camera and a pickup, the hidden
+// part still shows as a flat see-through silhouette in the item's colour.
+// GreaterDepth draws it only where something nearer is already drawn, so the
+// visible part of the item looks the same as before.
+const xrayMaterials = new Map();
+function xrayMaterial(color) {
+  if (!xrayMaterials.has(color)) {
+    xrayMaterials.set(
+      color,
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: CONFIG.render.itemXrayOpacity,
+        depthFunc: THREE.GreaterDepth,
+        depthWrite: false,
+      }),
+    );
+  }
+  return xrayMaterials.get(color);
+}
+
 function outlined(geo, color, scale = 1.12) {
   const g = new THREE.Group();
   const hull = new THREE.Mesh(geo, outlineHullMaterial);
   hull.scale.setScalar(scale);
-  g.add(hull, new THREE.Mesh(geo, toonMaterial(color)));
+  const xray = new THREE.Mesh(geo, xrayMaterial(color));
+  xray.renderOrder = 10; // after the walls, so their depth is already there
+  g.add(hull, new THREE.Mesh(geo, toonMaterial(color)), xray);
   return g;
 }
 

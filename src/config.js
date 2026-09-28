@@ -158,6 +158,7 @@ export const CONFIG = {
     heroLabelsFollowBall: true,
     bonusReminderAfter: 1.5, // s after "Combo Kill!" before a separate "Bonus turn!" banner is worth showing
     hpBarMinPx: 14,
+    itemXrayOpacity: 0.6, // floor pickups hidden behind a wall show through it as a silhouette this opaque
   },
 
   // Flat greys from the mockup.

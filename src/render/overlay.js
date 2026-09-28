@@ -99,13 +99,16 @@ export function createOverlay(container, camera) {
         a.el.classList.toggle('acting', acting);
       }
     },
-    /** Rising, fading label at a world point, e.g. "-1". */
-    float(text, x, z, height, className = '') {
+    /**
+     * Rising, fading label at a world point, e.g. "-1". With `follow` (a ball),
+     * it rides above that ball as it moves instead of staying where it was made.
+     */
+    float(text, x, z, height, className = '', follow = null) {
       const el = document.createElement('div');
       el.className = `float ${className}`;
       el.textContent = text;
       layer.appendChild(el);
-      const f = { el, x, y: height, z };
+      const f = { el, x, y: height, z, follow };
       floats.add(f);
       place(el, x, height, z);
       el.addEventListener('animationend', () => {
@@ -127,7 +130,17 @@ export function createOverlay(container, camera) {
       gear.shield.title = 'Shield: blocks the next enemy hit';
     },
     update() {
-      for (const f of floats) place(f.el, f.x, f.y, f.z);
+      // Floating labels stay inside the view (below the HUD bar), so a value
+      // earned near the edge is never lost off screen.
+      for (const f of floats) {
+        const p = f.follow ? toScreen(f.follow.x, f.y, f.follow.z) : toScreen(f.x, f.y, f.z);
+        const half = f.el.offsetWidth / 2 + 4;
+        placeAt(
+          f.el,
+          Math.min(layer.clientWidth - half, Math.max(half, p.left)),
+          Math.min(layer.clientHeight - 8, Math.max(TOP_RESERVED + 30, p.top)),
+        );
+      }
       if (gear.ball && (!gear.sword.hidden || !gear.shield.hidden)) {
         // Beside the ball at its centre height, just clear of its edge on screen.
         const b = gear.ball;

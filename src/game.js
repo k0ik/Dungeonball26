@@ -203,7 +203,6 @@ export function createGame(container, levels, startIndex = 0) {
   // --- Turns -----------------------------------------------------------------
   function startEnemyPhase() {
     state.taken = new Set();
-    state.enemyActed = false; // announce "Enemy Turn" only if someone actually moves
     state.patrollers = pickPatrollers(enemies());
     nextTurn();
   }
@@ -216,7 +215,6 @@ export function createGame(container, levels, startIndex = 0) {
       state.actor = actor;
       if (!actor) {
         state.phase = 'aim';
-        if (state.enemyActed) hud.turnToast('Player Turn', 'player');
         return;
       }
       state.taken.add(actor);
@@ -228,7 +226,6 @@ export function createGame(container, levels, startIndex = 0) {
         state.phase = 'enemyWait';
         state.timer = CONFIG.enemy.lungeTelegraph;
         state.waited = 0;
-        announceEnemyTurn();
         return;
       }
 
@@ -240,15 +237,8 @@ export function createGame(container, levels, startIndex = 0) {
       state.phase = 'enemyWait';
       state.timer = CONFIG.enemy.patrolDelay;
       state.waited = 0;
-      announceEnemyTurn();
       return;
     }
-  }
-
-  function announceEnemyTurn() {
-    if (state.enemyActed) return;
-    state.enemyActed = true;
-    hud.turnToast('Enemy Turn', 'enemy');
   }
 
   function launchActor() {
@@ -316,7 +306,7 @@ export function createGame(container, levels, startIndex = 0) {
   function pickUp(item) {
     const label = collect(item, hero, state);
     sfx.play(PICKUP_SOUND[item.kind], 0.8);
-    overlay.float(label, hero.x, hero.z, hero.radius * 2 + 0.45, PICKUP_STYLE[item.kind]);
+    overlay.float(label, hero.x, hero.z, hero.radius * 2 + 0.8, PICKUP_STYLE[item.kind], hero);
     hud.setLives(state.lives, CONFIG.hero.lives);
   }
 
@@ -345,7 +335,8 @@ export function createGame(container, levels, startIndex = 0) {
         sfx.play('chest', 0.9);
         objectsView.openChest(obj);
         state.gold += o.gold;
-        overlay.float(`+${o.gold}`, obj.x, obj.z, 0.9, 'gold');
+        // Over the ball (always on screen), not the chest, which may not be.
+        overlay.float(`+${o.gold}`, hero.x, hero.z, hero.radius * 2 + 0.8, 'gold', hero);
       } else if (o.type === 'explode') {
         sfx.play('explode', 1);
         objectsView.remove(obj);
@@ -374,7 +365,9 @@ export function createGame(container, levels, startIndex = 0) {
   }
 
   function handleOutcomes(outcomes) {
-    const floatAt = (ball, text, cls, lift = 0) => overlay.float(text, ball.x, ball.z, ball.radius * 2 + 0.2 + lift, cls);
+    // Labels about you ride along above your ball; labels over enemies stay put.
+    const floatAt = (ball, text, cls, lift = 0) =>
+      overlay.float(text, ball.x, ball.z, ball.radius * 2 + 0.2 + lift, cls, ball === hero ? hero : null);
     let comboSounded = false;
     for (const o of outcomes) {
       if (o.type === 'hit' || o.type === 'combo') {
@@ -382,9 +375,9 @@ export function createGame(container, levels, startIndex = 0) {
           sfx.play('hit', 0.9, { pitch: 0.95 + Math.random() * 0.1 });
           // Each of your hits wears the sword: whole -> broken -> gone.
           const sword = useSwordHit(hero);
-          if (sword === 'broken') floatAt(hero, 'Sword cracked', 'gear', 0.45);
+          if (sword === 'broken') floatAt(hero, 'Sword cracked', 'gear', 0.8);
           else if (sword === 'gone') {
-            floatAt(hero, 'Sword broke!', 'gear', 0.45);
+            floatAt(hero, 'Sword broke!', 'gear', 0.8);
             sfx.play('blocked', 0.6, { pitch: 0.8 });
           }
         }
@@ -394,7 +387,7 @@ export function createGame(container, levels, startIndex = 0) {
         }
         floatAt(o.target, `-${o.amount}`, o.type === 'combo' ? 'combo' : '');
         // Every enemy after the first one damaged this shot is a combo.
-        if (o.chain >= 2) floatAt(o.target, 'Combo!', 'combo-label', 0.45);
+        if (o.chain >= 2) floatAt(o.target, 'Combo!', 'combo-label', 0.8);
       } else if (o.type === 'blast') {
         floatAt(o.target, `-${o.amount}`, 'hurt');
       } else if (o.type === 'kill') {
@@ -575,6 +568,9 @@ export function createGame(container, levels, startIndex = 0) {
     renderer.render(scene, rig.camera);
     overlay.update();
     hud.setGold(state.gold);
+    // Whose turn it is, always shown: yours while you aim and your shot rolls,
+    // the enemies' from the first enemy move until it's back to you.
+    hud.setTurn(['enemyWait', 'enemyMove', 'down'].includes(state.phase) ? 'enemy' : 'player');
     overlay.setGear(hero, {
       sword: hero.swordHits >= CONFIG.loot.swordUses ? 'whole' : hero.swordHits > 0 ? 'broken' : null,
       shield: hero.shield,

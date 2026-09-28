@@ -99,7 +99,7 @@ body {
 }
 
 .float {
-  font-size: 16px;
+  font-size: 32px;
   font-weight: 800;
   color: #ff4f8b; /* your hits: hot pink */
   text-shadow:
@@ -128,15 +128,15 @@ body {
     opacity: 1;
   }
   38% {
-    margin-top: -26px;
+    margin-top: -36px;
     opacity: 1;
   }
   77% {
-    margin-top: -26px;
+    margin-top: -36px;
     opacity: 1;
   }
   to {
-    margin-top: -30px;
+    margin-top: -42px;
     opacity: 0;
   }
 }
@@ -150,7 +150,7 @@ body {
 
 .float.hurt {
   color: #ff7a3d; /* damage to you: orange-red */
-  font-size: 18px;
+  font-size: 36px;
   text-shadow:
     0 0 2px #3d1000,
     0 1px 0 #3d1000,
@@ -160,7 +160,7 @@ body {
 }
 
 .float.combo-label {
-  font-size: 13px;
+  font-size: 26px;
   font-weight: 900;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -294,7 +294,7 @@ body {
   box-shadow: inset 0 0 0 1.5px #6b6d72;
 }
 
-.turn-toast {
+.turn-label {
   position: absolute;
   left: 50%;
   top: calc(52px + env(safe-area-inset-top, 0px));
@@ -308,18 +308,24 @@ body {
   z-index: 3;
 }
 
-.turn-toast[data-who='player'] {
+.turn-label[data-who='player'] {
   color: #10301a;
   background: #5ad16a; /* the your-turn ring's green */
 }
 
-.turn-toast[data-who='enemy'] {
+.turn-label[data-who='enemy'] {
   color: #fff;
   background: #c8005f; /* enemy magenta */
 }
 
-.turn-toast.show {
-  animation: banner-in 0.2s ease-out;
+.turn-label.show {
+  animation: turn-pulse 0.35s ease-out;
+}
+
+@keyframes turn-pulse {
+  40% {
+    scale: 1.15;
+  }
 }
 
 .banner {
@@ -364,6 +370,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .alert.acting span,
   .hud-gold.bump,
+  .turn-label.show,
   .banner.show {
     animation: none;
   }
@@ -391,7 +398,7 @@ body {
 }
 
 .float.gear {
-  font-size: 14px;
+  font-size: 28px;
   color: #d6e6ff;
   text-shadow:
     0 0 2px #0b2350,

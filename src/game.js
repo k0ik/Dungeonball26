@@ -76,6 +76,7 @@ export function createGame(container, levels, startIndex = 0) {
     plan: null, // its move: { kind: 'lunge' } or { kind: 'patrol', vx, vz, target }
     timer: 0,
     waited: 0, // seconds the acting enemy has waited for the camera
+    comboKillAt: -Infinity, // when the last "Combo Kill!" banner showed
   };
 
   let levelIndex = -1;
@@ -292,22 +293,30 @@ export function createGame(container, levels, startIndex = 0) {
     }
     world.events.length = 0;
 
-    const floatAt = (ball, text, cls) => overlay.float(text, ball.x, ball.z, ball.radius * 2 + 0.2, cls);
+    const floatAt = (ball, text, cls, lift = 0) => overlay.float(text, ball.x, ball.z, ball.radius * 2 + 0.2 + lift, cls);
     let comboSounded = false;
     for (const o of outcomes) {
-      if (o.type === 'hit') {
-        sfx.play('hit', 0.9, { pitch: 0.95 + Math.random() * 0.1 });
-        floatAt(o.target, `-${o.amount}`);
-      } else if (o.type === 'combo') {
-        if (!comboSounded) sfx.play('combo', 0.9);
-        comboSounded = true;
-        floatAt(o.target, `-${o.amount}`, 'combo');
+      if (o.type === 'hit' || o.type === 'combo') {
+        if (o.type === 'hit') sfx.play('hit', 0.9, { pitch: 0.95 + Math.random() * 0.1 });
+        else if (!comboSounded) {
+          sfx.play('combo', 0.9);
+          comboSounded = true;
+        }
+        floatAt(o.target, `-${o.amount}`, o.type === 'combo' ? 'combo' : '');
+        // Every enemy after the first one damaged this shot is a combo.
+        if (o.chain >= 2) floatAt(o.target, 'Combo!', 'combo-label', 0.45);
       } else if (o.type === 'kill') {
         sfx.play('kill', 0.9);
         enemyViews.get(o.target)?.die();
         overlay.removeBar(o.target);
+        if (o.shotKills >= 2) {
+          sfx.play('comboKill', 0.9);
+          state.comboKillAt = performance.now();
+          hud.banner(o.shotKills > 2 ? `Combo Kill ×${o.shotKills}!` : 'Combo Kill!', 'Bonus turn: shoot again', 2);
+        }
       } else if (o.type === 'hurt') {
         sfx.play('hurt', 1);
+        heroView.flash();
         floatAt(hero, `-${o.amount}`, 'hurt');
         if (hero.hp <= 0) knockedOut();
       }
@@ -389,7 +398,21 @@ export function createGame(container, levels, startIndex = 0) {
 
     switch (state.phase) {
       case 'shot':
-        if (isAtRest(world)) startEnemyPhase();
+        if (isAtRest(world)) {
+          // A combo kill (2+ enemies in one shot) earns a bonus turn: the
+          // enemy phase is skipped and you shoot again.
+          if (combat.shotKills >= 2) {
+            state.phase = 'aim';
+            // The "Combo Kill!" banner already announced the bonus turn; only
+            // remind you if the shot rolled on long after it.
+            if (performance.now() - state.comboKillAt > CONFIG.render.bonusReminderAfter * 1000) {
+              hud.banner('Bonus turn!', 'Shoot again', 1.3);
+            }
+            sfx.play('respawn', 0.7);
+          } else {
+            startEnemyPhase();
+          }
+        }
         break;
       case 'enemyWait':
         // The enemy moves once its telegraph is done and the camera has
@@ -418,7 +441,7 @@ export function createGame(container, levels, startIndex = 0) {
       aimView.hide();
     }
 
-    heroView.update();
+    heroView.update(dt);
     for (const [enemy, view] of enemyViews) {
       view.update(dt);
       if (view.gone) {
@@ -473,6 +496,7 @@ export function createGame(container, levels, startIndex = 0) {
       return world;
     },
     hero,
+    heroView,
     state,
     rig,
     respawn,

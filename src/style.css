@@ -150,6 +150,21 @@ body {
     -1px 0 0 #3d1000;
 }
 
+.float.combo-label {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffc233;
+  text-shadow:
+    0 0 2px #3d2a00,
+    0 1px 0 #3d2a00,
+    0 -1px 0 #3d2a00,
+    1px 0 0 #3d2a00,
+    -1px 0 0 #3d2a00;
+  animation-duration: 1.1s;
+}
+
 /* "!" over an enemy that can see you, as in the mockup. */
 .alert {
   font-size: 22px;

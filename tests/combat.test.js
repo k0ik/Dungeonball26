@@ -118,3 +118,32 @@ test('a slow combo still counts: a gently knocked enemy nudging another', () => 
   const out = runShot(ctx);
   assert.equal(out.filter((o) => o.type === 'combo').length, 2, 'both enemies take the combo hit');
 });
+
+test('combo chain: the second enemy damaged in a shot is marked as a combo', () => {
+  const ctx = setup([
+    { x: 5, z: 4.5, level: 3 },
+    { x: 8, z: 4.5, level: 3 },
+  ]);
+  ctx.hero.vx = 8;
+  const out = runShot(ctx);
+  const [A, B] = ctx.list;
+  const firstHit = (e) => out.find((o) => (o.type === 'hit' || o.type === 'combo') && o.target === e && o.chain);
+  assert.equal(firstHit(A).chain, 1, 'the first enemy damaged');
+  assert.equal(firstHit(B).chain, 2, 'the second enemy damaged is the combo');
+  assert.ok(out.filter((o) => o.target === A && o.chain).length === 1, 'an enemy is only counted once per shot');
+});
+
+test('combo kill: kills are counted per shot and reset on the next shot', () => {
+  const ctx = setup([
+    { x: 5, z: 4.5, level: 1 },
+    { x: 8, z: 4.5, level: 1 },
+  ]);
+  ctx.list[1].hp = 1; // B already hurt, so the combo finishes it too
+  ctx.hero.vx = 8;
+  const out = runShot(ctx);
+  const kills = out.filter((o) => o.type === 'kill');
+  assert.deepEqual(kills.map((k) => k.shotKills), [1, 2]);
+  assert.equal(ctx.combat.shotKills, 2);
+  ctx.combat.beginShot();
+  assert.equal(ctx.combat.shotKills, 0);
+});

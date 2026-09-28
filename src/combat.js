@@ -34,6 +34,9 @@ export function createEnemy({ x, z, level, id }) {
 
 export function createCombat() {
   let pairsThisShot = new Set();
+  // Per shot, for combo feedback: enemies damaged so far (in order) and kills.
+  let damagedThisShot = new Set();
+  let killsThisShot = 0;
   let actor = null; // the enemy whose turn it is; null during your shot
   let actorHasHit = false;
 
@@ -46,14 +49,27 @@ export function createCombat() {
     // The cooldown guards against the hero grinding; combos have their own
     // once-per-pair rule and don't start it.
     if (kind === 'hit') enemy.lastHit = time;
-    out.push({ type: kind, target: enemy, amount, event: ev });
-    if (enemy.hp === 0) out.push({ type: 'kill', target: enemy });
+    // `chain` is this enemy's place among the distinct enemies damaged this
+    // shot (1 for the first), or 0 if it was already damaged earlier.
+    let chain = 0;
+    if (!damagedThisShot.has(enemy)) {
+      damagedThisShot.add(enemy);
+      chain = damagedThisShot.size;
+    }
+    out.push({ type: kind, target: enemy, amount, event: ev, chain });
+    if (enemy.hp === 0) out.push({ type: 'kill', target: enemy, shotKills: ++killsThisShot });
   }
 
   return {
+    /** Enemies killed by the current (or last) shot. */
+    get shotKills() {
+      return killsThisShot;
+    },
     /** Call at each launch: the once-per-pair combo rule resets per shot. */
     beginShot() {
       pairsThisShot = new Set();
+      damagedThisShot = new Set();
+      killsThisShot = 0;
       actor = null;
     },
     /** Call as each enemy starts its turn (lunge or patrol). */

@@ -92,6 +92,8 @@ const SYNTHS = {
       const buzz = Math.sign(Math.sin(2 * Math.PI * (420 - 700 * t) * t)) * Math.exp(-t * 14) * 0.2;
       return (thud + buzz) * 0.7;
     }),
+  // Combo kill: a quick bright rising arpeggio.
+  comboKill: (ctx) => notes(ctx, [523, 659, 784, 1047], 0.08, 0.45),
   // Knocked out: three falling notes.
   down: (ctx) => notes(ctx, [523, 392, 262], 0.16, 0.5),
   // Back at the start: two soft rising notes.

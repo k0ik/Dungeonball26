@@ -112,6 +112,8 @@ export const CONFIG = {
     // Enemy HP bars get one notch per HP and grow with max HP, so a tougher
     // enemy has a visibly longer bar. Pixels.
     hpBarPxPerHp: 6,
+    hitFlashSeconds: 0.28, // the hero glows red this long when an enemy hits it
+    bonusReminderAfter: 1.5, // s after "Combo Kill!" before a separate "Bonus turn!" banner is worth showing
     hpBarMinPx: 14,
   },
 
@@ -134,6 +136,7 @@ export const CONFIG = {
     heroStripe: 0x3a86ff,
     aim: 0xffffff,
     turnRing: 0x5ad16a, // matches the hero's HP bar
+    hitFlash: 0xff2a2a,
     shadow: 0x000000,
   },
 

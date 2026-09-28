@@ -1,5 +1,5 @@
 // A toon ball with an inverted-hull outline, a blob shadow, and a stripe so
-// rolling reads visually.
+// rolling reads visually. It can flash red when hit.
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
@@ -52,10 +52,30 @@ export function createBallView(ball, { color, stripe }) {
   let lastX = ball.x;
   let lastZ = ball.z;
 
+  // Hit flash: tint the ball red, fading back over hitFlashSeconds. The
+  // material colour multiplies the ball's own colours, so red turns the white
+  // body red (an emissive glow on top of white only reads as pale pink).
+  const baseColor = body.material.color.clone();
+  const flashColor = new THREE.Color(CONFIG.colors.hitFlash);
+  let flashLeft = 0;
+  let flashLevel = 0;
+
   return {
     object: group,
+    flash() {
+      flashLeft = CONFIG.render.hitFlashSeconds;
+    },
+    /** Current flash strength, 0..1 (for debugging and tests). */
+    get flashLevel() {
+      return flashLevel;
+    },
     /** Sync to the simulation and roll by the distance moved since last frame. */
-    update() {
+    update(dt = 0) {
+      if (flashLeft > 0 || flashLevel > 0) {
+        flashLeft = Math.max(0, flashLeft - dt);
+        flashLevel = flashLeft / CONFIG.render.hitFlashSeconds;
+        body.material.color.lerpColors(baseColor, flashColor, flashLevel);
+      }
       const dx = ball.x - lastX;
       const dz = ball.z - lastZ;
       const dist = Math.hypot(dx, dz);

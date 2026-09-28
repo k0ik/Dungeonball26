@@ -97,10 +97,10 @@ D_{\text{enemy}} = \text{ATK} \qquad D_{\text{hero}} = 1 \qquad \text{HP}_{\text
 | Stat | Start value | Notes |
 | --- | --- | --- |
 | Hero max HP | 10 | A health potion heals 1 and a super health potion 5, capped at max |
-| Hero ATK | 1 | A sword raises it to 2 |
+| Hero ATK | 1 | A sword adds 3, for ATK 4 |
 | Shield | None held | A held shield cancels the next enemy hit on you and is used up by it (replaces DEF, now that every hit costs 1 HP) |
 | Enemy level L | 1 to 3 in the MVP | Read from the enemy's HP bar: one notch per HP, and the bar grows longer for tougher enemies |
-| Kill reward | 10 × L gold | Drops as coins where it died |
+| Kill reward | L gold | Drops as coins where it died |
 
 Combo example: with ATK 1, you hit enemy A and it slides into enemy B. A takes 2 damage in total and B takes 1. A level-1 enemy has 2 HP, so A dies and B is left at 1 HP if it is also level 1.
 
@@ -129,28 +129,29 @@ Barrels, chests, keys and doors are the level's furniture, and barrel and chest 
 | Object | Behavior |
 | --- | --- |
 | Barrel | Solid bumper. Each contact above 0.4 tiles/s cracks it one stage, with a 0.15 s cooldown per barrel. The third hit breaks it and drops random loot, picked up automatically. |
-| Chest | Solid bumper. The first contact opens it and grants 50 gold. |
+| Chest | Solid bumper. The first contact opens it and grants a random 8 to 24 gold. |
 | Key | Floor pickup, collected by rolling over it. Color-matched to one door and shown in a HUD slot. |
 | Door | Solid and opaque until the hero is within half a tile while holding the matching key. Then it opens for good and the key is consumed. Enemies can pass through an open door. |
 | Exit | Ends the level when the hero's center enters its tile. |
-| Coins | Dropped where an enemy dies, worth 10 × its level in total. Collected by rolling over them, so grabbing them can pull you back into an enemy's sight. |
+| Coins | Dropped where an enemy dies, worth its level in gold. Collected by rolling over them, so grabbing them can pull you back into an enemy's sight. |
 | Explosive barrel (red) | Solid bumper with the same physics as a barrel. Any contact from the hero or an enemy, at any speed, detonates it: the ball that touched it takes 1 flat damage, ignoring ATK and the shield, and the barrel is destroyed with no loot. |
 
-Every barrel drops something, and you pick it up automatically the moment it breaks. Starting weights, to tune by feel:
+Every barrel drops something. You collect it automatically the moment the barrel breaks, unless you can't use it right now: a shield while you already hold one, or a potion (or super potion) while your HP is full. Then it stays on the floor where the barrel was, visible, and you collect it later by rolling over it once you can use it. Starting weights, to tune by feel:
 
 | Result | Chance | Effect |
 | --- | --- | --- |
-| Gold | 50% | +1 to +5 gold, added to your score |
+| Gold | 45% | +1 to +5 gold, added to your score |
 | Health potion | 25% | +1 HP, capped at max |
 | Super health potion | 8% | +5 HP, capped at max |
-| Shield | 12% | You now hold a shield: it cancels the next enemy hit on you, then is used up |
+| Shield | 12% | You now hold a shield: it cancels the next enemy hit on you, then is used up. Shields don't stack |
+| Sword | 5% | +3 ATK (ATK 4), for good |
 | 1-up | 5% | +1 life |
 
-There is no inventory. Each pickup floats above the hero for about a second, for example "+1 HP", "+5 HP", "+3", "Shield" or "1-up". Only the hero cracks barrels and opens chests.
+There is no inventory. Each pickup floats above the hero for about a second, for example "+1 HP", "+5 HP", "+3", "Shield", "Sword" or "1-up". Only the hero cracks barrels and opens chests.
 
 A red barrel is a hazard, not a reward: it can hurt an enemy that bumps it as easily as it can hurt you, so it's worth luring enemies into one.
 
-You hold at most one shield; a shield found while you already hold one is wasted (see open questions).
+You hold at most one shield; while you hold one, another shield stays on the floor until yours is used up. A second sword changes nothing (see assumptions).
 
 ## Levels
 
@@ -275,8 +276,8 @@ The rules above use these defaults where your answers left a gap. Change any tha
 - Each enemy attacks at most once per round, and only the attacker (the enemy whose turn it is) can damage the hero. Red barrels are the exception: they damage whichever ball touches them, hero included, in any phase.
 - If the hero dies mid-round, the round ends there: the remaining enemies skip their turn and the hero respawns with the first move.
 - Sight range is 6 tiles, not the screen width, because a portrait screen is only 9 tiles wide. Other enemies also block sight, so they can shield you.
-- The only gear is the shield, a one-hit consumable held until an enemy hit uses it up. The sword (ATK 2) is no longer in the barrel loot.
-- Barrel loot and chest gold are granted at once with a floating label. Keys and enemy coins lie on the floor.
+- Gear is the shield, a one-hit consumable held until an enemy hit uses it up (they don't stack), and the sword, +3 ATK for good. A second sword is assumed to change nothing, since there are no gear tiers.
+- Barrel loot and chest gold are granted at once with a floating label, except a shield or potion you can't use yet, which waits on the floor. Keys and enemy coins lie on the floor.
 - Respawn restores full HP, and keys you hold are kept.
 - Aiming is a slingshot pull-back rather than dragging toward the target.
 - An explosive barrel deals a flat 1 damage regardless of stats, ignores the normal 0.4 tiles/s hit threshold, and drops no loot.
@@ -287,6 +288,4 @@ The rules above use these defaults where your answers left a gap. Change any tha
 
 Open questions:
 
-- **Gold scale:** barrel gold is now +1 to +5, but kills still drop 10 × L gold and chests grant 50. Scale kills and chests down to match (for example L gold per kill, 10 per chest), or keep them as the big payouts?
-- **Stacking shields:** can you hold more than one shield (each cancels one hit), or is a second one wasted while you hold one? The doc currently says wasted.
-- **The sword:** it's no longer in the barrel loot. Drop it (ATK stays 1), or move it to chests?
+- None right now. (Resolved: kills drop L gold, chests 8 to 24; shields don't stack and wait on the floor, as do potions at full HP; swords come from barrels, +3 ATK.)

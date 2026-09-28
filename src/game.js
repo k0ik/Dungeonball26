@@ -23,6 +23,7 @@ import { shotFromDrag, canGrab, previewPath } from './aim.js';
 import { buildLevelView } from './render/levelView.js';
 import { createBallView } from './render/ballView.js';
 import { createEnemyView } from './render/enemyView.js';
+import { createTurnRing } from './render/turnRing.js';
 import { createOverlay } from './render/overlay.js';
 import { createHud } from './render/hud.js';
 import { createAimView } from './render/aimView.js';
@@ -61,6 +62,9 @@ export function createGame(container, levels, startIndex = 0) {
 
   const aimView = createAimView(rig.yaw);
   scene.add(aimView.object);
+  // Red dashed ring under the enemy whose turn it is, so you know where to look.
+  const actorRing = createTurnRing(CONFIG.colors.enemyTurnRing);
+  scene.add(actorRing.object);
 
   const combat = createCombat();
   const objectsView = createObjectsView(scene);
@@ -225,7 +229,7 @@ export function createGame(container, levels, startIndex = 0) {
       if (canSee(level, actor, hero, world.balls, world.statics)) {
         state.plan = { kind: 'lunge' };
         state.phase = 'enemyWait';
-        state.timer = CONFIG.enemy.lungeTelegraph;
+        state.timer = Math.max(CONFIG.enemy.lungeTelegraph, CONFIG.enemy.turnRingBeat);
         state.waited = 0;
         return;
       }
@@ -236,7 +240,7 @@ export function createGame(container, levels, startIndex = 0) {
       if (!move) continue; // boxed in: it stays put this turn
       state.plan = { kind: 'patrol', ...move };
       state.phase = 'enemyWait';
-      state.timer = CONFIG.enemy.patrolDelay;
+      state.timer = Math.max(CONFIG.enemy.patrolDelay, CONFIG.enemy.turnRingBeat);
       state.waited = 0;
       return;
     }
@@ -513,11 +517,12 @@ export function createGame(container, levels, startIndex = 0) {
         }
         break;
       case 'enemyWait':
-        // The enemy moves once its telegraph is done and the camera has
-        // reached it (or it has waited long enough).
-        state.timer -= dt;
+        // The camera travels to the enemy first (or gives up after
+        // enemyTurnMaxWait); then its red ring (and "!", for a lunge) stays
+        // on screen for its telegraph before it moves.
         state.waited += dt;
-        if (state.timer <= 0 && (rig.settled || state.waited >= CONFIG.enemy.enemyTurnMaxWait)) launchActor();
+        if (rig.settled || state.waited >= CONFIG.enemy.enemyTurnMaxWait) state.timer -= dt;
+        if (state.timer <= 0) launchActor();
         break;
       case 'enemyMove':
         if (isAtRest(world)) nextTurn();
@@ -538,6 +543,9 @@ export function createGame(container, levels, startIndex = 0) {
     } else {
       aimView.hide();
     }
+    // The acting enemy's red ring: from its telegraph until its move ends.
+    if ((state.phase === 'enemyWait' || state.phase === 'enemyMove') && state.actor) actorRing.show(state.actor, dt);
+    else actorRing.hide();
 
     // Face: ouch just after a hit (and while down), determined while you aim
     // and while your shot rolls, confident otherwise.

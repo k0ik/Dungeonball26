@@ -67,6 +67,9 @@ export const CONFIG = {
     hitCooldown: 0.15, // seconds, per enemy
     lungeTelegraph: 0.45, // seconds the "!" pulses before a lunge launches
     patrolDelay: 0.2, // seconds before a patrol move
+    // The acting enemy's red turn ring stays on screen at least this long,
+    // counted once the camera has reached it, before the enemy moves.
+    turnRingBeat: 0.6,
     enemyTurnMaxWait: 1.5, // seconds an enemy waits at most for the camera to reach it
   },
 
@@ -183,6 +186,7 @@ export const CONFIG = {
     heroStripe: 0xb4bac4, // a faint darker band on the silver, so rolling still reads
     aim: 0xffffff,
     turnRing: 0x5ad16a, // matches the hero's HP bar
+    enemyTurnRing: 0xff2a2a, // the enemy that's about to move
     hitFlash: 0xff2a2a,
     // Objects and pickups, after the mockup.
     barrel: 0xa87c40,

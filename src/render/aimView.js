@@ -7,6 +7,7 @@
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
+import { createTurnRing } from './turnRing.js';
 
 const A = CONFIG.aim;
 const Y = 0.02; // just above the floor
@@ -76,28 +77,8 @@ export function createAimView(yaw = 0) {
   group.add(cancelMark);
 
   // "Your turn": dashed green ring at the cancel radius, slowly turning.
-  const turnRing = new THREE.Group();
-  const turnMat = new THREE.MeshBasicMaterial({
-    color: CONFIG.colors.turnRing,
-    transparent: true,
-    opacity: A.turnRingOpacity,
-    depthWrite: false,
-  });
-  const slot = (Math.PI * 2) / A.turnRingDashes;
-  for (let i = 0; i < A.turnRingDashes; i++) {
-    const geo = new THREE.RingGeometry(
-      A.cancelRadius - A.turnRingWidth / 2,
-      A.cancelRadius + A.turnRingWidth / 2,
-      8,
-      1,
-      i * slot,
-      slot * A.turnRingDashFill,
-    ).rotateX(-Math.PI / 2);
-    turnRing.add(new THREE.Mesh(geo, turnMat));
-  }
-  turnRing.position.y = Y;
-  turnRing.visible = false;
-  group.add(turnRing);
+  const turnRing = createTurnRing(CONFIG.colors.turnRing);
+  group.add(turnRing.object);
 
   const hoops = [];
   for (let i = 0; i < MAX_HOOPS; i++) {
@@ -133,12 +114,9 @@ export function createAimView(yaw = 0) {
     showTurn(hero, dt) {
       group.visible = true;
       cancelMark.scale.set(1, 1, 1);
-      turnRing.visible = true;
+      turnRing.show(hero, dt);
       cancelMark.visible = false;
       pathGroup.visible = false;
-      turnRing.position.x = hero.x;
-      turnRing.position.z = hero.z;
-      turnRing.rotation.y -= A.turnRingSpin * dt;
     },
     /**
      * shot: from shotFromDrag; path: from previewPath, or null to hide the path
@@ -147,7 +125,7 @@ export function createAimView(yaw = 0) {
      */
     show(hero, shot, path, uiScale = 1) {
       group.visible = true;
-      turnRing.visible = false;
+      turnRing.hide();
       cancelMark.visible = true;
       cancelMark.scale.set(uiScale, 1, uiScale);
       cancelMark.position.x = hero.x;

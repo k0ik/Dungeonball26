@@ -62,7 +62,7 @@ export function createGame(container, levels, startIndex = 0) {
   // The hero persists across levels; the level, its world and its view don't.
   const hero = createBall({ x: 0, z: 0, kind: 'hero', id: 'hero' });
   Object.assign(hero, { atk: CONFIG.hero.atk, maxHp: CONFIG.hero.maxHp, hp: CONFIG.hero.maxHp, shield: false, swordHits: 0 });
-  const heroView = createBallView(hero, { color: CONFIG.colors.hero, stripe: CONFIG.colors.heroStripe, silver: true, toCamera: rig.toCamera });
+  const heroView = createBallView(hero, { color: CONFIG.colors.hero, silver: true, toCamera: rig.toCamera });
   scene.add(heroView.object);
   overlay.addBar(hero, 'hero');
 

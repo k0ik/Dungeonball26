@@ -188,7 +188,6 @@ export const CONFIG = {
     hpFill: 0xe8336f,
     hpTrack: 0x2a2b2e,
     hero: 0xffffff, // tint over the hero's chrome (silver) shading
-    heroStripe: 0xb4bac4, // a faint darker band on the silver, so rolling still reads
     aim: 0xffffff,
     turnRing: 0x5ad16a, // matches the hero's HP bar
     enemyTurnRing: 0xff2a2a, // the enemy that's about to move

@@ -80,13 +80,15 @@ Who takes damage depends on whose phase it is, never on ball speed. Speed only d
 
 | Contact | Your shot | Enemy phase |
 | --- | --- | --- |
-| Hero hits enemy | Enemy loses ATK HP on each fresh contact | No damage |
+| Hero hits enemy | Enemy loses ATK HP on each fresh contact; a killing blow ricochets you off it as if it were solid | No damage |
 | Knocked enemy hits enemy | Both lose 1 HP, once per pair per shot | No damage |
 | Enemy hits hero | No damage to hero | Hero loses HP, only from enemies moving this round (lunging or patrolling), at most once each |
 | Anything hits a wall | No damage | No damage |
 | Hero hits barrel or chest | Counts | Counts (recoil hits too) |
 | Enemy hits barrel (e.g. one you knocked into it) | Cracks it | Cracks it |
 | Hero or enemy hits red barrel | That ball takes 1 flat damage | That ball takes 1 flat damage |
+
+**Killing blows ricochet.** Equal balls hitting head-on swap speeds, so without this a kill would hand all your speed to an enemy that then vanishes, and you'd stop dead. Instead, the contact that kills a ball is redone as if that ball were solid: the survivor bounces off it with the speed it came in with (keeping 90%, like any ball bounce), then the dead ball is removed. The same goes for a knocked enemy whose combo hit kills another enemy.
 
 Damage and health formulas, with L as the enemy's level:
 
@@ -164,6 +166,7 @@ Trick shots are special one-shot combos, tracked as achievements. Each one pays 
 | Bank Shot | Combo an enemy into a barrel: an enemy you knocked hits another enemy, which then hits a barrel | +20 gold |
 | Drop Shot | Knock an enemy into a bottomless pit (needs pits) | +15 gold |
 | Long Drop | Combo an enemy into a pit: it falls in after being hit by another knocked enemy, not by you directly (needs pits) | +30 gold |
+| Boomerang | Hit enemy A, it bounces off enemy B and comes back into you, and that return hit kills it (your hits count whichever ball is moving) | +25 gold |
 
 The names and bonus amounts are placeholders to tune.
 - **Tracking:** credit for a hit passes along a chain. An enemy you hit is "knocked by you", and an enemy it hits is "combo-knocked". Whatever a knocked enemy touches next (a barrel, a pit, another enemy) is credited to the chain for the rest of the shot.
@@ -263,7 +266,7 @@ The camera is a true orthographic projection at a fixed isometric angle matched 
 - **Walls:** short, so they never hide a ball behind them. The mockup's walls stand a little taller than the ball; the build uses 0.55 tile (`render.wallHeight`) so a ball resting just behind a wall stays visible.
 - **Lighting:** one ambient light plus one directional light, no dynamic shadows for the MVP.
 - **Turn label:** a small pill below the gold, at the top centre, always shows whose turn it is: "Player Turn" (green) while you aim and while your shot rolls, "Enemy Turn" (magenta) from the enemies' telegraph until it's your move again. It pulses when it changes, and sits apart from the centre banners, so it never covers "Combo Kill!".
-- **Turn toast:** because the label is small and easy to miss, each change of turn also shows the same words big in the middle of the screen, as a pill in the same colour. It pops in, holds for about half a second, then shrinks and flies up into the label (about 1 s in all), so you notice the change and learn where the label lives. The very first label of a level doesn't toast, and a bonus turn isn't a change, so it doesn't either.
+- **Turn toast:** because the label is small and easy to miss, each change of turn shows the same words big in the upper third of the screen, as a pill in the same colour. It pops in, holds for about half a second, then shrinks and flies up to land exactly on the label's spot and become the label (about 1 s in all). The small label stays hidden while it flies, so the two never show at once. The very first label of a level doesn't toast, and a bonus turn isn't a change, so it doesn't either. With reduced motion on, the label simply switches.
 - **Low HP:** at 1 HP (`render.dangerHp`) a soft red glow pulses slowly around the edge of the screen, like a heartbeat, until you heal or respawn. (It was first tried as the enemy-turn cue, but it read as "you're hurt", so it moved here.)
 - **Pickups through walls:** a floor pickup (coins, a potion, gear) hidden behind a wall shows through it as a flat see-through silhouette in its own colour (`render.itemXrayOpacity`), only where a wall or closed door covers it (a stencil mask), never through a ball standing on it, so loot is never lost from view. Keys are drawn 1.5× the size of other pickups.
 - **See-through chests:** while you aim, any chest within about 2 tiles of the ball fades to 30% opacity, so an open lid never hides the ball; it turns solid again when you release.

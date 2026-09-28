@@ -98,6 +98,25 @@ function resolveStatic(world, b, s) {
   world.events.push({ type: 'static', ball: b, obj: s, speed: -vn });
 }
 
+/**
+ * Redo one side of a ball-ball impact as if the other ball had been a solid,
+ * fixed bumper: `ball` (ev.a or ev.b) bounces off with its velocity from just
+ * before the impact. Used when the impact kills the other ball, so a killing
+ * blow ricochets instead of handing all its speed to a ball that then vanishes.
+ */
+export function bounceOffFixed(ev, ball) {
+  const isA = ball === ev.a;
+  const vx = isA ? ev.before.avx : ev.before.bvx;
+  const vz = isA ? ev.before.avz : ev.before.bvz;
+  // Normal pointing from `ball` into the other one.
+  const nx = isA ? ev.nx : -ev.nx;
+  const nz = isA ? ev.nz : -ev.nz;
+  const vn = vx * nx + vz * nz;
+  if (vn <= 0) return; // it wasn't moving into the other ball
+  ball.vx = vx - (1 + P.ballRestitution) * vn * nx;
+  ball.vz = vz - (1 + P.ballRestitution) * vn * nz;
+}
+
 function resolveBallPair(world, a, b) {
   const dx = b.x - a.x;
   const dz = b.z - a.z;
@@ -118,12 +137,14 @@ function resolveBallPair(world, a, b) {
 
   const approach = (a.vx - b.vx) * nx + (a.vz - b.vz) * nz;
   if (approach <= 0) return;
+  // Velocities just before the impact, kept on the event (see bounceOffFixed).
+  const before = { avx: a.vx, avz: a.vz, bvx: b.vx, bvz: b.vz };
   const j = ((1 + P.ballRestitution) * approach) / 2;
   a.vx -= j * nx;
   a.vz -= j * nz;
   b.vx += j * nx;
   b.vz += j * nz;
-  world.events.push({ type: 'ball', a, b, speed: approach });
+  world.events.push({ type: 'ball', a, b, speed: approach, nx, nz, before });
 }
 
 /** Closest-point test of a circle against one solid tile. Returns contact or null. */

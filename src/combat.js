@@ -17,7 +17,7 @@
 // Speed never changes the damage, only whether a contact counts.
 
 import { CONFIG } from './config.js';
-import { createBall } from './physics.js';
+import { createBall, bounceOffFixed } from './physics.js';
 import { heroDamage } from './turns.js';
 
 const E = CONFIG.enemy;
@@ -139,7 +139,11 @@ export function createCombat() {
 
         const enemy = a === hero ? b : b === hero ? a : null;
         if (enemy?.kind === 'enemy') {
-          if (canTakeHit(enemy, time)) damage(enemy, hero.atk, time, out, ev, 'hit');
+          if (canTakeHit(enemy, time)) {
+            damage(enemy, hero.atk, time, out, ev, 'hit');
+            // A killing blow ricochets off the enemy as if it were solid.
+            if (enemy.hp === 0 && ev.before) bounceOffFixed(ev, hero);
+          }
           continue;
         }
 
@@ -149,6 +153,8 @@ export function createCombat() {
           pairsThisShot.add(key);
           damage(a, 1, time, out, ev, 'combo');
           damage(b, 1, time, out, ev, 'combo');
+          if (ev.before && a.hp === 0 && b.hp > 0) bounceOffFixed(ev, b);
+          if (ev.before && b.hp === 0 && a.hp > 0) bounceOffFixed(ev, a);
         }
       }
       if (out.some((o) => o.type === 'kill')) {

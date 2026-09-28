@@ -32,12 +32,17 @@ export function createHud(container) {
   let shownTurn = '';
 
   // Turn toast: at each change of turn the same words appear big in the
-  // middle of the screen for a moment, then shrink and fly up into the label,
-  // so the change is hard to miss and you learn where the label lives.
+  // upper third of the screen for a moment, then shrink and fly up to become
+  // the label. The label itself stays hidden meanwhile, so it never doubles up.
   const toast = document.createElement('div');
   toast.className = 'turn-toast';
   toast.setAttribute('aria-hidden', 'true'); // the label already announces it
   container.appendChild(toast);
+  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+  toast.addEventListener('animationend', () => {
+    toast.classList.remove('show');
+    turn.classList.remove('landing');
+  });
 
   const banner = document.createElement('div');
   banner.className = 'banner';
@@ -83,7 +88,8 @@ export function createHud(container) {
       turn.classList.remove('show');
       void turn.offsetWidth;
       turn.classList.add('show');
-      if (!first) {
+      if (!first && !reducedMotion?.matches) {
+        turn.classList.add('landing'); // hidden until the toast lands on it
         toast.textContent = turn.textContent;
         toast.dataset.who = who;
         toast.classList.remove('show');

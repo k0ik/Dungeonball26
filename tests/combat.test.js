@@ -165,3 +165,23 @@ test('enemies moving together can each hurt the hero once; a bystander cannot', 
   assert.deepEqual(out.map((o) => `${o.type}:${o.source.id}`), ['hurt:a', 'hurt:b']);
   assert.equal(hero.hp, 8);
 });
+
+test('a killing blow ricochets off the enemy instead of stopping dead', () => {
+  const ctx = setup([{ x: 6, z: 4.5, level: 1 }]);
+  const { world, hero, combat } = ctx;
+  const enemy = world.balls.find((b) => b.kind === 'enemy');
+  enemy.hp = 1; // one hit kills it
+  hero.x = 4;
+  hero.z = 4.5;
+  hero.vx = 5;
+  hero.vz = 0;
+  combat.beginShot();
+  let killed = false;
+  for (let i = 0; i < 240 && !killed; i++) {
+    stepWorld(world);
+    killed = combat.resolve(world, hero).some((o) => o.type === 'kill');
+    world.events.length = 0;
+  }
+  assert.ok(killed, 'the enemy died');
+  assert.ok(hero.vx < -3, `the hero bounced back (vx ${hero.vx.toFixed(2)})`);
+});

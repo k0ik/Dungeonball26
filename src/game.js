@@ -461,18 +461,13 @@ export function createGame(container, levels, startIndex = 0) {
 
   // --- Camera ------------------------------------------------------------------
   /**
-   * What the camera should keep in view right now: every moving ball, so no
-   * collision or combo happens off screen; the enemy whose turn it is (and,
-   * for a lunge, you, or for a patrol, where it's heading); otherwise you.
+   * What the camera should keep in view right now: during your shot, every
+   * moving ball, so no collision or combo happens off screen; otherwise you
+   * (the enemy phase included: it just pulls out a bit, see the frame call).
    */
   function framingPoints() {
     const moving = world.balls.filter((b) => b.vx !== 0 || b.vz !== 0);
     switch (state.phase) {
-      case 'enemyWait':
-        // You, every enemy about to move, and where the patrols are heading.
-        return [hero, ...state.moves.flatMap((m) => (m.kind === 'patrol' ? [m.enemy, m.target] : [m.enemy]))];
-      case 'enemyMove':
-        return [hero, ...moving];
       case 'shot':
         return moving.length ? moving : [hero];
       default:
@@ -648,7 +643,11 @@ export function createGame(container, levels, startIndex = 0) {
       const from = rig.aimStartWidth;
       rig.aimZoom(hero, from + (Math.max(from, CONFIG.camera.aimMaxWidth) - from) * fill, dt);
     } else {
-      rig.frame(framingPoints(), rig.speedWidth(speedOf(hero)), dt);
+      // Enemy phase: stay on you, just pulled out a bit (enemyPhaseWidth), and
+      // catch whatever enemy action happens to land in view.
+      const enemyPhase = state.phase === 'enemyWait' || state.phase === 'enemyMove';
+      const width = rig.speedWidth(speedOf(hero));
+      rig.frame(framingPoints(), enemyPhase ? Math.max(width, CONFIG.camera.enemyPhaseWidth) : width, dt);
     }
     renderer.render(scene, rig.camera);
     overlay.update();

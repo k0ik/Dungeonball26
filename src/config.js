@@ -143,7 +143,10 @@ export const CONFIG = {
     zoomOutRate: 3, // exponential smoothing rates, 1/s
     zoomInRate: 1.5,
     followRate: 3, // pan smoothing, 1/s
-    // An enemy waits for the camera to arrive before it moves (at most enemyTurnMaxWait).
+    // Enemy phase: the camera stays on you, pulled out to this width, and
+    // eases back to the resting width for your shot.
+    enemyPhaseWidth: 13,
+    // The enemies wait for the camera to arrive before they move (at most enemyTurnMaxWait).
     settleDistance: 0.6, // tiles from the framing goal that count as arrived
     settleZoom: 0.12, // fraction of the goal width that counts as arrived
     distance: 60, // orthographic, so this only has to clear the scene

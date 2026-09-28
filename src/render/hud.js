@@ -31,6 +31,14 @@ export function createHud(container) {
   container.appendChild(turn);
   let shownTurn = '';
 
+  // Turn toast: at each change of turn the same words appear big in the
+  // middle of the screen for a moment, then shrink and fly up into the label,
+  // so the change is hard to miss and you learn where the label lives.
+  const toast = document.createElement('div');
+  toast.className = 'turn-toast';
+  toast.setAttribute('aria-hidden', 'true'); // the label already announces it
+  container.appendChild(toast);
+
   const banner = document.createElement('div');
   banner.className = 'banner';
   banner.hidden = true;
@@ -68,12 +76,20 @@ export function createHud(container) {
     /** Whose turn it is: 'player' or 'enemy'. Pulses when it changes. */
     setTurn(who) {
       if (who === shownTurn) return;
+      const first = shownTurn === ''; // no toast for the very first label
       shownTurn = who;
       turn.textContent = who === 'enemy' ? 'Enemy Turn' : 'Player Turn';
       turn.dataset.who = who;
       turn.classList.remove('show');
       void turn.offsetWidth;
       turn.classList.add('show');
+      if (!first) {
+        toast.textContent = turn.textContent;
+        toast.dataset.who = who;
+        toast.classList.remove('show');
+        void toast.offsetWidth; // restart the animation
+        toast.classList.add('show');
+      }
     },
     /**
      * Darken the screen and block input, with a title and a second line.

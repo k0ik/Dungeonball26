@@ -375,6 +375,64 @@ body {
   background: #c8005f; /* enemy magenta */
 }
 
+/* Big centre copy of the label at each turn change: pops in, holds, then
+   shrinks and flies up into the label's spot. */
+.turn-toast {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  padding: 10px 26px;
+  border-radius: 999px;
+  font: 800 34px/1.2 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.turn-toast[data-who='player'] {
+  color: #10301a;
+  background: #5ad16a;
+}
+
+.turn-toast[data-who='enemy'] {
+  color: #fff;
+  background: #c8005f;
+}
+
+.turn-toast.show {
+  animation: turn-toast 1.05s ease-in-out forwards;
+}
+
+@keyframes turn-toast {
+  0% {
+    opacity: 0;
+    scale: 0.6;
+  }
+  15% {
+    opacity: 1;
+    scale: 1.08;
+  }
+  25% {
+    scale: 1;
+    top: 50%;
+  }
+  60% {
+    opacity: 1;
+    scale: 1;
+    top: 50%;
+  }
+  100% {
+    opacity: 0.2;
+    scale: 0.38;
+    top: calc(65px + env(safe-area-inset-top, 0px));
+  }
+}
+
 .turn-label.show {
   animation: turn-pulse 0.35s ease-out;
 }
@@ -472,6 +530,7 @@ body {
   .hud-gold.bump,
   .turn-label.show,
   .banner.show,
+  .turn-toast.show,
   .danger-edge.on {
     animation: none;
   }

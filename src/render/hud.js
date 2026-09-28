@@ -1,14 +1,15 @@
-// Top HUD bar (design doc: "Camera, HUD and presentation"): a dark bar as in
-// the mockup, with gold (the score) on the left and lives in the middle; key
-// slots take the right in M6. (Gear is shown beside the hero instead.) Also
-// shows short centred banners.
+// Top HUD (design doc: "Camera, HUD and presentation"): no bar behind it,
+// just gold (the score) outlined on the left; key slots take the right in M6.
+// (Gear is shown beside the hero instead.) Also shows short centred banners
+// and the death screen.
+
+import { CONFIG } from '../config.js';
 
 export function createHud(container) {
   const bar = document.createElement('div');
   bar.className = 'hud';
-  bar.innerHTML = `<div class="hud-left"><span class="coin"></span><span class="hud-gold">0</span></div><div class="hud-lives" aria-label="Lives"></div><div class="hud-right"></div>`;
+  bar.innerHTML = `<div class="hud-left"><span class="coin"></span><span class="hud-gold">0</span></div><div class="hud-right"></div>`;
   container.appendChild(bar);
-  const lives = bar.querySelector('.hud-lives');
   const gold = bar.querySelector('.hud-gold');
   let shownGold = -1;
 
@@ -26,6 +27,21 @@ export function createHud(container) {
   container.appendChild(banner);
   let bannerTimer = 0;
 
+  // Death screen: darkens everything (HUD included) and swallows input until
+  // hidden, then lightens again.
+  const death = document.createElement('div');
+  death.className = 'death';
+  death.setAttribute('role', 'alert');
+  death.innerHTML = '<strong></strong><span></span>';
+  death.style.setProperty('--fade', `${CONFIG.hero.deathFadeSeconds}s`);
+  container.appendChild(death);
+  for (const type of ['pointerdown', 'pointermove', 'pointerup', 'click', 'contextmenu']) {
+    death.addEventListener(type, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+  }
+
   return {
     setGold(n) {
       if (n === shownGold) return;
@@ -39,10 +55,6 @@ export function createHud(container) {
         gold.classList.add('bump');
       }
     },
-    setLives(n, max) {
-      lives.setAttribute('aria-label', `${n} of ${max} lives`);
-      lives.innerHTML = Array.from({ length: Math.max(n, max) }, (_, i) => `<span class="life${i < n ? '' : ' lost'}"></span>`).join('');
-    },
     /** Whose turn it is: 'player' or 'enemy'. Pulses when it changes. */
     setTurn(who) {
       if (who === shownTurn) return;
@@ -52,6 +64,16 @@ export function createHud(container) {
       turn.classList.remove('show');
       void turn.offsetWidth;
       turn.classList.add('show');
+    },
+    /** Darken the screen and block input, with a title and a second line. */
+    deathScreen(title, sub) {
+      death.querySelector('strong').textContent = title;
+      death.querySelector('span').textContent = sub;
+      banner.hidden = true;
+      death.classList.add('on');
+    },
+    hideDeathScreen() {
+      death.classList.remove('on');
     },
     /** Centred message for `seconds`; a second line is optional. */
     banner(title, sub = '', seconds = 1.6) {

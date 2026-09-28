@@ -115,6 +115,8 @@ Every enemy that currently sees the hero shows a "!" above it, updated live even
 
 You have 3 lives. Reaching 0 HP costs one life and puts you back at the level start with full HP, while the board stays exactly as you left it.
 
+- **Death screen:** at 0 HP, input is blocked and the screen darkens for 3 seconds with "You Died!" and, on a second line, the lives left ("2 lives remain", "1 life remains") or "Game Over". Anything still rolling stops under it, you're put back at the start (or the level restarts on a game over), and the screen lightens again with your move. Lives aren't shown in the HUD otherwise.
+
 - **Board state persists:** dead enemies stay dead, damaged enemies stay damaged, broken barrels stay broken, opened chests and doors stay open, and keys you hold stay with you.
 - **Respawn is safe:** enemies only act after your shot, so you always get the first move after respawning.
 - **Extra lives** come only from a rare barrel drop (a 1-up).
@@ -149,11 +151,11 @@ Defaults assumed until you say otherwise: an offer never includes a card you alr
 
 ## Objects
 
-Barrels, chests, keys and doors are the level's furniture, and barrel and chest rewards are granted immediately with a short floating label above the hero.
+Barrels, chests, keys and doors are the level's furniture. Chest gold is granted immediately with a short floating label above the hero; barrel loot lands on the floor for you to roll over.
 
 | Object | Behavior |
 | --- | --- |
-| Barrel | Solid bumper. Each contact above 0.4 tiles/s cracks it one stage, with a 0.15 s cooldown per barrel. The third hit breaks it and drops random loot, picked up automatically. Each crack is obvious at a glance: the barrel gets darker, shorter and more faceted, and the last stage leans. |
+| Barrel | Solid bumper. Each contact above 0.4 tiles/s cracks it one stage, with a 0.15 s cooldown per barrel. The second hit breaks it and leaves random loot on the floor where it stood, collected like enemy coins by rolling over it (so taking the loot is the "third hit"). The crack is obvious at a glance: the barrel gets darker, shorter and more faceted, and leans. |
 | Chest | Solid bumper. The first contact opens it and grants a random 8 to 24 gold. |
 | Key | Floor pickup, collected by rolling over it. Color-matched to one door and shown in a HUD slot. |
 | Door | Solid and opaque until the hero is within half a tile while holding the matching key. Then it opens for good and the key is consumed. Enemies can pass through an open door. |
@@ -161,7 +163,7 @@ Barrels, chests, keys and doors are the level's furniture, and barrel and chest 
 | Coins | Dropped where an enemy dies, worth its level in gold. Collected by rolling over them, so grabbing them can pull you back into an enemy's sight. |
 | Explosive barrel (red) | Solid bumper with the same physics as a barrel. Any contact from the hero or an enemy, at any speed, detonates it: the ball that touched it takes 1 flat damage, ignoring ATK and the shield, and the barrel is destroyed with no loot. |
 
-Every barrel drops something. You collect it automatically the moment the barrel breaks, unless you can't use it right now: a shield while you already hold one, or a potion (or super potion) while your HP is full. Then it stays on the floor where the barrel was, visible, and you collect it later by rolling over it once you can use it. Starting weights, to tune by feel:
+Every barrel drops something, left on the floor where the barrel was. You collect it by rolling over it, unless you can't use it right now: a shield while you already hold one, or a potion (or super potion) while your HP is full. Then it stays there, visible, until you roll over it once you can use it. Starting weights, to tune by feel:
 
 | Result | Chance | Effect |
 | --- | --- | --- |
@@ -237,9 +239,9 @@ The camera is a true orthographic projection at a fixed isometric angle matched 
 - **Dynamic zoom:** the frustum widens as the hero speeds up, so a hard shot pulls the camera out to reveal more of its path, then eases back to the base 9-tile width once every ball is at rest. Default range: 9 tiles at rest up to about 13 tiles at max launch speed (9 tiles/s). This is the minimum width; framing several moving balls can widen it further.
 - **Walls:** short, so they never hide a ball behind them. The mockup's walls stand a little taller than the ball; the build uses 0.55 tile (`render.wallHeight`) so a ball resting just behind a wall stays visible.
 - **Lighting:** one ambient light plus one directional light, no dynamic shadows for the MVP.
-- **Turn label:** a small pill under the top bar always shows whose turn it is: "Player Turn" (green) while you aim and while your shot rolls, "Enemy Turn" (magenta) from the first enemy move until it's your move again. It pulses when it changes, and sits apart from the centre banners, so it never covers "Combo Kill!" or "Knocked out!".
+- **Turn label:** a small pill below the gold, at the top centre, always shows whose turn it is: "Player Turn" (green) while you aim and while your shot rolls, "Enemy Turn" (magenta) from the first enemy move until it's your move again. It pulses when it changes, and sits apart from the centre banners, so it never covers "Combo Kill!".
 - **See-through chests:** while you aim, any chest within about 2 tiles of the ball fades to 30% opacity, so an open lid never hides the ball; it turns solid again when you release.
-- **HUD:** a dark top bar as in your mock, with gold (the score, next to a coin) on the left, lives in the middle (one small hero ball per life) and key slots on the right (M6). Gear isn't in the bar: its icons sit beside the hero ball instead (sword to the right, shield to the left). HP bars sit above the hero (green) and each enemy (pink), rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The aim preview is different: it's drawn in the 3D scene itself, on the ground plane, so it lands exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
+- **HUD:** no bar behind it (the mockup's dark bar was dropped): gold (the score, next to a coin) sits on the left with a dark outline and drop shadow so it reads over any floor, and key slots go on the right (M6). Lives aren't shown; the death screen says how many remain. Gear isn't in the bar: its icons sit beside the hero ball instead (sword to the right, shield to the left). HP bars sit above the hero (green) and each enemy (pink), rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The aim preview is different: it's drawn in the 3D scene itself, on the ground plane, so it lands exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
 - **Art:** procedural 3D primitives matching your mockup: extruded boxes for walls, cylinders for barrels, boxes for chests, spheres for hero and enemies. Walls and floor are flat greys with no outlines, shaded per face (light tops, darker sides); balls and props are toon-shaded with outlines.
 
 ## Audio
@@ -248,7 +250,7 @@ Sound is MVP scope, not a later pass — a game about impacts needs impacts to s
 
 **Ambient:** one looping ambient or music track plays under a level, non-positional. Per-level variation is a good post-MVP addition, not required now.
 
-**Impact and event SFX:** a short one-shot per event — shot launch, wall bounce, barrel crack (rising in intensity across the three hits) and break, red barrel explosion, chest open, the hero's hit on an enemy, an enemy-to-enemy combo hit, enemy lunge launch, the hero taking damage, coin pickup, potion or sword or shield or extra-life pickup, key pickup, door unlock, level exit, and death or respawn.
+**Impact and event SFX:** a short one-shot per event — shot launch, wall bounce, barrel crack and break, red barrel explosion, chest open, the hero's hit on an enemy, an enemy-to-enemy combo hit, enemy lunge launch, the hero taking damage, coin pickup, potion or sword or shield or extra-life pickup, key pickup, door unlock, level exit, and death or respawn.
 
 **Implementation:** Three.js's built-in `THREE.AudioListener` and `THREE.Audio` cover both layers without adding a library. Non-positional playback is enough given the MVP's small view; simple stereo panning by world x-position is a nice-to-have, not required. For the MVP, source SFX and the ambient loop from a free, CC0 pack (for example, Kenney's audio assets) rather than composing original audio. Swapping in custom or licensed audio later doesn't change any of the event hookups.
 
@@ -300,7 +302,7 @@ The rules above use these defaults where your answers left a gap. Change any tha
 - If the hero dies mid-round, the round ends there: the remaining enemies skip their turn and the hero respawns with the first move.
 - Sight range is 6 tiles, not the screen width, because a portrait screen is only 9 tiles wide. Other enemies also block sight, so they can shield you.
 - Gear is the shield, a one-hit consumable held until an enemy hit uses it up (they don't stack), and the sword, +3 ATK for two hits on enemies (combo and blast damage don't use it up).
-- Barrel loot and chest gold are granted at once with a floating label, except a shield or potion you can't use yet, which waits on the floor. Keys and enemy coins lie on the floor.
+- Chest gold is granted at once with a floating label. Barrel loot, keys and enemy coins lie on the floor until you roll over them.
 - Respawn restores full HP, and keys you hold are kept.
 - Aiming is a slingshot pull-back rather than dragging toward the target.
 - An explosive barrel deals a flat 1 damage regardless of stats, ignores the normal 0.4 tiles/s hit threshold, and drops no loot.

@@ -73,7 +73,7 @@ export const CONFIG = {
   // Barrels, chests and red barrels (design doc: "Objects").
   objects: {
     barrelRadius: 0.34,
-    barrelHits: 3, // the third hit breaks it
+    barrelHits: 2, // the second hit breaks it; its loot then waits on the floor
     barrelCooldown: 0.15, // seconds between cracks, per barrel
     chestHalfX: 0.36, // chest footprint, half-size along x and z
     chestHalfZ: 0.28,
@@ -107,7 +107,11 @@ export const CONFIG = {
   },
 
   hero: {
-    downPause: 1.0, // seconds after a knockout before you respawn
+    // Death screen: the screen darkens with "You Died!" and the lives left
+    // (or "Game Over") and input is blocked for this long, then it lightens
+    // and play resumes from the start.
+    deathScreenSeconds: 3,
+    deathFadeSeconds: 0.4, // darken / lighten time, inside the 3 s
     maxHp: 10,
     atk: 1,
     lives: 3,

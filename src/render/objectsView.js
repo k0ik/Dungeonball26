@@ -11,13 +11,12 @@ const BARREL_HEIGHT = 0.62;
 const CHEST_HEIGHT = 0.4;
 const LID_HEIGHT = 0.2;
 
-// Barrel look per crack stage: each stage is darker, shorter and more
-// faceted (fewer, flat-shaded sides), and the last one leans, so damage reads
-// at a glance.
+// Barrel look per crack stage: a barrel breaks on its second hit, so the one
+// cracked stage is darker, shorter, faceted (few flat-shaded sides) and
+// leaning, so damage reads at a glance.
 const BARREL_STAGES = [
   { sides: 20, height: BARREL_HEIGHT, shade: 1, flat: false, lean: 0 },
-  { sides: 9, height: BARREL_HEIGHT * 0.88, shade: 0.68, flat: true, lean: 0.06 },
-  { sides: 6, height: BARREL_HEIGHT * 0.74, shade: 0.45, flat: true, lean: 0.16 },
+  { sides: 7, height: BARREL_HEIGHT * 0.8, shade: 0.52, flat: true, lean: 0.14 },
 ];
 
 function barrelGeometry(stage) {

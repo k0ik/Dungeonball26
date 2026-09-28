@@ -127,7 +127,6 @@ export function createGame(container, levels, startIndex = 0) {
     state.entry = { hp: hero.hp, atk: hero.atk, shield: hero.shield, swordHits: hero.swordHits, gold: state.gold };
     respawn();
     rig.snapTo(hero.x, hero.z);
-    hud.setLives(state.lives, CONFIG.hero.lives);
   }
 
   /** Put the hero back at the start. The board is left exactly as it is. */
@@ -253,21 +252,24 @@ export function createGame(container, levels, startIndex = 0) {
     state.phase = 'enemyMove';
   }
 
+  // Death screen: input is blocked and the screen darkens for
+  // deathScreenSeconds. The respawn (or game-over restart) happens under it,
+  // just before it lightens, and play carries on.
   function knockedOut() {
     state.phase = 'down';
-    state.timer = CONFIG.hero.downPause;
+    state.timer = CONFIG.hero.deathScreenSeconds;
     state.aiming = false;
     aimView.hide();
-    sfx.play('down', 0.9);
-    hud.banner('Knocked out!', state.lives > 1 ? 'Back to the start' : 'Last life gone');
+    const left = state.lives - 1;
+    sfx.play(left > 0 ? 'down' : 'gameover', 0.9);
+    hud.deathScreen('You Died!', left > 0 ? `${left} ${left === 1 ? 'life remains' : 'lives remain'}` : 'Game Over');
   }
 
   function afterKnockout() {
+    for (const b of world.balls) b.vx = b.vz = 0; // anything still rolling stops under the dark screen
     state.lives--;
     if (state.lives > 0) {
       respawn({ heal: true });
-      sfx.play('respawn', 0.8);
-      hud.banner(`${state.lives} ${state.lives === 1 ? 'life' : 'lives'} left`, 'The board stays as you left it', 1.4);
     } else {
       // Game over: the level starts from scratch, with the HP, gear and gold
       // you entered it with.
@@ -275,11 +277,11 @@ export function createGame(container, levels, startIndex = 0) {
       const { hp, atk, shield, swordHits, gold } = state.entry;
       Object.assign(hero, { hp, atk, shield, swordHits });
       state.gold = gold;
-      sfx.play('gameover', 0.9);
       loadLevel(levelIndex);
-      hud.banner('Game over', 'The level starts over', 2);
     }
-    hud.setLives(state.lives, CONFIG.hero.lives);
+    rig.snapTo(hero.x, hero.z);
+    hud.hideDeathScreen();
+    sfx.play('respawn', 0.8);
   }
 
   // Reaching the exit ends the run at once, even mid-roll. For now there is
@@ -293,11 +295,9 @@ export function createGame(container, levels, startIndex = 0) {
   }
 
   // --- Events ------------------------------------------------------------------
-  /** Barrel loot: collect it now if you can use it, otherwise leave it on the floor. */
+  /** Barrel loot lands on the floor where the barrel stood; roll over it to take it. */
   function dropLoot(x, z) {
-    const item = { ...rollLoot(), x, z };
-    if (canCollect(item, hero)) pickUp(item);
-    else world.items.push(item);
+    world.items.push({ ...rollLoot(), x, z });
   }
 
   /** The ball labels about you should follow, or null to leave them in place (config). */
@@ -310,7 +310,6 @@ export function createGame(container, levels, startIndex = 0) {
     const label = collect(item, hero, state);
     sfx.play(PICKUP_SOUND[item.kind], 0.8);
     overlay.float(label, hero.x, hero.z, hero.radius * 2 + 0.8, PICKUP_STYLE[item.kind], heroFollow());
-    hud.setLives(state.lives, CONFIG.hero.lives);
   }
 
   /** Roll over a floor item to take it, once you can use it. */
@@ -522,7 +521,7 @@ export function createGame(container, levels, startIndex = 0) {
         break;
       case 'down':
         state.timer -= dt;
-        if (state.timer <= 0 && isAtRest(world)) afterKnockout();
+        if (state.timer <= 0) afterKnockout();
         break;
     }
 

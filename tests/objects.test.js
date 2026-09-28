@@ -30,17 +30,17 @@ test('the level builds a barrel, a chest and a red barrel as bumpers', () => {
   assert.deepEqual(world.statics.map((s) => `${s.kind}:${s.shape}`).sort(), ['barrel:circle', 'chest:box', 'explosive:circle']);
 });
 
-test('a barrel cracks on each hero hit and breaks on the third', () => {
+test('a barrel cracks on each hero hit and breaks on the second', () => {
   const { world, hero, get } = setup();
   const barrel = get('barrel');
   const stages = [];
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 2; i++) {
     touch(world, hero, barrel);
     stages.push(...resolveObjects(world, hero).map((o) => o.type + (o.stage ?? '')));
     world.events.length = 0;
     world.time += 0.2;
   }
-  assert.deepEqual(stages, ['crack1', 'crack2', 'break']);
+  assert.deepEqual(stages, ['crack1', 'break']);
   assert.ok(!world.statics.includes(barrel), 'a broken barrel leaves the board');
 });
 

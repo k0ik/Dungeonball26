@@ -306,7 +306,7 @@ Changes agreed during development that aren't built yet. (Trait cards are schedu
 
 - **Trick shots:** the achievements in the section above, with their first-time gold bonuses. Most can be built now; the two pit shots need the bottomless pit.
 - **Red barrel blast push:** a red barrel's explosion also shoves nearby balls. Every ball, hero or enemy, within 2 tiles of the barrel's centre is pushed straight away from it with a quick burst of speed, up to 6 tiles/s at the centre, falling off to nothing at the edge. Only balls the blast can reach get pushed: a wall between the barrel and a ball shields it, using the same line check as sight. The push deals no damage by itself; only the ball that touched the barrel takes the 1 damage. A push that sends an enemy into another enemy counts as a combo, and one that sends an enemy into a barrel counts as your knock during your shot. Blasts can chain into other red barrels.
-- **A clearer turn cue:** the small turn label is easy to miss (see the Camera, HUD and presentation section for the options being weighed).
+- **A clearer turn cue:** the small turn label is easy to miss. Options: a big "Your Turn" / "Enemy Turn" toast in the middle of the screen at each change that shrinks and flies into the label; a thin coloured bar across the top edge (green or magenta); dimming and desaturating the board slightly during the enemy turn; or a short sound sting at each change. Not decided yet.
 
 - **Bottomless pit:** a new tile that any ball, the hero or an enemy, can fall into, dying instantly.
   - **Falling in:** a ball falls when its centre passes over the pit, so it can graze the edge and roll on. It drops out of sight with a short fall.

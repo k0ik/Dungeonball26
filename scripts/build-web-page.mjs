@@ -31,7 +31,7 @@ ${css}
 .hint b { color: #ffd166; font-weight: 600; }
 .hint.gone { opacity: 0; }
 </style>
-<div id="game"><p class="hint" id="hint"><b>Press on the ball</b>, drag back, release to shoot.<br>Let go near the ball to cancel. Knock enemies into each other for combos. The green exit starts the hall over.<br>Keys: <b>r</b> respawn, <b>d</b> debug.</p></div>
+<div id="game"><p class="hint" id="hint"><b>Press on the ball</b>, drag back, release to shoot.<br>Let go near the ball to cancel. Knock enemies into each other for combos. Roll over a key to open its door; the green exit leads on.<br>Keys: <b>r</b> respawn, <b>n</b> next level, <b>d</b> debug.</p></div>
 <script type="module">
 ${js}
 </script>

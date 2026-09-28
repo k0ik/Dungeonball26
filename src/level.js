@@ -112,7 +112,7 @@ export function tileAt(level, col, row) {
   return level.tiles[row][col];
 }
 
-/** Solid for physics and sight. Doors are closed until M6 opens them. */
+/** Solid for physics and sight. A closed door is solid; an opened one becomes floor (doors.js). */
 export function isSolid(level, col, row) {
   const t = tileAt(level, col, row);
   return t === 'wall' || t === 'door';

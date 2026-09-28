@@ -1,9 +1,10 @@
 // Top HUD (design doc: "Camera, HUD and presentation"): no bar behind it,
-// just gold (the score) outlined on the left; key slots take the right in M6.
-// (Gear is shown beside the hero instead.) Also shows short centred banners
-// and the death screen.
+// just gold (the score) outlined on the left and the keys you hold on the
+// right. (Gear is shown beside the hero instead.) Also shows short centred
+// banners and the full-screen death / run-complete screen.
 
 import { CONFIG } from '../config.js';
+import { keyIcon } from './icons.js';
 
 export function createHud(container) {
   const bar = document.createElement('div');
@@ -11,6 +12,8 @@ export function createHud(container) {
   bar.innerHTML = `<div class="hud-left"><span class="coin"></span><span class="hud-gold">0</span></div><div class="hud-right"></div>`;
   container.appendChild(bar);
   const gold = bar.querySelector('.hud-gold');
+  const keySlots = bar.querySelector('.hud-right');
+  let shownKeys = null;
   let shownGold = -1;
 
   // "Player Turn" / "Enemy Turn": a small pill under the bar, always shown,
@@ -27,8 +30,8 @@ export function createHud(container) {
   container.appendChild(banner);
   let bannerTimer = 0;
 
-  // Death screen: darkens everything (HUD included) and swallows input until
-  // hidden, then lightens again.
+  // Full-screen message ("You Died!", "Run Complete!"): darkens everything
+  // (HUD included) and swallows input until hidden, then lightens again.
   const death = document.createElement('div');
   death.className = 'death';
   death.setAttribute('role', 'alert');
@@ -65,15 +68,29 @@ export function createHud(container) {
       void turn.offsetWidth;
       turn.classList.add('show');
     },
-    /** Darken the screen and block input, with a title and a second line. */
-    deathScreen(title, sub) {
+    /**
+     * Darken the screen and block input, with a title and a second line.
+     * `variant` 'death' titles in red, 'win' in gold.
+     */
+    showScreen(title, sub, variant = 'death') {
       death.querySelector('strong').textContent = title;
       death.querySelector('span').textContent = sub;
+      death.dataset.variant = variant;
       banner.hidden = true;
       death.classList.add('on');
     },
-    hideDeathScreen() {
+    hideScreen() {
       death.classList.remove('on');
+    },
+    /** The keys you hold, as a list of colours ('red', 'blue', 'yellow'). */
+    setKeys(keys) {
+      const key = keys.join();
+      if (key === shownKeys) return;
+      shownKeys = key;
+      keySlots.innerHTML = keys
+        .map((c) => `<span class="key-slot" title="${c} key">${keyIcon(`#${CONFIG.colors.keys[c].toString(16).padStart(6, '0')}`)}</span>`)
+        .join('');
+      keySlots.setAttribute('aria-label', keys.length ? `Keys: ${keys.join(', ')}` : 'No keys');
     },
     /** Centred message for `seconds`; a second line is optional. */
     banner(title, sub = '', seconds = 1.6) {

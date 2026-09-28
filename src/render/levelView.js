@@ -1,10 +1,11 @@
 // Builds the static level geometry: the floor, short extruded walls and exit
 // tiles. Colours are baked per face (flat, like the mockup) rather than lit.
+// Doors aren't part of it: doorsView draws them, so they can open.
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { tileAt } from '../level.js';
-import { outlineLineMaterial } from './materials.js';
+import { outlineLineMaterial, markOccluder } from './materials.js';
 
 const C = CONFIG.colors;
 
@@ -15,12 +16,13 @@ function pushQuad(pos, col, a, b, c, d, color) {
 }
 
 const flatMaterial = new THREE.MeshBasicMaterial({ vertexColors: true });
+const wallMaterial = markOccluder(new THREE.MeshBasicMaterial({ vertexColors: true }));
 
-function meshFrom(pos, col) {
+function meshFrom(pos, col, material = flatMaterial) {
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-  return new THREE.Mesh(geo, flatMaterial);
+  return new THREE.Mesh(geo, material);
 }
 
 export function buildLevelView(level) {
@@ -51,10 +53,7 @@ export function buildLevelView(level) {
   const front = new THREE.Color(C.wallFront); // +z
   const side = new THREE.Color(C.wallSide); // +x
   const back = new THREE.Color(C.wallBack); // -z and -x
-  const isWall = (c, r) => {
-    const t = tileAt(level, c, r);
-    return t === 'wall' || t === 'door';
-  };
+  const isWall = (c, r) => tileAt(level, c, r) === 'wall';
   for (let row = 0; row < level.height; row++) {
     for (let col = 0; col < level.width; col++) {
       if (!isWall(col, row)) continue;
@@ -67,7 +66,7 @@ export function buildLevelView(level) {
     }
   }
   if (wallPos.length) {
-    const walls = meshFrom(wallPos, wallCol);
+    const walls = meshFrom(wallPos, wallCol, wallMaterial);
     group.add(walls);
     if (CONFIG.render.wallOutlines) {
       group.add(new THREE.LineSegments(new THREE.EdgesGeometry(walls.geometry, 30), outlineLineMaterial));

@@ -5,7 +5,7 @@
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
-import { toonMaterial, outlineHullMaterial } from './materials.js';
+import { toonMaterial, outlineHullMaterial, clearOccluder } from './materials.js';
 import { calmFace, angryFace, faceSprite } from './faces.js';
 
 const shadowMaterial = new THREE.MeshBasicMaterial({
@@ -19,7 +19,7 @@ export function createEnemyView(ball, toCamera) {
   const r = ball.radius;
   const group = new THREE.Group();
 
-  const body = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 20), toonMaterial(CONFIG.colors.enemy));
+  const body = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 20), clearOccluder(toonMaterial(CONFIG.colors.enemy)));
   body.position.y = r;
   const outline = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 16), outlineHullMaterial);
   outline.scale.setScalar(CONFIG.render.outlineScale);

@@ -20,6 +20,30 @@ export function toonMaterial(color, extra = {}) {
 
 export const outlineLineMaterial = new THREE.LineBasicMaterial({ color: CONFIG.colors.outline });
 
+// Occlusion mask for the pickup x-ray (itemsView): walls and doors set
+// stencil 1 where they're drawn, balls reset it to 0 over themselves, and the
+// x-ray only draws where it's 1. So a pickup shows through a wall, but never
+// through an enemy standing on it (or a ball in front of the wall).
+function stencilWrite(material, ref) {
+  Object.assign(material, {
+    stencilWrite: true,
+    stencilRef: ref,
+    stencilFunc: THREE.AlwaysStencilFunc,
+    stencilZPass: THREE.ReplaceStencilOp,
+  });
+  return material;
+}
+export const markOccluder = (material) => stencilWrite(material, 1);
+export const clearOccluder = (material) => stencilWrite(material, 0);
+/** Draw only over wall pixels (see markOccluder). */
+export const onOccluder = (material) =>
+  Object.assign(material, {
+    stencilWrite: true, // enables the stencil test
+    stencilRef: 1,
+    stencilFunc: THREE.EqualStencilFunc,
+    stencilZPass: THREE.KeepStencilOp,
+  });
+
 /** Inverted-hull outline: a slightly larger back-faced black copy. */
 export const outlineHullMaterial = new THREE.MeshBasicMaterial({
   color: CONFIG.colors.outline,

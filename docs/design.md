@@ -122,7 +122,8 @@ You have 3 lives. Reaching 0 HP costs one life and puts you back at the level st
 - **Respawn is safe:** enemies only act after your shot, so you always get the first move after respawning.
 - **Extra lives** come only from a rare barrel drop (a 1-up).
 - **Game over** at 0 lives restarts the current level from scratch with 3 lives, and the HP and gear you entered it with.
-- **Between levels:** HP, gear bonuses, lives and score carry over. Unused keys do not.
+- **Between levels:** reaching the exit loads the next level at once (even mid-roll), with a short banner naming it ("One Key, Level 3 of 3"). HP, gear bonuses, lives and score carry over. Unused keys do not.
+- **Run complete:** the exit of the last level darkens the screen with "Run Complete!" and your gold for 4 seconds, then a fresh run starts at level 1 (full HP, no gear, 3 lives, no gold).
 
 Gold is the score, and it is where the risk against greed tension lives. Kills score and reduce future danger. Barrels and chests score too, but they keep you out in the open among enemies that are still alive.
 
@@ -159,8 +160,8 @@ Barrels, chests, keys and doors are the level's furniture. Chest gold is granted
 | --- | --- |
 | Barrel | Solid bumper. Each contact above 0.4 tiles/s, from the hero or an enemy (say one you knocked into it), cracks it one stage, with a 0.15 s cooldown per barrel. The second hit breaks it and leaves random loot on the floor where it stood, collected like enemy coins by rolling over it (so taking the loot is the "third hit"). The crack is obvious at a glance: the barrel gets darker, shorter and more faceted, and leans. |
 | Chest | Solid bumper. The first contact opens it and grants a random 8 to 24 gold. |
-| Key | Floor pickup, collected by rolling over it. Color-matched to one door and shown in a HUD slot. |
-| Door | Solid and opaque until the hero is within half a tile while holding the matching key. Then it opens for good and the key is consumed. Enemies can pass through an open door. |
+| Key | Floor pickup (a standing key in red, blue or yellow), collected by rolling over it. Color-matched to one door and shown in a HUD slot at the top right until used. |
+| Door | Solid and opaque until the hero is within half a tile while holding the matching key. Then it opens for good (it sinks into the floor with a clunk and "Unlocked!") and the key is consumed; the check runs every physics step, so a ball rolling at a door with its key usually goes straight through. A closed door is a block in its key's colour, a little lower than the walls, with a keyhole on its faces. Enemies can pass through an open door. |
 | Exit | Ends the level when the hero's center enters its tile. |
 | Coins | Dropped where an enemy dies, worth its level in gold. Collected by rolling over them, so grabbing them can pull you back into an enemy's sight. |
 | Explosive barrel (red) | Solid bumper with the same physics as a barrel. Any contact from the hero or an enemy, at any speed, detonates it: the ball that touched it takes 1 flat damage, ignoring ATK, and the barrel is destroyed with no loot. If it's you and you hold a shield, the shield takes the blast instead ("Blocked!") and is used up. |
@@ -219,13 +220,13 @@ Barrel loot is random by default. Per-barrel overrides can be added later withou
 
 The five MVP levels ramp one idea at a time. Sizes are suggestions in tiles.
 
-Until the other levels exist (M6–M7), Long Hall is the only level and reaching its exit starts it over: the hero goes back to its start and the enemies reset.
+Levels 1 to 3 are built (M6); a run is those three in order until levels 4 and 5 arrive in M8.
 
 | # | Name | Size | Enemies | Keys and doors | Teaches |
 | --- | --- | --- | --- | --- | --- |
 | 1 | Long Hall | 12×32 | Eight, levels 1 to 3 (a touching pair blocks the first doorway), plus six barrels, three chests and two red barrels | None | Aiming, bouncing, hitting enemies, combos, the exit |
-| 2 | Breakables | 9×20 | Two level-1 | None | Barrels, chest, potions, sightlines |
-| 3 | One Key | 12×20 | Level 1 and level 2 | Red | Keys, doors, hiding from sight |
+| 2 | Breakables | 9×20 | Two level-1, plus seven barrels and a chest among pillars | None | Barrels, chest, potions, sightlines |
+| 3 | One Key | 12×20 | Level 1 and level 2 (the level 2 guards the door), plus barrels, two chests and a red barrel | Red: the key sits in a nook out of the guard's sight; the door seals the exit room | Keys, doors, hiding from sight |
 | 4 | Two Keys | 14×24 | Four, levels 1 to 3 | Red, blue | Routing, combos, using enemies as blockers |
 | 5 | Gauntlet | 16×32 | Seven, levels 1 to 3 | Red, blue, yellow | Scrolling, risk against greed, everything together |
 
@@ -242,9 +243,9 @@ The camera is a true orthographic projection at a fixed isometric angle matched 
 - **Walls:** short, so they never hide a ball behind them. The mockup's walls stand a little taller than the ball; the build uses 0.55 tile (`render.wallHeight`) so a ball resting just behind a wall stays visible.
 - **Lighting:** one ambient light plus one directional light, no dynamic shadows for the MVP.
 - **Turn label:** a small pill below the gold, at the top centre, always shows whose turn it is: "Player Turn" (green) while you aim and while your shot rolls, "Enemy Turn" (magenta) from the first enemy move until it's your move again. It pulses when it changes, and sits apart from the centre banners, so it never covers "Combo Kill!".
-- **Pickups through walls:** a floor pickup (coins, a potion, gear) hidden behind a wall shows through it as a flat see-through silhouette in its own colour (`render.itemXrayOpacity`), only where the wall covers it, so loot is never lost from view.
+- **Pickups through walls:** a floor pickup (coins, a potion, gear) hidden behind a wall shows through it as a flat see-through silhouette in its own colour (`render.itemXrayOpacity`), only where a wall or closed door covers it (a stencil mask), never through a ball standing on it, so loot is never lost from view. Keys are drawn 1.5× the size of other pickups.
 - **See-through chests:** while you aim, any chest within about 2 tiles of the ball fades to 30% opacity, so an open lid never hides the ball; it turns solid again when you release.
-- **HUD:** no bar behind it (the mockup's dark bar was dropped): gold (the score, next to a coin) sits on the left with a dark outline and drop shadow so it reads over any floor, and key slots go on the right (M6). Lives aren't shown; the death screen says how many remain. Gear isn't in the bar: its icons sit beside the hero ball instead (sword to the right, shield to the left). HP bars sit above the hero (green) and each enemy (pink), rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The aim preview is different: it's drawn in the 3D scene itself, on the ground plane, so it lands exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
+- **HUD:** no bar behind it (the mockup's dark bar was dropped): gold (the score, next to a coin) sits on the left with a dark outline and drop shadow so it reads over any floor, and the keys you hold sit on the right as small key icons in their colours. Lives aren't shown; the death screen says how many remain. Gear isn't in the bar: its icons sit beside the hero ball instead (sword to the right, shield to the left). HP bars sit above the hero (green) and each enemy (pink), rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The aim preview is different: it's drawn in the 3D scene itself, on the ground plane, so it lands exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
 - **Art:** procedural 3D primitives matching your mockup: extruded boxes for walls, cylinders for barrels, boxes for chests, spheres for hero and enemies. Walls and floor are flat greys with no outlines, shaded per face (light tops, darker sides); balls and props are toon-shaded with outlines.
 - **The hero:** a polished silver ball (a stylized chrome matcap with a faint darker band, so rolling still reads) with an outline and a face that always looks at the camera. Its expression follows the play: confident at rest (cocked brow, smirk), determined while you aim and while your shot rolls (brows down, narrowed eyes, set mouth), and an "ouch" face (eyes squeezed shut, mouth open) for 0.8 s after any hit that costs HP, and while you're down.
 

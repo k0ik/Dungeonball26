@@ -1,7 +1,7 @@
 // Loot and pickups (design doc: "Objects"). Pure rules: what a barrel drops,
 // whether you can use a pickup right now, and what collecting it does.
 //
-// `run` is the player's run state: { gold, lives }. The hero ball carries
+// `run` is the player's run state: { gold, lives, keys }. The hero ball carries
 // hp, maxHp, atk, shield (bool) and swordHits (uses left: 2 whole, 1 broken, 0 none).
 
 import { CONFIG } from './config.js';
@@ -73,6 +73,9 @@ export function collect(item, hero, run) {
     case 'oneUp':
       run.lives += 1;
       return '1-up';
+    case 'key':
+      run.keys.push(item.color);
+      return `${item.color[0].toUpperCase()}${item.color.slice(1)} key`;
     default:
       throw new Error(`unknown item ${item.kind}`);
   }

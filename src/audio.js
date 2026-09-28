@@ -148,6 +148,21 @@ const SYNTHS = {
       const clang = Math.sin(2 * Math.PI * 620 * t) * 0.5 + Math.sin(2 * Math.PI * 1370 * t) * 0.35 + Math.sin(2 * Math.PI * 2210 * t) * 0.2;
       return (clang * Math.exp(-t * 10) + (Math.random() * 2 - 1) * Math.exp(-t * 80) * 0.4) * 0.55;
     }),
+  // Key picked up: a bright two-note jingle with a metallic shimmer.
+  key: (ctx) =>
+    synth(ctx, 0.45, (t) => {
+      const note = (f, u) => (u < 0 ? 0 : (Math.sin(2 * Math.PI * f * u) + Math.sin(2 * Math.PI * f * 2.76 * u) * 0.3) * Math.exp(-u * 9));
+      return (note(1320, t) + note(1760, t - 0.09)) * 0.3;
+    }),
+  // Door unlocks: a heavy clunk, then a low grinding slide.
+  door: (ctx) =>
+    synth(ctx, 0.6, (t) => {
+      const clunk = Math.sin(2 * Math.PI * (180 - 120 * t) * t) * Math.exp(-t * 25) + (Math.random() * 2 - 1) * Math.exp(-t * 60) * 0.4;
+      const grind = t > 0.08 ? (Math.random() * 2 - 1) * 0.18 * Math.sin(Math.PI * Math.min(1, (t - 0.08) / 0.5)) * (0.6 + 0.4 * Math.sin(2 * Math.PI * 38 * t)) : 0;
+      return (clunk * 0.7 + grind) * 0.8;
+    }),
+  // Run complete: a triumphant rising fanfare.
+  win: (ctx) => notes(ctx, [523, 659, 784, 1047, 784, 1047], 0.12, 0.45),
   // Two billiard balls: bright and short.
   ball: (ctx) =>
     synth(ctx, 0.08, (t) => {

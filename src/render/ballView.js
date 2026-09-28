@@ -5,7 +5,7 @@
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
-import { toonMaterial, silverMaterial, outlineHullMaterial } from './materials.js';
+import { toonMaterial, silverMaterial, outlineHullMaterial, clearOccluder } from './materials.js';
 import { heroFaces, faceSprite } from './faces.js';
 
 const shadowMaterial = new THREE.MeshBasicMaterial({
@@ -35,7 +35,8 @@ export function createBallView(ball, { color, stripe, silver = false, toCamera =
 
   const body = new THREE.Mesh(
     stripe != null ? stripedSphere(r, color, stripe) : new THREE.SphereGeometry(r, 32, 20),
-    (silver ? silverMaterial : toonMaterial)(stripe != null ? 0xffffff : color, { vertexColors: stripe != null }),
+    // A ball hides pickups behind it for real: it clears the x-ray mask.
+    clearOccluder((silver ? silverMaterial : toonMaterial)(stripe != null ? 0xffffff : color, { vertexColors: stripe != null })),
   );
   body.position.y = r;
   // Tilt the stripe so it doesn't start edge-on to the camera.

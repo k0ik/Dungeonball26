@@ -11,6 +11,10 @@
 //   enemyWait  the acting enemy's short telegraph before it moves
 //   enemyMove  the acting enemy's move is rolling
 //   down       you were knocked out; waiting to respawn
+//   won        you cleared the last level; the run-complete screen is up
+//
+// Levels (M6): the exit loads the next level. HP, gear, lives and gold carry
+// over; keys don't. After the last level the run starts over.
 
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
@@ -33,11 +37,13 @@ import { createObjects, resolveObjects } from './objects.js';
 import { rollLoot, canCollect, collect, useSwordHit } from './loot.js';
 import { createObjectsView } from './render/objectsView.js';
 import { createItemsView } from './render/itemsView.js';
+import { createDoorsView } from './render/doorsView.js';
+import { openDoors } from './doors.js';
 
 /** levels: [{ id, name, text }]. */
 export function createGame(container, levels, startIndex = 0) {
   // --- Rendering -----------------------------------------------------------
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, stencil: true }); // stencil: the pickup x-ray mask
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, CONFIG.render.maxPixelRatio));
   renderer.setClearColor(CONFIG.colors.background);
   container.appendChild(renderer.domElement);
@@ -69,6 +75,7 @@ export function createGame(container, levels, startIndex = 0) {
   const combat = createCombat();
   const objectsView = createObjectsView(scene);
   const itemsView = createItemsView(scene);
+  const doorsView = createDoorsView(scene);
   const enemyViews = new Map(); // enemy ball -> view
 
   const state = {
@@ -81,6 +88,7 @@ export function createGame(container, levels, startIndex = 0) {
     clears: 0,
     lives: CONFIG.hero.lives,
     gold: 0, // the score
+    keys: [], // colours of the keys you hold; this level only
     entry: null, // HP, gear and gold when this level was entered; game over restores them
     taken: new Set(), // enemies that have acted this round
     patrollers: new Set(), // enemies allowed to patrol this round
@@ -109,8 +117,11 @@ export function createGame(container, levels, startIndex = 0) {
     world = createWorld(level);
     world.balls.push(hero);
     world.statics = createObjects(level);
-    world.items = []; // floor pickups: kill coins, and loot you couldn't use yet
+    // Floor pickups: kill coins, barrel loot, and the level's keys.
+    world.items = level.keys.map((k) => ({ kind: 'key', color: k.color, ...tileCenter(k) }));
+    state.keys = []; // unused keys don't carry over (and a game over takes them back)
     objectsView.build(world.statics);
+    doorsView.build(level.doors);
 
     for (const view of enemyViews.values()) {
       scene.remove(view.object);
@@ -268,7 +279,7 @@ export function createGame(container, levels, startIndex = 0) {
     aimView.hide();
     const left = state.lives - 1;
     sfx.play(left > 0 ? 'down' : 'gameover', 0.9);
-    hud.deathScreen('You Died!', left > 0 ? `${left} ${left === 1 ? 'life remains' : 'lives remain'}` : 'Game Over');
+    hud.showScreen('You Died!', left > 0 ? `${left} ${left === 1 ? 'life remains' : 'lives remain'}` : 'Game Over');
   }
 
   function afterKnockout() {
@@ -286,18 +297,43 @@ export function createGame(container, levels, startIndex = 0) {
       loadLevel(levelIndex);
     }
     rig.snapTo(hero.x, hero.z);
-    hud.hideDeathScreen();
+    hud.hideScreen();
     sfx.play('respawn', 0.8);
   }
 
-  // Reaching the exit ends the run at once, even mid-roll. For now there is
-  // one level, so it starts over: hero back at the start, enemies reset.
-  // HP and lives carry over, as they would between levels.
+  /** Short banner naming the level just entered. */
+  function levelBanner() {
+    hud.banner(levels[levelIndex].name, `Level ${levelIndex + 1} of ${levels.length}`, 1.8);
+  }
+
+  // Reaching the exit ends the level at once, even mid-roll, and loads the
+  // next one. HP, gear, lives and gold carry over. After the last level the
+  // run is complete: a screen shows your gold, then the run starts over.
   function reachExit() {
     state.clears++;
-    sfx.play('exit', 0.8);
-    loadLevel(levelIndex);
-    hud.banner('Exit!', 'The hall starts over', 1.2);
+    if (levelIndex + 1 < levels.length) {
+      sfx.play('exit', 0.8);
+      loadLevel(levelIndex + 1);
+      levelBanner();
+      return;
+    }
+    for (const b of world.balls) b.vx = b.vz = 0;
+    state.phase = 'won';
+    state.timer = CONFIG.hero.runCompleteSeconds;
+    state.aiming = false;
+    aimView.hide();
+    sfx.play('win', 0.9);
+    hud.showScreen('Run Complete!', `${state.gold} gold`, 'win');
+  }
+
+  /** A fresh run from level 1: full HP, no gear, 3 lives, no gold. */
+  function newRun() {
+    Object.assign(hero, { atk: CONFIG.hero.atk, maxHp: CONFIG.hero.maxHp, hp: CONFIG.hero.maxHp, shield: false, swordHits: 0 });
+    state.lives = CONFIG.hero.lives;
+    state.gold = 0;
+    loadLevel(0);
+    hud.hideScreen();
+    levelBanner();
   }
 
   // --- Events ------------------------------------------------------------------
@@ -309,13 +345,23 @@ export function createGame(container, levels, startIndex = 0) {
   /** The ball labels about you should follow, or null to leave them in place (config). */
   const heroFollow = () => (CONFIG.render.heroLabelsFollowBall ? hero : null);
 
-  const PICKUP_SOUND = { gold: 'coin', coins: 'coin', potion: 'potion', superPotion: 'potion', shield: 'gear', sword: 'gear', oneUp: 'oneUp' };
-  const PICKUP_STYLE = { gold: 'gold', coins: 'gold', potion: 'heal', superPotion: 'heal', shield: 'gear', sword: 'gear', oneUp: 'gear' };
+  const PICKUP_SOUND = { gold: 'coin', coins: 'coin', potion: 'potion', superPotion: 'potion', shield: 'gear', sword: 'gear', oneUp: 'oneUp', key: 'key' };
+  const PICKUP_STYLE = { gold: 'gold', coins: 'gold', potion: 'heal', superPotion: 'heal', shield: 'gear', sword: 'gear', oneUp: 'gear', key: 'gear' };
 
   function pickUp(item) {
     const label = collect(item, hero, state);
     sfx.play(PICKUP_SOUND[item.kind], 0.8);
     overlay.float(label, hero.x, hero.z, hero.radius * 2 + 0.8, PICKUP_STYLE[item.kind], heroFollow());
+  }
+
+  /** A door opens when you come close holding its key. */
+  function checkDoors() {
+    // noKeys: the Locksmith card (M7) will turn this on.
+    for (const door of openDoors(level, hero, state.keys, { noKeys: false })) {
+      doorsView.open(door);
+      sfx.play('door', 1);
+      overlay.float('Unlocked!', door.col + 0.5, door.row + 0.5, CONFIG.render.wallHeight + 0.3, 'gear');
+    }
   }
 
   /** Roll over a floor item to take it, once you can use it. */
@@ -452,7 +498,10 @@ export function createGame(container, levels, startIndex = 0) {
   window.addEventListener('keydown', (e) => {
     if (e.key === 'd' || e.key === '`') debug.hidden = !debug.hidden;
     if (e.key === 'r' && state.phase === 'aim') respawn();
-    if (e.key === 'n') loadLevel(levelIndex + 1);
+    if (e.key === 'n' && state.phase !== 'won') {
+      loadLevel(levelIndex + 1);
+      levelBanner();
+    }
   });
 
   // --- Layout ------------------------------------------------------------------
@@ -489,7 +538,8 @@ export function createGame(container, levels, startIndex = 0) {
       const outcomes = combat.resolve(world, hero);
       handleEvents(outcomes, resolveObjects(world, hero));
       checkPickups();
-      if (state.phase !== 'down' && tileAt(level, Math.floor(hero.x), Math.floor(hero.z)) === 'exit') {
+      checkDoors();
+      if (state.phase !== 'down' && state.phase !== 'won' && tileAt(level, Math.floor(hero.x), Math.floor(hero.z)) === 'exit') {
         reachExit();
         break;
       }
@@ -531,6 +581,10 @@ export function createGame(container, levels, startIndex = 0) {
         state.timer -= dt;
         if (state.timer <= 0) afterKnockout();
         break;
+      case 'won':
+        state.timer -= dt;
+        if (state.timer <= 0) newRun();
+        break;
     }
 
     if (state.aiming) {
@@ -555,6 +609,7 @@ export function createGame(container, levels, startIndex = 0) {
     );
     heroView.update(dt);
     objectsView.update(dt);
+    doorsView.update(dt);
     objectsView.fadeChests(hero, state.aiming, dt);
     itemsView.sync(world.items);
     itemsView.update(dt);
@@ -587,6 +642,7 @@ export function createGame(container, levels, startIndex = 0) {
     renderer.render(scene, rig.camera);
     overlay.update();
     hud.setGold(state.gold);
+    hud.setKeys(state.keys);
     // Whose turn it is, always shown: yours while you aim and your shot rolls,
     // the enemies' from the first enemy move until it's back to you.
     hud.setTurn(['enemyWait', 'enemyMove', 'down'].includes(state.phase) ? 'enemy' : 'player');
@@ -611,6 +667,7 @@ export function createGame(container, levels, startIndex = 0) {
     requestAnimationFrame(frame);
   }
   loadLevel(startIndex);
+  levelBanner();
   requestAnimationFrame(frame);
 
   // Handy for poking at the game from the browser console.

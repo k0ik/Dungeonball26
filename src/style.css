@@ -175,6 +175,10 @@ body {
   text-shadow: 0 3px 10px rgba(0, 0, 0, 0.7);
 }
 
+.death[data-variant='win'] strong {
+  color: #ffd23f;
+}
+
 .death span {
   font-size: 22px;
   font-weight: 700;
@@ -309,6 +313,14 @@ body {
   gap: 6px;
 }
 
+/* Keys you hold, top right. */
+.key-slot svg {
+  display: block;
+  width: 26px;
+  height: 26px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+}
+
 /* Gear beside the hero ball. */
 .gear-icon svg {
   display: block;
@@ -422,6 +434,10 @@ body {
   font-weight: 800;
   color: #ff4a4a;
   text-shadow: 0 3px 10px rgba(0, 0, 0, 0.7);
+}
+
+.death[data-variant='win'] strong {
+  color: #ffd23f;
 }
 
 .death span {

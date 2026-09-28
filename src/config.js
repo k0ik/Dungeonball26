@@ -83,7 +83,11 @@ export const CONFIG = {
     chestGoldMin: 8,
     chestGoldMax: 24,
     explosiveDamage: 1, // flat, ignores ATK; a held shield absorbs it instead
-    itemRadius: 0.25, // floor pickups (coins, loot you couldn't use yet)
+    itemRadius: 0.25, // floor pickups (coins, barrel loot, keys)
+    // A door opens when the hero comes within this distance (tiles, ball
+    // centre to the door tile's edge) holding the matching key.
+    doorReach: 0.5,
+    doorOpenSeconds: 0.35, // the door sinks into the floor this fast
     // While you aim, chests this close to the ball turn see-through so an
     // open lid never hides it.
     chestFadeRadius: 2.2,
@@ -115,6 +119,7 @@ export const CONFIG = {
     // and play resumes from the start.
     deathScreenSeconds: 3,
     deathFadeSeconds: 0.4, // darken / lighten time, inside the 3 s
+    runCompleteSeconds: 4, // the "Run Complete!" screen after the last level, before a new run
     maxHp: 10,
     atk: 1,
     lives: 3,
@@ -201,6 +206,8 @@ export const CONFIG = {
     superPotion: 0x9b5cff,
     shieldItem: 0x3a86ff,
     oneUpItem: 0xc9cdd4, // a little silver hero ball
+    // Keys and their doors.
+    keys: { red: 0xe8413c, blue: 0x3a86ff, yellow: 0xffd23f },
     sword: 0xd4d7dc,
     shadow: 0x000000,
   },

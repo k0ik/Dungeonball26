@@ -20,6 +20,18 @@ test('level 1 matches the design doc: 12x32, enemies of levels 1 to 3', () => {
   assert.deepEqual([...new Set(level.enemies.map((e) => e.level))].sort(), [1, 2, 3]);
 });
 
+test('levels 2 and 3 match the design doc', () => {
+  const b = parseLevel(readFileSync(new URL('breakables.txt', levelsDir), 'utf8'));
+  assert.deepEqual([b.width, b.height], [9, 20]);
+  assert.deepEqual(b.enemies.map((e) => e.level), [1, 1]);
+  assert.equal(b.doors.length + b.keys.length, 0);
+  const k = parseLevel(readFileSync(new URL('one-key.txt', levelsDir), 'utf8'));
+  assert.deepEqual([k.width, k.height], [12, 20]);
+  assert.deepEqual(k.enemies.map((e) => e.level).sort(), [1, 2]);
+  assert.deepEqual(k.doors.map((d) => d.color), ['red']);
+  assert.deepEqual(k.keys.map((d) => d.color), ['red']);
+});
+
 test('parses the illustrative level from the design doc', () => {
   const level = parseLevel(`#########
 #...X...#
@@ -50,4 +62,32 @@ test('rejects bad levels with a useful message', () => {
   assert.throws(() => parseLevel('###\n#S#\n##'), /row 3/);
   assert.throws(() => parseLevel('###\n#Q#\n###'), /unknown tile 'Q'/);
   assert.throws(() => parseLevel('###\n#.#\n###'), /no hero start/);
+});
+
+/** Tiles reachable from the start by 4-way moves over non-solid tiles. */
+function reachable(level) {
+  const seen = new Set();
+  const queue = [[level.start.col, level.start.row]];
+  while (queue.length) {
+    const [c, r] = queue.pop();
+    const id = `${c},${r}`;
+    if (seen.has(id) || isSolid(level, c, r)) continue;
+    seen.add(id);
+    queue.push([c + 1, r], [c - 1, r], [c, r + 1], [c, r - 1]);
+  }
+  return seen;
+}
+
+test('every shipped level can be finished: keys first, then doors, then the exit', () => {
+  for (const file of readdirSync(levelsDir).filter((f) => f.endsWith('.txt'))) {
+    const level = parseLevel(readFileSync(new URL(file, levelsDir), 'utf8'), file);
+    const before = reachable(level);
+    for (const k of level.keys) assert.ok(before.has(`${k.col},${k.row}`), `${file}: ${k.color} key reachable before any door`);
+    for (const d of level.doors) level.tiles[d.row][d.col] = 'floor';
+    const after = reachable(level);
+    for (const e of level.exits) assert.ok(after.has(`${e.col},${e.row}`), `${file}: exit reachable`);
+    if (level.doors.length) {
+      assert.ok(!level.exits.some((e) => before.has(`${e.col},${e.row}`)), `${file}: the doors really guard the exit`);
+    }
+  }
 });

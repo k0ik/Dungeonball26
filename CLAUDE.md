@@ -1,8 +1,8 @@
 # Dungeonball
 
-A portrait-phone billiards + dungeon-crawler. You are a ball; drag back and release to launch yourself pool-style through dungeon rooms, ricocheting off walls, barrels and enemies to reach the exit.
+A portrait-phone billiards + dungeon-crawler roguelike, with trait cards picked between levels. You are a ball; drag back and release to launch yourself pool-style through dungeon rooms, ricocheting off walls, barrels and enemies to reach the exit.
 
-Full design spec: **[docs/design.md](docs/design.md)** — read it before implementing any gameplay system. It covers the turn structure, physics parameters, combat formulas, object behavior, level format, camera, audio, and the milestone build order (M0–M7). Treat it as the source of truth for game rules; this file only covers project-level conventions.
+Full design spec: **[docs/design.md](docs/design.md)** — read it before implementing any gameplay system. It covers the turn structure, physics parameters, combat formulas, object behavior, level format, camera, audio, and the milestone build order (M0–M8). Treat it as the source of truth for game rules; this file only covers project-level conventions.
 
 ## Stack
 
@@ -17,7 +17,7 @@ Full design spec: **[docs/design.md](docs/design.md)** — read it before implem
 - **Units:** all distances in the design doc are in tiles, not pixels or world units — check `docs/design.md`'s parameter tables before hardcoding a magic number.
 - **Levels:** authored as plain text grids (one character per tile), per the legend in `docs/design.md`. Keep the level loader and the legend in sync — if you add a new tile character, update both.
 - **Config:** keep every tunable number (speeds, radii, HP, ATK/DEF, sight range, etc.) in one config module rather than scattered through gameplay code, so the values in `docs/design.md`'s tables stay easy to retune.
-- **Build order:** follow the M0–M7 milestones in the design doc in sequence — each is meant to be playable on its own before moving to the next.
+- **Build order:** follow the M0–M8 milestones in the design doc in sequence — each is meant to be playable on its own before moving to the next.
 
 ## Keeping the design doc in sync
 

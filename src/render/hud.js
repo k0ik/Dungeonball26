@@ -12,6 +12,14 @@ export function createHud(container) {
   const gold = bar.querySelector('.hud-gold');
   let shownGold = -1;
 
+  // "Player Turn" / "Enemy Turn": a small pill under the bar, separate from
+  // the centre banner so the two never cover each other.
+  const turn = document.createElement('div');
+  turn.className = 'turn-toast';
+  turn.hidden = true;
+  container.appendChild(turn);
+  let turnTimer = 0;
+
   const banner = document.createElement('div');
   banner.className = 'banner';
   banner.hidden = true;
@@ -34,6 +42,17 @@ export function createHud(container) {
     setLives(n, max) {
       lives.setAttribute('aria-label', `${n} of ${max} lives`);
       lives.innerHTML = Array.from({ length: Math.max(n, max) }, (_, i) => `<span class="life${i < n ? '' : ' lost'}"></span>`).join('');
+    },
+    /** Briefly announce whose turn it is. */
+    turnToast(text, who, seconds = 1.1) {
+      turn.textContent = text;
+      turn.dataset.who = who;
+      turn.hidden = false;
+      turn.classList.remove('show');
+      void turn.offsetWidth;
+      turn.classList.add('show');
+      clearTimeout(turnTimer);
+      turnTimer = setTimeout(() => (turn.hidden = true), seconds * 1000);
     },
     /** Centred message for `seconds`; a second line is optional. */
     banner(title, sub = '', seconds = 1.6) {

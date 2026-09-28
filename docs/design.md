@@ -4,7 +4,7 @@ Sep 18, 2026 · @Kirk
 
 ## Overview
 
-Dungeonball is a portrait phone game where you are a pool ball fighting through dungeon rooms to the exit.
+Dungeonball is a portrait phone game where you are a pool ball fighting through dungeon rooms to the exit. It's a roguelike with a light deck-building layer: at the end of each level you pick a trait card, and the cards you hold change how the whole run plays.
 
 You pull back, release, and the ball ricochets off walls, barrels and enemies. Enemies that can see you lunge back, so where you stop matters as much as what you hit.
 
@@ -14,6 +14,7 @@ Design pillars:
 - **Every stop is a decision.** Ending a shot in an enemy's sightline costs HP.
 - **Risk against greed.** Gold is the score. Barrels and chests pay, but lingering near enemies is dangerous.
 - **No surprises.** Aim preview, "!" alerts and visible HP bars make every loss legible.
+- **Every run is a build.** The trait cards you choose between levels bend the rules in your favour, so two runs play differently.
 
 Target: a true orthographic 3D view at a fixed isometric angle, rendered with Three.js and tested in a desktop browser first. The simulation underneath stays a 2D grid; only the rendering is 3D.
 
@@ -108,7 +109,7 @@ Combos are called out so you can see them land. Within a single shot, the first 
 
 Pinning works too. Trap an enemy between you and a wall and your rebound can hit it again within the same shot. A hit counts only at an impact speed of at least 0.4 tiles/s (just above the stop threshold, so any visible contact lands; it was 1.5 until halving friction made slow roll-ins common), with a 0.15 s cooldown per enemy, so a ball resting against another cannot grind it down.
 
-Every enemy that currently sees the hero shows a "!" above it, updated live even mid-shot, so you can steer toward a safe stopping spot. Sight range is 6 tiles. Walls, barrels, closed doors and other enemies block sight, and sight is a hero-width sweep so a lunge can really reach you. Watchers off screen get an edge marker. A patrolling enemy shows no marker and a calm expression; a sighted one shows the "!" (and, per the to-do list, an angry expression).
+Every enemy that currently sees the hero shows a "!" above it, updated live even mid-shot, so you can steer toward a safe stopping spot. Sight range is 6 tiles. Walls, barrels, closed doors and other enemies block sight, and sight is a hero-width sweep so a lunge can really reach you. Watchers off screen get an edge marker. An enemy's face shows its awareness too: while it can't see you it wears a calm, slightly dumb face; the moment it can, its face turns angry (slanted eyes, hard brows, a snarl) alongside the "!", and it calms down again when it loses sight of you.
 
 ## Lives, death and progression
 
@@ -123,6 +124,28 @@ You have 3 lives. Reaching 0 HP costs one life and puts you back at the level st
 Gold is the score, and it is where the risk against greed tension lives. Kills score and reduce future danger. Barrels and chests score too, but they keep you out in the open among enemies that are still alive.
 
 Shots taken are tracked and shown on the level-complete screen but do not affect the score in the MVP.
+
+## Trait cards
+
+Trait cards are the roguelike layer. Each is an always-on ability that lasts for the rest of the run.
+
+- **Slots:** you hold up to 3 cards.
+- **The pick:** at the end of each level you're offered 3 cards and choose 1. If your 3 slots are full, you then pick one of your cards to replace. You can skip at any point, from the offer or the replace step, and keep what you have.
+- **Always on:** cards have no activation and no cooldown; their effect simply applies while you hold them. A small row of held cards sits in the HUD.
+
+Starting cards (numbers are defaults to tune):
+
+| Card | Effect |
+| --- | --- |
+| Vampirism | Each kill heals you 1 HP, capped at max |
+| Doppleganger | +1 life, and +1 to the lives you're restored to on a game over |
+| Junk Hunter | Swords and shields turn up twice as often in barrels |
+| Bullionaire | All gold you collect is worth 1.5× (rounded up) |
+| Scavenger | Barrels break in one hit |
+| Locksmith | Doors open without keys |
+| Athletic | Your ball rolls faster and farther: 25% less friction on it (enemies unaffected; the aim preview includes it) |
+
+Defaults assumed until you say otherwise: an offer never includes a card you already hold, and a card you replace goes back into the pool. Cards carry over between levels like HP and gold, and a game over restores the cards you entered the level with.
 
 ## Objects
 
@@ -214,6 +237,8 @@ The camera is a true orthographic projection at a fixed isometric angle matched 
 - **Dynamic zoom:** the frustum widens as the hero speeds up, so a hard shot pulls the camera out to reveal more of its path, then eases back to the base 9-tile width once every ball is at rest. Default range: 9 tiles at rest up to about 13 tiles at max launch speed (9 tiles/s). This is the minimum width; framing several moving balls can widen it further.
 - **Walls:** short, so they never hide a ball behind them. The mockup's walls stand a little taller than the ball; the build uses 0.55 tile (`render.wallHeight`) so a ball resting just behind a wall stays visible.
 - **Lighting:** one ambient light plus one directional light, no dynamic shadows for the MVP.
+- **Turn toasts:** a small pill under the top bar says "Enemy Turn" (magenta) when the first enemy starts to move, and "Player Turn" (green) when it's your move again. It sits apart from the centre banners, so it never covers "Combo Kill!" or "Knocked out!".
+- **See-through chests:** while you aim, any chest within about 2 tiles of the ball fades to 30% opacity, so an open lid never hides the ball; it turns solid again when you release.
 - **HUD:** a dark top bar as in your mock, with gold (the score, next to a coin) on the left, lives in the middle (one small hero ball per life) and key slots on the right (M6). Gear isn't in the bar: its icons sit beside the hero ball instead (sword to the right, shield to the left). HP bars sit above the hero (green) and each enemy (pink), rendered as an HTML/CSS overlay on top of the canvas so they always face the viewer. The aim preview is different: it's drawn in the 3D scene itself, on the ground plane, so it lands exactly where you're dragging under the isometric projection rather than as a flat screen overlay.
 - **Art:** procedural 3D primitives matching your mockup: extruded boxes for walls, cylinders for barrels, boxes for chests, spheres for hero and enemies. Walls and floor are flat greys with no outlines, shaded per face (light tops, darker sides); balls and props are toon-shaded with outlines.
 
@@ -244,13 +269,12 @@ Two habits keep tuning cheap. Put every number from this doc in one config file.
 | M4 | Turn manager, line of sight, "!" markers, lunges, lives, respawn, lunge and hero-hit SFX | The full core loop |
 | M5 | Barrels, chests, loot table, coin drops, floating labels, HUD, pickup and break SFX | Loot and score |
 | M6 | Keys, doors, exit, carry-over between levels, door and key SFX | Finish a run of levels |
-| M7 | Five levels, tuning pass, feedback effects, ambient music, phone test | The MVP |
+| M7 | Trait cards: the end-of-level pick (offer 3, replace when full, skip), the seven starting cards, held cards in the HUD | A run you build as you go |
+| M8 | Five levels, tuning pass, feedback effects, ambient music, phone test | The MVP |
 
 ## To-do
 
-Changes agreed during development that aren't built yet.
-
-- **Enemy expressions follow awareness:** an enemy that can't see the hero wears a dumb, calm face (as now); the moment it can see the hero, its face turns angry, alongside the "!". It switches back when it loses sight of you.
+Changes agreed during development that aren't built yet. (None right now: enemy expressions, turn toasts and see-through chests are built. Trait cards are scheduled as M7.)
 
 ## Out of scope for the MVP
 
@@ -287,4 +311,7 @@ The rules above use these defaults where your answers left a gap. Change any tha
 
 Open questions:
 
-- None right now. (Resolved: kills drop L gold, chests 8 to 24; shields don't stack and wait on the floor, as do potions at full HP; swords come from barrels, +3 ATK.)
+- **Trait card pool:** should offers exclude cards you hold (assumed yes), and can a card show up again after you replace it (assumed yes)?
+- **Doppleganger when replaced:** do you lose the extra life you gained from it, or keep it?
+- **Locksmith and keys:** with Locksmith, do keys still appear (and count for anything), or are they skipped?
+- **Athletic:** 25% less friction is the starting guess; should it also raise your launch speed?

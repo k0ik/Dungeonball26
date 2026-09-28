@@ -81,6 +81,10 @@ export const CONFIG = {
     chestGoldMax: 24,
     explosiveDamage: 1, // flat, ignores ATK and the shield
     itemRadius: 0.25, // floor pickups (coins, loot you couldn't use yet)
+    // While you aim, chests this close to the ball turn see-through so an
+    // open lid never hides it.
+    chestFadeRadius: 2.2,
+    chestFadeOpacity: 0.3,
   },
 
   // Barrel loot (design doc: "Objects"). Weights are relative.

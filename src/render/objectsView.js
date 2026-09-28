@@ -43,11 +43,13 @@ function chestMesh() {
   const d = O.chestHalfZ * 2;
   const mat = toonMaterial(C.chest);
   const band = toonMaterial(C.chestBand);
+  // Its own outline material, so the whole chest can fade on its own.
+  const lines = outlineLineMaterial.clone();
 
   const baseGeo = new THREE.BoxGeometry(w, CHEST_HEIGHT, d);
   const base = new THREE.Mesh(baseGeo, mat);
   base.position.y = CHEST_HEIGHT / 2;
-  base.add(new THREE.LineSegments(new THREE.EdgesGeometry(baseGeo), outlineLineMaterial));
+  base.add(new THREE.LineSegments(new THREE.EdgesGeometry(baseGeo), lines));
 
   // The lid pivots on its back edge (-z, away from the camera).
   const hinge = new THREE.Group();
@@ -55,7 +57,7 @@ function chestMesh() {
   const lidGeo = new THREE.BoxGeometry(w, LID_HEIGHT, d);
   const lid = new THREE.Mesh(lidGeo, mat);
   lid.position.set(0, LID_HEIGHT / 2, d / 2);
-  lid.add(new THREE.LineSegments(new THREE.EdgesGeometry(lidGeo), outlineLineMaterial));
+  lid.add(new THREE.LineSegments(new THREE.EdgesGeometry(lidGeo), lines));
   // The band wraps the lid just above its bottom edge. It must not share a
   // plane with any lid face, or the open lid's underside flickers (z-fighting).
   const strap = new THREE.Mesh(new THREE.BoxGeometry(w + 0.02, 0.06, d + 0.02), band);
@@ -64,7 +66,7 @@ function chestMesh() {
   hinge.add(lid);
 
   group.add(base, hinge);
-  return { group, hinge };
+  return { group, hinge, fadeMaterials: [mat, band, lines], opacity: 1 };
 }
 
 export function createObjectsView(scene) {
@@ -131,6 +133,27 @@ export function createObjectsView(scene) {
       mesh.scale.setScalar(0.3);
       root.add(mesh);
       blasts.push({ mesh, t: 0 });
+    },
+    /**
+     * While aiming, fade chests near the ball to see-through (and back once
+     * you release), so a chest in front of the ball never hides it.
+     */
+    fadeChests(ball, aiming, dt) {
+      const k = 1 - Math.exp(-10 * dt);
+      for (const [s, v] of views) {
+        if (s.kind !== 'chest') continue;
+        const near = aiming && Math.hypot(s.x - ball.x, s.z - ball.z) < O.chestFadeRadius;
+        v.opacity += ((near ? O.chestFadeOpacity : 1) - v.opacity) * k;
+        const see = v.opacity < 0.995;
+        for (const m of v.fadeMaterials) {
+          if (m.transparent !== see) {
+            m.transparent = see;
+            m.depthWrite = !see;
+            m.needsUpdate = true;
+          }
+          m.opacity = see ? v.opacity : 1;
+        }
+      }
     },
     update(dt) {
       for (const [s, v] of views) {

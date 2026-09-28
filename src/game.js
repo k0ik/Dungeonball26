@@ -203,6 +203,7 @@ export function createGame(container, levels, startIndex = 0) {
   // --- Turns -----------------------------------------------------------------
   function startEnemyPhase() {
     state.taken = new Set();
+    state.enemyActed = false; // announce "Enemy Turn" only if someone actually moves
     state.patrollers = pickPatrollers(enemies());
     nextTurn();
   }
@@ -215,6 +216,7 @@ export function createGame(container, levels, startIndex = 0) {
       state.actor = actor;
       if (!actor) {
         state.phase = 'aim';
+        if (state.enemyActed) hud.turnToast('Player Turn', 'player');
         return;
       }
       state.taken.add(actor);
@@ -226,6 +228,7 @@ export function createGame(container, levels, startIndex = 0) {
         state.phase = 'enemyWait';
         state.timer = CONFIG.enemy.lungeTelegraph;
         state.waited = 0;
+        announceEnemyTurn();
         return;
       }
 
@@ -237,8 +240,15 @@ export function createGame(container, levels, startIndex = 0) {
       state.phase = 'enemyWait';
       state.timer = CONFIG.enemy.patrolDelay;
       state.waited = 0;
+      announceEnemyTurn();
       return;
     }
+  }
+
+  function announceEnemyTurn() {
+    if (state.enemyActed) return;
+    state.enemyActed = true;
+    hud.turnToast('Enemy Turn', 'enemy');
   }
 
   function launchActor() {
@@ -533,6 +543,7 @@ export function createGame(container, levels, startIndex = 0) {
 
     heroView.update(dt);
     objectsView.update(dt);
+    objectsView.fadeChests(hero, state.aiming, dt);
     itemsView.sync(world.items);
     itemsView.update(dt);
     for (const [enemy, view] of enemyViews) {
@@ -548,7 +559,9 @@ export function createGame(container, levels, startIndex = 0) {
     const acting = state.phase === 'enemyWait' || state.phase === 'enemyMove' ? state.actor : null;
     for (const enemy of enemies()) {
       const lunging = enemy === acting && state.plan?.kind === 'lunge';
-      overlay.setAlert(enemy, lunging || canSee(level, enemy, hero, world.balls, world.statics), lunging);
+      const aware = lunging || canSee(level, enemy, hero, world.balls, world.statics);
+      overlay.setAlert(enemy, aware, lunging);
+      enemyViews.get(enemy)?.setAngry(aware);
     }
 
     if (state.aiming) {

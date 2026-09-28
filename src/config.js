@@ -143,7 +143,8 @@ export const CONFIG = {
     zoomOutRate: 3, // exponential smoothing rates, 1/s
     zoomInRate: 1.5,
     followRate: 3, // pan smoothing, 1/s
-    // Enemy phase: the camera stays on you, pulled out to this width, and
+    // Enemy phase: the camera stays on you, pulled out just enough to show the
+    // enemies about to move (where they stand), up to this width; then it
     // eases back to the resting width for your shot.
     enemyPhaseWidth: 13,
     // The enemies wait for the camera to arrive before they move (at most enemyTurnMaxWait).

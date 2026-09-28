@@ -219,6 +219,15 @@ export function createCameraRig() {
       place();
     },
     /** The speed-based minimum width for a ball moving at `speed`. */
+    /**
+     * View width that keeps `center` in the middle of the screen and still
+     * shows every point (with the usual padding), clamped to min..max.
+     */
+    widthAround(center, points, minWidth, maxWidth) {
+      // Mirroring each point through the centre keeps the framing centred on it.
+      const all = [center, ...points.flatMap((p) => [p, { x: 2 * center.x - p.x, z: 2 * center.z - p.z }])];
+      return computeFraming(all, { yaw, elevation, aspect, minWidth, maxWidth, padding: K.framePadding }).width;
+    },
     speedWidth(speed) {
       const t = Math.min(1, speed / CONFIG.aim.maxLaunchSpeed);
       return K.baseViewWidth + (K.maxViewWidth - K.baseViewWidth) * t;

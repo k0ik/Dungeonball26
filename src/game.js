@@ -223,12 +223,13 @@ export function createGame(container, levels, startIndex = 0) {
     const moves = [];
     const claimed = []; // patrol destinations already taken this round
     for (const enemy of enemies()) {
+      const from = { x: enemy.x, z: enemy.z }; // where it stands as the phase starts (camera framing)
       if (canSee(level, enemy, hero, world.balls, world.statics)) {
-        moves.push({ enemy, kind: 'lunge' });
+        moves.push({ enemy, from, kind: 'lunge' });
       } else if (patrollers.has(enemy)) {
         const move = patrolMove(level, enemy, [...world.balls, ...claimed], Math.random, world.statics);
         if (!move) continue; // boxed in: it stays put
-        moves.push({ enemy, kind: 'patrol', ...move });
+        moves.push({ enemy, from, kind: 'patrol', ...move });
         claimed.push({ x: move.target.x, z: move.target.z, radius: enemy.radius });
       }
     }
@@ -643,11 +644,13 @@ export function createGame(container, levels, startIndex = 0) {
       const from = rig.aimStartWidth;
       rig.aimZoom(hero, from + (Math.max(from, CONFIG.camera.aimMaxWidth) - from) * fill, dt);
     } else {
-      // Enemy phase: stay on you, just pulled out a bit (enemyPhaseWidth), and
-      // catch whatever enemy action happens to land in view.
+      // Enemy phase: stay centred on you, pulled out only as far as it takes
+      // to show where the moving enemies stood when the phase began, up to
+      // enemyPhaseWidth; whatever else lands in view is a bonus.
       const enemyPhase = state.phase === 'enemyWait' || state.phase === 'enemyMove';
-      const width = rig.speedWidth(speedOf(hero));
-      rig.frame(framingPoints(), enemyPhase ? Math.max(width, CONFIG.camera.enemyPhaseWidth) : width, dt);
+      let width = rig.speedWidth(speedOf(hero));
+      if (enemyPhase) width = rig.widthAround(hero, state.moves.map((m) => m.from), width, CONFIG.camera.enemyPhaseWidth);
+      rig.frame(framingPoints(), width, dt);
     }
     renderer.render(scene, rig.camera);
     overlay.update();

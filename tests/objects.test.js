@@ -85,13 +85,15 @@ test('a red barrel goes off on any contact, even a slow enemy touch, and hurts t
   assert.ok(!world.statics.includes(red));
 });
 
-test('a red barrel ignores the shield and can finish an enemy', () => {
+test('a held shield absorbs a red barrel blast and is used up; a red barrel can finish an enemy', () => {
   const { world, hero } = setup();
   hero.shield = true;
   const combat = createCombat();
-  combat.explosion(world, hero, hero);
-  assert.equal(hero.hp, 9);
-  assert.equal(hero.shield, true, 'the shield is not used up by a blast');
+  assert.deepEqual(combat.explosion(world, hero, hero).map((o) => o.type), ['blocked']);
+  assert.equal(hero.hp, 10, 'the shield takes the blast');
+  assert.equal(hero.shield, false, 'the shield is used up');
+  assert.deepEqual(combat.explosion(world, hero, hero).map((o) => o.type), ['hurt']);
+  assert.equal(hero.hp, 9, 'without a shield the blast hurts');
   const enemy = Object.assign(createEnemy({ x: 5, z: 1.5, level: 1, id: 'e' }), { hp: 1 });
   world.balls.push(enemy);
   combat.beginShot();

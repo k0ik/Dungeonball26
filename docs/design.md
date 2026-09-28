@@ -99,7 +99,7 @@ D_{\text{enemy}} = \text{ATK} \qquad D_{\text{hero}} = 1 \qquad \text{HP}_{\text
 | --- | --- | --- |
 | Hero max HP | 10 | A health potion heals 1 and a super health potion 5, capped at max |
 | Hero ATK | 1 | A sword adds 3 (ATK 4) for your next two hits on enemies |
-| Shield | None held | A held shield cancels the next enemy hit on you and is used up by it (replaces DEF, now that every hit costs 1 HP) |
+| Shield | None held | A held shield cancels the next enemy hit or red-barrel blast on you and is used up by it (replaces DEF, now that every hit costs 1 HP) |
 | Enemy level L | 1 to 3 in the MVP | Read from the enemy's HP bar: one notch per HP, and the bar grows longer for tougher enemies |
 | Kill reward | L gold | Drops as coins where it died |
 
@@ -161,7 +161,7 @@ Barrels, chests, keys and doors are the level's furniture. Chest gold is granted
 | Door | Solid and opaque until the hero is within half a tile while holding the matching key. Then it opens for good and the key is consumed. Enemies can pass through an open door. |
 | Exit | Ends the level when the hero's center enters its tile. |
 | Coins | Dropped where an enemy dies, worth its level in gold. Collected by rolling over them, so grabbing them can pull you back into an enemy's sight. |
-| Explosive barrel (red) | Solid bumper with the same physics as a barrel. Any contact from the hero or an enemy, at any speed, detonates it: the ball that touched it takes 1 flat damage, ignoring ATK and the shield, and the barrel is destroyed with no loot. |
+| Explosive barrel (red) | Solid bumper with the same physics as a barrel. Any contact from the hero or an enemy, at any speed, detonates it: the ball that touched it takes 1 flat damage, ignoring ATK, and the barrel is destroyed with no loot. If it's you and you hold a shield, the shield takes the blast instead ("Blocked!") and is used up. |
 
 Every barrel drops something, left on the floor where the barrel was. You collect it by rolling over it, unless you can't use it right now: a shield while you already hold one, or a potion (or super potion) while your HP is full. Then it stays there, visible, until you roll over it once you can use it. Starting weights, to tune by feel:
 
@@ -170,7 +170,7 @@ Every barrel drops something, left on the floor where the barrel was. You collec
 | Gold | 45% | +1 to +5 gold, added to your score |
 | Health potion | 25% | +1 HP, capped at max |
 | Super health potion | 8% | +5 HP, capped at max |
-| Shield | 12% | You now hold a shield: it cancels the next enemy hit on you, then is used up. Shields don't stack |
+| Shield | 12% | You now hold a shield: it cancels the next enemy hit or red-barrel blast on you, then is used up. Shields don't stack |
 | Sword | 5% | +3 ATK (ATK 4) for two hits on enemies: after the first it shows as a broken half-blade, after the second it's gone |
 | 1-up | 5% | +1 life |
 
@@ -302,11 +302,11 @@ The rules above use these defaults where your answers left a gap. Change any tha
 - Each enemy attacks at most once per round, and only the attacker (the enemy whose turn it is) can damage the hero. Red barrels are the exception: they damage whichever ball touches them, hero included, in any phase.
 - If the hero dies mid-round, the round ends there: the remaining enemies skip their turn and the hero respawns with the first move.
 - Sight range is 6 tiles, not the screen width, because a portrait screen is only 9 tiles wide. Other enemies also block sight, so they can shield you.
-- Gear is the shield, a one-hit consumable held until an enemy hit uses it up (they don't stack), and the sword, +3 ATK for two hits on enemies (combo and blast damage don't use it up).
+- Gear is the shield, a one-hit consumable held until an enemy hit or a red-barrel blast uses it up (they don't stack), and the sword, +3 ATK for two hits on enemies (combo and blast damage don't use it up).
 - Chest gold is granted at once with a floating label. Barrel loot, keys and enemy coins lie on the floor until you roll over them.
 - Respawn restores full HP, and keys you hold are kept.
 - Aiming is a slingshot pull-back rather than dragging toward the target.
-- An explosive barrel deals a flat 1 damage regardless of stats, ignores the normal 0.4 tiles/s hit threshold, and drops no loot.
+- An explosive barrel deals a flat 1 damage regardless of ATK (a held shield absorbs it and is used up), ignores the normal 0.4 tiles/s hit threshold, and drops no loot.
 - Zoom tracks the hero's speed only. Enemy lunges and patrols don't drive it.
 - Patrol speed is 1–3 tiles/s, well under the 6 tiles/s lunge speed, so a patrolling enemy always reads as calmer than an attacking one.
 - A patrol move follows normal physics, so if it happens to collide with the hero it still deals damage, the same as a lunge would. Contact is what matters, not intent.

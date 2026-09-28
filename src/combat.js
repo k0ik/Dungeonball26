@@ -10,7 +10,7 @@
 //   its level, at most once per turn. A held shield cancels that hit instead
 //   and is used up. No other contact deals damage.
 // Red barrels (any phase): the ball that set one off takes 1 flat damage,
-// ignoring ATK and the shield.
+// ignoring ATK. A held shield absorbs it instead and is used up.
 // Walls never deal damage.
 // A hit only counts at an impact speed of at least `hitMinSpeed`, and each
 // enemy has a short cooldown so a ball resting against it can't grind it down.
@@ -76,14 +76,18 @@ export function createCombat() {
       actor = null;
     },
     /**
-     * A red barrel went off on `victim`: 1 flat damage, ignoring ATK and the
-     * shield. Returns outcomes like resolve(); a killed enemy leaves the board.
+     * A red barrel went off on `victim`: 1 flat damage, ignoring ATK. If the
+     * hero holds a shield, it takes the blast instead and is used up.
+     * Returns outcomes like resolve(); a killed enemy leaves the board.
      */
     explosion(world, victim, hero) {
       const out = [];
       const amount = CONFIG.objects.explosiveDamage;
       if (victim === hero) {
-        if (hero.hp > 0) {
+        if (hero.shield) {
+          hero.shield = false;
+          out.push({ type: 'blocked', target: hero, source: 'explosion' });
+        } else if (hero.hp > 0) {
           hero.hp = Math.max(0, hero.hp - amount);
           out.push({ type: 'hurt', target: hero, amount, source: 'explosion' });
         }

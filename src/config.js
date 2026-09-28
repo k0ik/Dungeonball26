@@ -79,7 +79,7 @@ export const CONFIG = {
     chestHalfZ: 0.28,
     chestGoldMin: 8,
     chestGoldMax: 24,
-    explosiveDamage: 1, // flat, ignores ATK and the shield
+    explosiveDamage: 1, // flat, ignores ATK; a held shield absorbs it instead
     itemRadius: 0.25, // floor pickups (coins, loot you couldn't use yet)
     // While you aim, chests this close to the ball turn see-through so an
     // open lid never hides it.

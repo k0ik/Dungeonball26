@@ -72,6 +72,7 @@ Aim is a slingshot pull-back: press on the hero, drag away from the target, rele
 - **Cancel marker:** while you drag, a thin, low-opacity circle at the cancel radius and a small "x" just below the hero on screen (inside the circle) mark the cancel zone. Both brighten while your finger is inside it, and disappear when you release.
 - **Cancel zone:** within about 0.6 tile of the hero the preview disappears, which reads as "release here to cancel." Releasing inside it cancels the shot; releasing past it fires.
 - **Preview:** a dashed line on the ground that runs the shot through the real physics ahead of time, so its length is exactly how far the ball will travel at the current power, including friction and bounce losses. It shows the first bounce, then ends where the ball stops or at its next contact. A small hoop marks each bounce and the end of the path, so the ball's next position is always marked, whether it comes to rest in the open or against something. The dash pattern also encodes power: a soft shot draws short, sparse dots, and a hard one draws long dashes packed close together.
+- **Preview accuracy:** the preview must match the real shot exactly. It runs the same combat and object rules on copies of the enemies (with their HP) and of the barrels and chests (with their cracks), so a killing blow's ricochet, a barrel breaking on its second crack and a red barrel going off all show in the path. Releasing fires exactly the shot the preview last showed, rather than re-reading the release point, so a finger's lift-off jitter can't nudge the angle. A test fires many shots through the real simulation and checks each against its preview.
 - **Locked:** while any ball is moving or during the enemy phase.
 
 ## Combat rules and formulas
@@ -153,6 +154,20 @@ Starting cards (numbers are defaults to tune):
 
 Defaults assumed until you say otherwise: an offer never includes a card you already hold, and a card you replace goes back into the pool. Cards carry over between levels like HP and gold, and a game over restores the cards you entered the level with.
 
+## End-of-level scorecard
+
+When you reach the exit, a scorecard sums up how you played the level before the next one (and the card pick, M7) starts. The scoring math comes later; for now, what it tracks:
+
+| Line | What it counts |
+| --- | --- |
+| Chests found | n of N chests opened |
+| Enemies slain | n of N enemies killed |
+| Untouched | Took no damage in the level (yes or no) |
+| Combos | n combos landed (enemy-to-enemy hits in your shots) |
+| Shots taken | n shots; this one counts against you, since fewer is better |
+
+Later candidates: coins collected (n of N, strips included), Clean Sweeps, trick shots landed, and lives lost. Each line would convert into bonus gold (or a grade) once the math is decided.
+
 ## Trick shots
 
 Trick shots are special one-shot combos, tracked as achievements. Each one pays a gold bonus the first time you land it, with a big centre banner naming it, like "Trick shot: Double Kill! +10". After that it still shows its name, but pays nothing extra. All of them happen within a single shot of yours; the enemy turn never counts.
@@ -184,7 +199,8 @@ Barrels, chests, keys and doors are the level's furniture. Chest gold is granted
 | Door | Solid and opaque until the hero is within half a tile while holding the matching key. Then it opens for good (it sinks into the floor with a clunk and "Unlocked!") and the key is consumed; the check runs every physics step, so a ball rolling at a door with its key usually goes straight through. A closed door is a block in its key's colour, a little lower than the walls, with a keyhole on its faces. Enemies can pass through an open door. |
 | Exit | Ends the level when the hero's center enters its tile. |
 | Coin strip | Single coins placed in the level with `*`, 1 gold each, set out in rows or columns like Pac-Man dots. Coins that touch side by side form one strip. They don't block the ball and are collected by rolling over them (enemies don't take them), with a quick tick that rises in pitch with each coin in the same shot instead of a floating label. Collecting a whole strip of 3 or more within one of your shots is a **Clean Sweep**: +5 gold, a sparkle sound and a "Clean Sweep! +5" label. A strip also shows you a line: a trail of coins toward a wall hints at a bank shot, and it can draw you across a room into enemies' sight. Money Magnet (a trait card) sweeps up strips from a near miss. |
-| Coins | There is one coin: the single 1-gold coin of the strips. A killed enemy scatters as many as its level, and barrel gold scatters its 1 to 5 the same way. Each coin flies out from the spot in an arc to a random clear spot 0.5 to 1.7 tiles away (never into a wall, door or bumper, nor across one), with a random arc height and flight time, so they land one after another, each with a single small bounce and a faint tink. A coin can be taken once it has landed. Collected by rolling over them, so grabbing them can pull you back into an enemy's sight. Scattered coins belong to no strip. |
+| Coins | There is one coin: the single 1-gold coin of the strips. A killed enemy scatters as many as its level (and now and then gear or a potion, see below), and barrel gold scatters its 1 to 5 the same way. Each coin flies out from the spot in an arc to a random clear spot 0.5 to 1.7 tiles away (never into a wall, door or bumper, nor across one), with a random arc height and flight time, so they land one after another, each with a single small bounce and a faint tink. A coin can be taken once it has landed. Collected by rolling over them, so grabbing them can pull you back into an enemy's sight. Scattered coins belong to no strip. Every coin on the floor spins in step with the others (one shared angle). A coin you take hops straight up, flashes white once and vanishes, like the chest's coins. |
+| Enemy drops | Besides its coins, a kill has separate, rare chances of dropping a sword (5%), a shield (8%) and a potion (12%, a quarter of those a super potion). They're rolled independently, so a lucky kill can drop more than one. Extras fly out and bounce just like the coins, and wait on the floor to be rolled over. |
 | Explosive barrel (red) | Solid bumper with the same physics as a barrel. Any contact from the hero or an enemy, at any speed, detonates it: the ball that touched it takes 1 flat damage, ignoring ATK, and the barrel is destroyed with no loot. If it's you and you hold a shield, the shield takes the blast instead ("Blocked!") and is used up. |
 
 Every barrel drops something, left on the floor where the barrel was. You collect it by rolling over it, unless you can't use it right now: a shield while you already hold one, or a potion (or super potion) while your HP is full. Then it stays there, visible, until you roll over it once you can use it. Starting weights, to tune by feel:

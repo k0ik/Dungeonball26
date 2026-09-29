@@ -26,6 +26,20 @@ export function rollLoot(rng = Math.random) {
 }
 
 /**
+ * What a killed enemy drops besides its coins: each of sword, shield and a
+ * potion has its own small chance, so a lucky kill can drop more than one.
+ * A potion drop is a super potion some of the time. Returns a list of kinds.
+ */
+export function rollEnemyDrops(rng = Math.random) {
+  const D = L.enemyDrops;
+  const out = [];
+  if (rng() < D.sword) out.push('sword');
+  if (rng() < D.shield) out.push('shield');
+  if (rng() < D.potion) out.push(rng() < D.superPotionShare ? 'superPotion' : 'potion');
+  return out;
+}
+
+/**
  * Can the hero use this right now? A potion at full HP or a shield while
  * already holding one can't be collected; it stays on the floor for later.
  */

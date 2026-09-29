@@ -111,6 +111,9 @@ export const CONFIG = {
     swordAtk: 3, // added to ATK while you hold a sword
     swordUses: 2, // hits on enemies before it breaks: whole -> broken half -> gone
     killGoldPerLevel: 1, // a kill drops coins worth the enemy's level
+    // Besides its coins, a kill has these separate, rare chances of dropping
+    // gear or a potion (rolled independently, so more than one can drop).
+    enemyDrops: { sword: 0.05, shield: 0.08, potion: 0.12, superPotionShare: 0.25 },
     // Coin strips: single coins placed in a level ('*'), 1 gold each.
     // Collecting a whole strip in one of your shots is a "Clean Sweep".
     stripCoinValue: 1,
@@ -137,6 +140,9 @@ export const CONFIG = {
     chestCoinTimeMax: 0.85,
     chestCoinStagger: 0.035, // seconds between one coin and the next
     chestCoinFlash: 0.3, // fraction of the flight, at the end, spent flashing
+    coinSpin: 1.6, // radians per second; every coin on the floor shares one angle
+    collectHopHeight: 0.8, // a taken coin hops this high (tiles), flashes and vanishes
+    collectHopTime: 0.4,
   },
 
   hero: {

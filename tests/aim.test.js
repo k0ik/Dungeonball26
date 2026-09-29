@@ -74,3 +74,40 @@ test('a barrel in the way bends the preview', () => {
   assert.equal(p.bends, 1);
   assert.ok(p.points[1].x < 5 - 0.34, 'bends at the barrel');
 });
+
+test('the preview matches the real shot, kills and barrels included', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { parseLevel: parse, tileCenter } = await import('../src/level.js');
+  const { createObjects, resolveObjects } = await import('../src/objects.js');
+  const { createCombat, createEnemy } = await import('../src/combat.js');
+  const text = readFileSync(new URL('../src/levels/long-hall.txt', import.meta.url), 'utf8');
+  for (let i = 0; i < 80; i++) {
+    const level = parse(text);
+    const world = createWorld(level);
+    const hero = Object.assign(createBall({ ...tileCenter(level.start), kind: 'hero', id: 'hero' }), { hp: 10, maxHp: 10, atk: 1, shield: false });
+    world.balls.push(hero);
+    world.statics = createObjects(level);
+    // Every other enemy dies in one hit, so killing blows (which ricochet) come up.
+    level.enemies.forEach((e, n) => world.balls.push(Object.assign(createEnemy({ ...tileCenter(e), level: e.level, id: `e${n}` }), n % 2 ? {} : { hp: 1 })));
+    const a = (i / 80) * Math.PI * 2;
+    const speed = 3 + (i % 7);
+    const prev = previewPath(level, hero, Math.cos(a), Math.sin(a), speed, world.balls.filter((b) => b !== hero), world.statics);
+    const combat = createCombat();
+    combat.beginShot();
+    hero.vx = Math.cos(a) * speed;
+    hero.vz = Math.sin(a) * speed;
+    const contacts = [{ x: hero.x, z: hero.z }];
+    for (let s = 0; s < 2000 && contacts.length < prev.points.length; s++) {
+      stepWorld(world);
+      const touched = world.events.some((ev) => ev.ball === hero || ev.a === hero || ev.b === hero);
+      combat.resolve(world, hero);
+      resolveObjects(world, hero);
+      world.events.length = 0;
+      if (touched) contacts.push({ x: hero.x, z: hero.z });
+      if (hero.vx === 0 && hero.vz === 0) contacts.push({ x: hero.x, z: hero.z });
+    }
+    const k = Math.min(contacts.length, prev.points.length) - 1;
+    const err = Math.hypot(contacts[k].x - prev.points[k].x, contacts[k].z - prev.points[k].z);
+    assert.ok(err < 0.01, `shot ${i} (angle ${a.toFixed(2)}, speed ${speed}) ends ${err.toFixed(2)} tiles from its preview`);
+  }
+});

@@ -197,3 +197,24 @@ test('a sword gives +3 ATK for two hits: whole, then broken, then gone', () => {
   assert.equal(hero.swordHits, 2);
   assert.equal(hero.atk, 4, 'replacing a broken sword does not stack ATK');
 });
+
+test('enemy drops: sword, shield and potion each on their own rare chance', async () => {
+  const { rollEnemyDrops } = await import('../src/loot.js');
+  const counts = { sword: 0, shield: 0, potion: 0, superPotion: 0, none: 0, several: 0 };
+  let seed = 7;
+  const rng = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const N = 20000;
+  for (let i = 0; i < N; i++) {
+    const drops = rollEnemyDrops(rng);
+    if (!drops.length) counts.none++;
+    if (drops.length > 1) counts.several++;
+    for (const d of drops) counts[d]++;
+  }
+  const D = CONFIG.loot.enemyDrops;
+  assert.ok(Math.abs(counts.sword / N - D.sword) < 0.01);
+  assert.ok(Math.abs(counts.shield / N - D.shield) < 0.01);
+  assert.ok(Math.abs((counts.potion + counts.superPotion) / N - D.potion) < 0.01);
+  assert.ok(counts.superPotion > 0 && counts.superPotion < counts.potion);
+  assert.ok(counts.none / N > 0.7, 'most kills drop only coins');
+  assert.ok(counts.several > 0, 'a lucky kill can drop more than one');
+});

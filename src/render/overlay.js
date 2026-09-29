@@ -12,7 +12,9 @@ import { SWORD_ICON, SWORD_BROKEN_ICON, SHIELD_ICON } from './icons.js';
 const BAR_HEIGHT = 0.3; // tiles above the top of the ball
 const ALERT_HEIGHT = 0.75; // tiles above the top of the ball
 const EDGE_MARGIN = 18; // px kept clear at the screen edges for pinned markers
-const TOP_RESERVED = 56; // px under the HUD bar
+// px kept clear at the top: the gold, and the turn label under it (which ends
+// at about 77px), so a "!" pinned to the top edge is never hidden behind them.
+const TOP_RESERVED = 84;
 
 export function createOverlay(container, camera) {
   const layer = document.createElement('div');
@@ -138,7 +140,7 @@ export function createOverlay(container, camera) {
         placeAt(
           f.el,
           Math.min(layer.clientWidth - half, Math.max(half, p.left)),
-          Math.min(layer.clientHeight - 8, Math.max(TOP_RESERVED + 30, p.top)),
+          Math.min(layer.clientHeight - 8, Math.max(TOP_RESERVED + 2, p.top)),
         );
       }
       if (gear.ball && (!gear.sword.hidden || !gear.shield.hidden)) {

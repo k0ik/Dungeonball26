@@ -34,7 +34,7 @@ import { createAimView } from './render/aimView.js';
 import { createCameraRig } from './render/cameraRig.js';
 import { createAudio } from './audio.js';
 import { createObjects, resolveObjects } from './objects.js';
-import { rollLoot, canCollect, collect, useSwordHit } from './loot.js';
+import { rollLoot, rollEnemyDrops, canCollect, collect, useSwordHit } from './loot.js';
 import { createObjectsView } from './render/objectsView.js';
 import { createItemsView } from './render/itemsView.js';
 import { createDoorsView } from './render/doorsView.js';
@@ -189,6 +189,7 @@ export function createGame(container, levels, startIndex = 0) {
     if (state.phase !== 'aim' || state.aiming || e.button > 0) return;
     if (!pointerOn(grabPlane, e, tmp) || !canGrab(hero, { x: tmp.x, z: tmp.z })) return;
     state.aiming = true;
+    state.shownShot = null; // nothing shown yet for this drag
     state.pointerId = e.pointerId;
     canvas.setPointerCapture(e.pointerId);
     aimCamera = rig.camera.clone();
@@ -207,8 +208,14 @@ export function createGame(container, levels, startIndex = 0) {
     state.aiming = false;
     aimView.hide();
     if (!fire || state.phase !== 'aim') return;
-    pointerOn(groundPlane, e, state.pointer, aimCamera);
-    const shot = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z });
+    // Fire exactly the shot the preview last showed. Re-reading the release
+    // point instead lets a finger's lift-off jitter nudge the angle, which a
+    // long bank shot turns into a visible miss.
+    let shot = state.shownShot;
+    if (!shot) {
+      pointerOn(groundPlane, e, state.pointer, aimCamera);
+      shot = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z });
+    }
     if (shot.cancel || shot.speed <= CONFIG.physics.stopThreshold) return;
     hero.vx = shot.dirX * shot.speed;
     hero.vz = shot.dirZ * shot.speed;
@@ -351,19 +358,21 @@ export function createGame(container, levels, startIndex = 0) {
   }
 
   /**
-   * Throw `n` single coins (the same coins as strips) out from (x, z): each
-   * flies to a random clear spot at a random distance, with a random arc
-   * height and flight time, so they land one after another, and bounces once.
-   * A spot is clear if the coin fits there and the way to it crosses no wall,
-   * door or bumper; after a few misses it just drops close by.
+   * Throw `n` single coins (the same coins as strips), plus any `extras`
+   * (other pickups), out from (x, z): each flies to a random clear spot at a
+   * random distance, with a random arc height and flight time, so they land
+   * one after another, and bounces once. A spot is clear if the item fits
+   * there and the way to it crosses no wall, door or bumper; after a few
+   * misses it just drops close by.
    */
-  function scatterCoins(x, z, n) {
+  function scatterCoins(x, z, n, extras = []) {
     const L = CONFIG.loot;
     const r = CONFIG.objects.itemRadius;
     const blocked = (px, pz) =>
       overlapsSolid(level, px, pz, r) || world.statics.some((s) => Math.hypot(s.x - px, s.z - pz) < (s.radius ?? Math.hypot(s.halfX, s.halfZ)) + r);
     const rand = (a, b) => a + Math.random() * (b - a);
-    for (let i = 0; i < n; i++) {
+    const items = [...Array.from({ length: n }, () => ({ kind: 'coin', value: 1 })), ...extras.map((kind) => ({ kind }))];
+    for (const item of items) {
       let to = null;
       for (let tries = 0; tries < 12 && !to; tries++) {
         const a = Math.random() * Math.PI * 2;
@@ -376,8 +385,7 @@ export function createGame(container, levels, startIndex = 0) {
       }
       to ??= { x: x + rand(-0.15, 0.15), z: z + rand(-0.15, 0.15) };
       world.items.push({
-        kind: 'coin',
-        value: 1,
+        ...item,
         x,
         z,
         fly: { fromX: x, fromZ: z, toX: to.x, toZ: to.z, t: 0, dur: rand(L.scatterTimeMin, L.scatterTimeMax), height: rand(L.scatterHeightMin, L.scatterHeightMax) },
@@ -436,6 +444,7 @@ export function createGame(container, levels, startIndex = 0) {
    */
   function pickUpStripCoin(item) {
     collect(item, hero, state);
+    itemsView.popCoin(item.x, item.z);
     state.shotCoins++;
     sfx.play('coin', 0.45, { pitch: Math.min(2, 0.9 + 0.07 * state.shotCoins) });
     const strip = item.strip;
@@ -538,8 +547,9 @@ export function createGame(container, levels, startIndex = 0) {
         enemyViews.get(o.target)?.die();
         overlay.removeBar(o.target);
         // A kill drops coins worth the enemy's level where it died.
-        // A kill scatters coins worth the enemy's level around where it died.
-        scatterCoins(o.target.x, o.target.z, o.target.level * CONFIG.loot.killGoldPerLevel);
+        // A kill scatters coins worth the enemy's level around where it died,
+        // and now and then a sword, shield or potion too.
+        scatterCoins(o.target.x, o.target.z, o.target.level * CONFIG.loot.killGoldPerLevel, rollEnemyDrops());
         if (o.shotKills >= 2 && state.phase === 'shot') {
           sfx.play('comboKill', 0.9);
           state.comboKillAt = performance.now();
@@ -677,6 +687,7 @@ export function createGame(container, levels, startIndex = 0) {
 
     if (state.aiming) {
       const shot = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z });
+      state.shownShot = shot; // what release will fire
       const others = world.balls.filter((b) => b !== hero);
       const preview = shot.cancel ? null : previewPath(level, hero, shot.dirX, shot.dirZ, shot.speed, others, world.statics);
       aimView.show(hero, shot, preview, rig.viewWidth / rig.aimStartWidth);

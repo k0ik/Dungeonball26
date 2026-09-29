@@ -128,6 +128,14 @@ export function createItemsView(scene) {
   const coinColor = new THREE.Color(C.coin);
   let t = 0;
 
+  /** One show-only coin on an arc from `from` to `to`, starting after `delay` s (t < 0 waits). */
+  function spark(from, to, height, dur, t0, drop = 0) {
+    const g = itemMesh({ kind: 'coin' });
+    g.visible = false;
+    root.add(g);
+    sparks.push({ g, body: g.children[0].children[1], from, to, height, dur, t: t0, drop }); // body: the coin's toon mesh (hull, body, x-ray)
+  }
+
   return {
     /**
      * A chest's gold as a fountain of the same spinning coins, one per gold:
@@ -139,21 +147,14 @@ export function createItemsView(scene) {
       const L = CONFIG.loot;
       const rand = (a, b) => a + Math.random() * (b - a);
       for (let i = 0; i < n; i++) {
-        const g = itemMesh({ kind: 'coin' });
-        g.visible = false;
-        root.add(g);
         const a = Math.random() * Math.PI * 2;
         const d = rand(L.chestCoinSpreadMin, L.chestCoinSpreadMax);
-        sparks.push({
-          g,
-          body: g.children[0].children[1], // the coin's toon mesh (hull, body, x-ray)
-          from: { x, y, z },
-          to: { x: x + Math.cos(a) * d, z: z + Math.sin(a) * d },
-          height: rand(L.chestCoinHeightMin, L.chestCoinHeightMax),
-          dur: rand(L.chestCoinTimeMin, L.chestCoinTimeMax),
-          t: -i * L.chestCoinStagger, // waits its turn to pop out
-        });
+        spark({ x, y, z }, { x: x + Math.cos(a) * d, z: z + Math.sin(a) * d }, rand(L.chestCoinHeightMin, L.chestCoinHeightMax), rand(L.chestCoinTimeMin, L.chestCoinTimeMax), -i * L.chestCoinStagger, 0.4);
       }
+    },
+    /** A coin you just took hops straight up, flashes white and vanishes, like the chest's. */
+    popCoin(x, z) {
+      spark({ x, y: 0.04, z }, { x, z }, CONFIG.loot.collectHopHeight, CONFIG.loot.collectHopTime, 0);
     },
     /** Match the scene to the current list of floor items. */
     sync(items) {
@@ -182,7 +183,7 @@ export function createItemsView(scene) {
         s.g.visible = true;
         s.g.position.set(
           s.from.x + (s.to.x - s.from.x) * u,
-          s.from.y + s.height * 4 * u * (1 - u) * 1.15 - 0.4 * u * u, // up high, then falling a little below the rim
+          s.from.y + s.height * 4 * u * (1 - u) * 1.15 - s.drop * u * u, // up, then (chest coins) falling a little below where they started
           s.from.z + (s.to.z - s.from.z) * u,
         );
         s.g.rotation.y += dt * 10;
@@ -197,7 +198,10 @@ export function createItemsView(scene) {
         }
       }
       for (const [item, g] of views) {
-        g.rotation.y += dt * (item.fly ? 9 : 1.6); // spins fast while flying
+        // Every coin on the floor turns in step (one shared angle); a flying
+        // one spins fast. Other pickups turn on their own.
+        if (item.kind === 'coin' && !item.fly) g.rotation.y = t * CONFIG.loot.coinSpin;
+        else g.rotation.y += dt * (item.fly ? 9 : 1.6);
         g.position.x = item.x;
         g.position.z = item.z;
         g.position.y = item.fly ? flightHeight(item.fly) : 0.04 + Math.sin(t * 3 + g.userData.phase) * 0.03;

@@ -123,9 +123,38 @@ export function createItemsView(scene) {
   const root = new THREE.Group();
   scene.add(root);
   const views = new Map(); // item -> mesh group
+  const sparks = []; // chest coins: show only, not pickups
+  const white = new THREE.Color(0xffffff);
+  const coinColor = new THREE.Color(C.coin);
   let t = 0;
 
   return {
+    /**
+     * A chest's gold as a fountain of the same spinning coins, one per gold:
+     * they pop out of the open chest one after another on high arcs, and each
+     * flashes white once and vanishes on the way down. Show only: the gold is
+     * credited when the chest opens.
+     */
+    chestCoins(x, y, z, n) {
+      const L = CONFIG.loot;
+      const rand = (a, b) => a + Math.random() * (b - a);
+      for (let i = 0; i < n; i++) {
+        const g = itemMesh({ kind: 'coin' });
+        g.visible = false;
+        root.add(g);
+        const a = Math.random() * Math.PI * 2;
+        const d = rand(L.chestCoinSpreadMin, L.chestCoinSpreadMax);
+        sparks.push({
+          g,
+          body: g.children[0].children[1], // the coin's toon mesh (hull, body, x-ray)
+          from: { x, y, z },
+          to: { x: x + Math.cos(a) * d, z: z + Math.sin(a) * d },
+          height: rand(L.chestCoinHeightMin, L.chestCoinHeightMax),
+          dur: rand(L.chestCoinTimeMin, L.chestCoinTimeMax),
+          t: -i * L.chestCoinStagger, // waits its turn to pop out
+        });
+      }
+    },
     /** Match the scene to the current list of floor items. */
     sync(items) {
       for (const [item, g] of views) {
@@ -145,6 +174,28 @@ export function createItemsView(scene) {
     },
     update(dt) {
       t += dt;
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const s = sparks[i];
+        s.t += dt;
+        if (s.t < 0) continue;
+        const u = Math.min(1, s.t / s.dur);
+        s.g.visible = true;
+        s.g.position.set(
+          s.from.x + (s.to.x - s.from.x) * u,
+          s.from.y + s.height * 4 * u * (1 - u) * 1.15 - 0.4 * u * u, // up high, then falling a little below the rim
+          s.from.z + (s.to.z - s.from.z) * u,
+        );
+        s.g.rotation.y += dt * 10;
+        // The last stretch: a single white flash, swelling slightly, then gone.
+        const flash = Math.max(0, (u - (1 - CONFIG.loot.chestCoinFlash)) / CONFIG.loot.chestCoinFlash);
+        s.body.material.color.lerpColors(coinColor, white, Math.sin(Math.PI * Math.min(1, flash * 1.4)) ** 0.5 * (flash > 0 ? 1 : 0));
+        s.g.scale.setScalar(1 + 0.5 * flash);
+        if (u >= 1) {
+          root.remove(s.g);
+          s.body.material.dispose();
+          sparks.splice(i, 1);
+        }
+      }
       for (const [item, g] of views) {
         g.rotation.y += dt * (item.fly ? 9 : 1.6); // spins fast while flying
         g.position.x = item.x;

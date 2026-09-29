@@ -476,6 +476,7 @@ export function createGame(container, levels, startIndex = 0) {
       } else if (o.type === 'open') {
         sfx.play('chest', 0.9);
         objectsView.openChest(obj);
+        itemsView.chestCoins(obj.x, 0.35, obj.z, o.gold); // one spinning coin per gold, popping out
         state.gold += o.gold;
         // Over the ball (always on screen), not the chest, which may not be.
         overlay.float(`+${o.gold}`, hero.x, hero.z, hero.radius * 2 + 0.8, 'gold', heroFollow());

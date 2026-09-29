@@ -127,6 +127,16 @@ export const CONFIG = {
     scatterTimeMax: 0.85,
     scatterBounceAt: 0.75, // fraction of the flight spent on the first arc; the rest is the bounce
     scatterBounceHeight: 0.25, // bounce height as a fraction of the arc
+    // Chest gold, shown as a fountain of the same coins (one per gold) that
+    // pop out of the chest in turn, arc high, flash white and vanish.
+    chestCoinSpreadMin: 0.2, // tiles from the chest
+    chestCoinSpreadMax: 1.1,
+    chestCoinHeightMin: 1.0, // arc height above the rim, tiles
+    chestCoinHeightMax: 1.8,
+    chestCoinTimeMin: 0.55, // seconds from popping out to vanishing
+    chestCoinTimeMax: 0.85,
+    chestCoinStagger: 0.035, // seconds between one coin and the next
+    chestCoinFlash: 0.3, // fraction of the flight, at the end, spent flashing
   },
 
   hero: {

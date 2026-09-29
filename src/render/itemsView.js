@@ -53,6 +53,14 @@ function itemMesh(item) {
         g.add(coin);
       }
       break;
+    case 'coin': {
+      // A single strip coin, standing on edge and spinning, like a dot to eat.
+      const coin = outlined(new THREE.CylinderGeometry(0.1, 0.1, 0.03, 16), C.coin, 1.15);
+      coin.rotation.x = Math.PI / 2;
+      coin.position.y = 0.16;
+      g.add(coin);
+      break;
+    }
     case 'potion':
     case 'superPotion': {
       const r = kind === 'potion' ? 0.1 : 0.13;

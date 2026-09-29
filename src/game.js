@@ -18,7 +18,7 @@
 
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
-import { parseLevel, tileCenter, tileAt } from './level.js';
+import { parseLevel, tileCenter, tileAt, coinStrips } from './level.js';
 import { createWorld, createBall, stepWorld, isAtRest, speedOf } from './physics.js';
 import { createCombat, createEnemy } from './combat.js';
 import { canSee } from './sight.js';
@@ -87,6 +87,8 @@ export function createGame(container, levels, startIndex = 0) {
     clears: 0,
     lives: CONFIG.hero.lives,
     gold: 0, // the score
+    strips: [], // this level's coin strips: { size, thisShot }
+    shotCoins: 0, // strip coins taken this shot (the tick's pitch)
     keys: [], // colours of the keys you hold; this level only
     entry: null, // HP, gear and gold when this level was entered; game over restores them
     moves: [], // this enemy phase: { enemy, kind: 'lunge' } or { enemy, kind: 'patrol', vx, vz, target }
@@ -113,8 +115,14 @@ export function createGame(container, levels, startIndex = 0) {
     world = createWorld(level);
     world.balls.push(hero);
     world.statics = createObjects(level);
-    // Floor pickups: kill coins, barrel loot, and the level's keys.
+    // Floor pickups: kill coins, barrel loot, the level's keys and its coin strips.
     world.items = level.keys.map((k) => ({ kind: 'key', color: k.color, ...tileCenter(k) }));
+    state.strips = coinStrips(level).map((coins) => {
+      const strip = { size: coins.length, thisShot: 0 };
+      for (const c of coins) world.items.push({ kind: 'coin', value: CONFIG.loot.stripCoinValue, strip, ...tileCenter(c) });
+      return strip;
+    });
+    state.shotCoins = 0;
     state.keys = []; // unused keys don't carry over (and a game over takes them back)
     objectsView.build(world.statics);
     doorsView.build(level.doors);
@@ -207,6 +215,9 @@ export function createGame(container, levels, startIndex = 0) {
     state.phase = 'shot';
     state.shots++;
     combat.beginShot();
+    // A new shot: strip sweeps and the coin tick's pitch start over.
+    for (const strip of state.strips) strip.thisShot = 0;
+    state.shotCoins = 0;
     sfx.play('launch', 0.4 + 0.6 * shot.fill, { pitch: 0.9 + 0.2 * shot.fill });
   }
   canvas.addEventListener('pointerup', (e) => endAim(e, true));
@@ -341,6 +352,10 @@ export function createGame(container, levels, startIndex = 0) {
   const PICKUP_STYLE = { gold: 'gold', coins: 'gold', potion: 'heal', superPotion: 'heal', shield: 'gear', sword: 'gear', oneUp: 'gear', key: 'gear' };
 
   function pickUp(item) {
+    if (item.kind === 'coin') {
+      pickUpStripCoin(item);
+      return;
+    }
     const label = collect(item, hero, state);
     sfx.play(PICKUP_SOUND[item.kind], 0.8);
     overlay.float(label, hero.x, hero.z, hero.radius * 2 + 0.8, PICKUP_STYLE[item.kind], heroFollow());
@@ -353,6 +368,28 @@ export function createGame(container, levels, startIndex = 0) {
       doorsView.open(door);
       sfx.play('door', 1);
       overlay.float('Unlocked!', door.col + 0.5, door.row + 0.5, CONFIG.render.wallHeight + 0.3, 'gear');
+    }
+  }
+
+  /**
+   * A strip coin: no label (a run of them would spam), just a tick that rises
+   * in pitch with each coin this shot. Taking a whole strip within one of
+   * your shots is a Clean Sweep, which pays a bonus.
+   */
+  function pickUpStripCoin(item) {
+    collect(item, hero, state);
+    state.shotCoins++;
+    sfx.play('coin', 0.45, { pitch: Math.min(2, 0.9 + 0.07 * state.shotCoins) });
+    const strip = item.strip;
+    if (state.phase !== 'shot') {
+      strip.thisShot = -Infinity; // picked up outside your shot: no sweep for this strip
+      return;
+    }
+    strip.thisShot++;
+    if (strip.thisShot === strip.size && strip.size >= CONFIG.loot.sweepMinCoins) {
+      state.gold += CONFIG.loot.sweepBonus;
+      sfx.play('sweep', 0.8);
+      overlay.float(`Clean Sweep! +${CONFIG.loot.sweepBonus}`, hero.x, hero.z, hero.radius * 2 + 0.8, 'gold', heroFollow());
     }
   }
 

@@ -161,6 +161,8 @@ const SYNTHS = {
       const grind = t > 0.08 ? (Math.random() * 2 - 1) * 0.18 * Math.sin(Math.PI * Math.min(1, (t - 0.08) / 0.5)) * (0.6 + 0.4 * Math.sin(2 * Math.PI * 38 * t)) : 0;
       return (clunk * 0.7 + grind) * 0.8;
     }),
+  // Clean Sweep (a whole coin strip in one shot): a fast sparkling run up.
+  sweep: (ctx) => notes(ctx, [1047, 1319, 1568, 2093, 2637], 0.05, 0.35),
   // Run complete: a triumphant rising fanfare.
   win: (ctx) => notes(ctx, [523, 659, 784, 1047, 784, 1047], 0.12, 0.45),
   // Two billiard balls: bright and short.

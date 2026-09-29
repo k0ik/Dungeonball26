@@ -148,7 +148,7 @@ Starting cards (numbers are defaults to tune):
 | Scavenger | Barrels break in one hit |
 | Locksmith | Doors open without keys |
 | Athletic | Your ball rolls faster and farther: 25% less friction on it (enemies unaffected; the aim preview includes it) |
-| Money Magnet | Gold on the floor (enemy coins and barrel gold) is collected from farther away: within 1.5 tiles of your ball's centre instead of just on contact (about 0.6 tiles), drawn in to you as you roll past. Other loot still needs contact |
+| Money Magnet | Gold on the floor (enemy coins, barrel gold and strip coins) is collected from farther away: within 1.5 tiles of your ball's centre instead of just on contact (about 0.6 tiles), drawn in to you as you roll past. Other loot still needs contact |
 | Elasticity | Barrels, chests and enemies act like pinball bumpers for you: each time your ball bounces off one, it's kicked away with +1.5 tiles/s of extra speed along the bounce (never above the 9 tiles/s max launch speed). Walls bounce as normal. The aim preview includes the kick |
 
 Defaults assumed until you say otherwise: an offer never includes a card you already hold, and a card you replace goes back into the pool. Cards carry over between levels like HP and gold, and a game over restores the cards you entered the level with.
@@ -183,6 +183,7 @@ Barrels, chests, keys and doors are the level's furniture. Chest gold is granted
 | Key | Floor pickup (a standing key in red, blue or yellow), collected by rolling over it. Color-matched to one door and shown in a HUD slot at the top right until used. |
 | Door | Solid and opaque until the hero is within half a tile while holding the matching key. Then it opens for good (it sinks into the floor with a clunk and "Unlocked!") and the key is consumed; the check runs every physics step, so a ball rolling at a door with its key usually goes straight through. A closed door is a block in its key's colour, a little lower than the walls, with a keyhole on its faces. Enemies can pass through an open door. |
 | Exit | Ends the level when the hero's center enters its tile. |
+| Coin strip | Single coins placed in the level with `*`, 1 gold each, set out in rows or columns like Pac-Man dots. Coins that touch side by side form one strip. They don't block the ball and are collected by rolling over them (enemies don't take them), with a quick tick that rises in pitch with each coin in the same shot instead of a floating label. Collecting a whole strip of 3 or more within one of your shots is a **Clean Sweep**: +5 gold, a sparkle sound and a "Clean Sweep! +5" label. A strip also shows you a line: a trail of coins toward a wall hints at a bank shot, and it can draw you across a room into enemies' sight. Money Magnet (a trait card) sweeps up strips from a near miss. |
 | Coins | Dropped where an enemy dies, worth its level in gold. Collected by rolling over them, so grabbing them can pull you back into an enemy's sight. |
 | Explosive barrel (red) | Solid bumper with the same physics as a barrel. Any contact from the hero or an enemy, at any speed, detonates it: the ball that touched it takes 1 flat damage, ignoring ATK, and the barrel is destroyed with no loot. If it's you and you hold a shield, the shield takes the blast instead ("Blocked!") and is used up. |
 
@@ -219,6 +220,7 @@ Each level is a plain text file with one character per tile. The screen shows ab
 | `r` `b` `y` | Key: red, blue, yellow |
 | `R` `B` `Y` | Door matching that key |
 | `E` | Explosive barrel (red) |
+| `*` | Coin (touching coins form a strip) |
 
 An illustrative level in this format, with one enemy, two barrels, a chest, a red key and a red door in front of the exit, which sits in its alcove at the top:
 
@@ -243,7 +245,7 @@ Barrel loot is random by default. Per-barrel overrides can be added later withou
 
 The five MVP levels ramp one idea at a time. Sizes are suggestions in tiles.
 
-Levels 1 to 3 are built (M6); a run is those three in order until levels 4 and 5 arrive in M8.
+Levels 1 to 3 are built (M6); a run is those three in order until levels 4 and 5 arrive in M8. Each has a few coin strips: one near the start to learn the Clean Sweep on, and others that lead somewhere (Long Hall's right-hand corridor, One Key's trail toward the key nook).
 
 | # | Name | Size | Enemies | Keys and doors | Teaches |
 | --- | --- | --- | --- | --- | --- |
@@ -330,6 +332,17 @@ Changes agreed during development that aren't built yet. (Trait cards are schedu
 ## Out of scope for the MVP
 
 These are good ideas that wait until the five-level loop is fun.
+
+- **Endless mode:** after the five handmade levels, levels are generated from a seed, one after another, getting harder, so a run can go on as long as you survive. Each candidate level is generated, checked with the same rules the handmade levels are tested against, and scored; the best of several is kept.
+  - **Shape:** portrait, like the handmade levels: 9 to 14 tiles wide, 20 to 40 tall, start at the bottom, exit in its alcove at the top. 4 to 8 rooms (4×4 up to 8×6) along a main route, joined by corridors at least 2 tiles wide, plus a few side branches.
+  - **Keys and doors:** a door on the main route with its key down a side branch reachable before it (checked by the same "can it be finished" test). Keys rise with depth: 0, then 1, then 2 or 3.
+  - **Cover:** about one pillar or wall stub per 12 floor tiles, so there is always somewhere to hide; no enemy can see the start tile.
+  - **Enemies:** a budget of total enemy levels that grows with depth (for example 4 + 2 × depth), spent on a mix of weak and strong enemies. Enemies at least 3 tiles apart, none within 6 tiles of the start, some deliberate pairs for combos, and a guard near each door.
+  - **Objects:** about one barrel per 25 floor tiles, along walls; chests in dead ends, so they're worth the detour; red barrels near enemy groups for lures, never at a narrow passage or near the start; a few coin strips, some pointing along good shot lines.
+  - **Difficulty with depth:** a bigger enemy budget, more keys, longer levels, fewer loot barrels; later, pits and rounded walls.
+  - **Seeds:** every level comes from a seed number, so levels can be shared or replayed, and a daily run (the same seed for everyone that day) becomes possible.
+  - **Scoring the candidates:** route length, how much cover there is, and how many good bank-shot angles the rooms offer; keep the best of several.
+  - **Cost:** sizable, larger than M6.
 
 - **Stories (elevation):** floors at different heights joined by ramps, as in isometric dungeon sketches; the ball never leaves the floor.
   - **Physics:** stays 2D. Each tile gets a floor height (story 0, 1, 2…), and ramp tiles slope in one direction between two heights. On a ramp, gravity pulls a ball downhill along the slope, so shots curve on slopes and an uphill shot can run out of speed and roll back.

@@ -54,6 +54,7 @@ export function collect(item, hero, run) {
   switch (item.kind) {
     case 'gold':
     case 'coins':
+    case 'coin':
       run.gold += item.value;
       return `+${item.value}`;
     case 'potion':

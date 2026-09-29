@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { parseLevel, isSolid, LEGEND } from '../src/level.js';
+import { parseLevel, isSolid, LEGEND, coinStrips } from '../src/level.js';
 
 const levelsDir = new URL('../src/levels/', import.meta.url);
 
@@ -100,5 +100,27 @@ test('every exit is tucked into a one-tile alcove, open on one side only', () =>
       const open = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dc, dr]) => !isSolid(level, col + dc, row + dr));
       assert.equal(open.length, 1, `${file}: exit at ${col},${row} has ${open.length} open sides`);
     }
+  }
+});
+
+test('coins that touch side by side form one strip; diagonal or separate ones do not', () => {
+  const level = parseLevel(`#######
+#****.#
+#.....#
+#.*..*#
+#..*.*#
+#S...*#
+#######`);
+  assert.equal(level.coins.length, 9);
+  assert.ok(!isSolid(level, 1, 1), 'a coin tile is floor');
+  const sizes = coinStrips(level).map((s) => s.length).sort();
+  // the row of 4, the column of 3, and two lone diagonal coins
+  assert.deepEqual(sizes, [1, 1, 3, 4]);
+});
+
+test('every shipped level has at least one coin strip long enough for a Clean Sweep', () => {
+  for (const file of readdirSync(levelsDir).filter((f) => f.endsWith('.txt'))) {
+    const level = parseLevel(readFileSync(new URL(file, levelsDir), 'utf8'), file);
+    assert.ok(coinStrips(level).some((s) => s.length >= 3), file);
   }
 });

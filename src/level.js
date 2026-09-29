@@ -12,6 +12,7 @@ export const LEGEND = {
   O: 'barrel',
   C: 'chest',
   E: 'explosive',
+  '*': 'coin',
   1: 'enemy',
   2: 'enemy',
   3: 'enemy',
@@ -53,6 +54,7 @@ export function parseLevel(text, name = 'level') {
     chests: [],
     keys: [],
     doors: [],
+    coins: [], // single coins; touching ones form strips (coinStrips)
   };
 
   lines.forEach((line, row) => {
@@ -97,6 +99,9 @@ export function parseLevel(text, name = 'level') {
         case 'chest':
           level.chests.push(at);
           break;
+        case 'coin':
+          level.coins.push(at);
+          break;
       }
       tileRow.push(base);
     }
@@ -105,6 +110,34 @@ export function parseLevel(text, name = 'level') {
 
   if (!level.start) throw new Error(`${name}: no hero start 'S'`);
   return level;
+}
+
+/**
+ * Group the level's coins into strips: coins that touch side by side (not
+ * diagonally) belong to the same strip. Returns a list of strips, each a list
+ * of { col, row }.
+ */
+export function coinStrips(level) {
+  const left = new Map(level.coins.map((c) => [`${c.col},${c.row}`, c]));
+  const strips = [];
+  for (const start of level.coins) {
+    if (!left.has(`${start.col},${start.row}`)) continue;
+    const strip = [];
+    const stack = [start];
+    left.delete(`${start.col},${start.row}`);
+    while (stack.length) {
+      const c = stack.pop();
+      strip.push(c);
+      for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const id = `${c.col + dc},${c.row + dr}`;
+        if (!left.has(id)) continue;
+        stack.push(left.get(id));
+        left.delete(id);
+      }
+    }
+    strips.push(strip);
+  }
+  return strips;
 }
 
 export function tileAt(level, col, row) {

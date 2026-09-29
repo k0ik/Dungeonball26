@@ -31,7 +31,7 @@ To test on a phone on the same network, run `npm run host` and open the printed 
 - `src/aim.js` — slingshot aim maths and the physics look-ahead preview
 - `src/combat.js` — damage rules for your shot and the enemy phase
 - `src/sight.js`, `src/turns.js` — line of sight, turn order, lunges and patrols
-- `src/objects.js`, `src/loot.js` — barrels, chests, red barrels, the loot table and pickup rules
+- `src/objects.js`, `src/loot.js` — barrels, chests, red barrels, coin strips, the loot table and pickup rules
 - `src/doors.js` — keys and doors
 - `src/render/` — Three.js views: level geometry, hero and enemy balls, aim preview, camera rig, HUD bar, and the HTML overlay for HP bars, "!" markers and damage numbers
 - `src/audio.js` — SFX via `THREE.Audio` (synthesized placeholders for now)

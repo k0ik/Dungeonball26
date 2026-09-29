@@ -111,6 +111,11 @@ export const CONFIG = {
     swordAtk: 3, // added to ATK while you hold a sword
     swordUses: 2, // hits on enemies before it breaks: whole -> broken half -> gone
     killGoldPerLevel: 1, // a kill drops coins worth the enemy's level
+    // Coin strips: single coins placed in a level ('*'), 1 gold each.
+    // Collecting a whole strip in one of your shots is a "Clean Sweep".
+    stripCoinValue: 1,
+    sweepBonus: 5,
+    sweepMinCoins: 3, // shorter strips pay no sweep bonus
   },
 
   hero: {

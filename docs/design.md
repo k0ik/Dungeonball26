@@ -308,6 +308,14 @@ Two habits keep tuning cheap. Put every number from this doc in one config file.
 
 Changes agreed during development that aren't built yet. (Trait cards are scheduled as M7.)
 
+- **Rounded walls:** the level builder rounds the corners of the block-based text levels, so level files don't change.
+  - **Outside corners** (a pillar or a wall end sticking into a room) become rounded bumps; a lone 1×1 pillar becomes a round post.
+  - **Inside corners** (a room's corners) become curved walls, so square rooms turn rounded and, with big enough curves, nearly circular.
+  - **How round:** one setting per level (a line at the top of the level file). 0 keeps today's right angles; a small value softens the corners; "max" makes each curve as big as the straight walls on either side allow, giving round chambers and pill-shaped corridors. A character to force one room round or square can come later if needed.
+  - **Physics:** a rounded outside corner behaves like a round bumper (the same contact as barrels). A rounded inside corner is a ball rolling around the inside of a curve, a small addition. The aim preview runs the real physics, so it draws curved bank shots correctly. Sight and patrol-path checks use the same rounded shapes, so what an enemy can see matches what a ball can hit.
+  - **Drawing:** walls are drawn as outlines traced around each wall mass, curves included, raised to wall height, instead of one block per tile. This is most of the work. Doors, exit alcoves, barrels and the floor are unchanged.
+  - **Play:** round rooms act like bowls where a hard shot circles the edge and sweeps enemies; rounded pillars bend shots instead of stopping them; pill corridors make long, flowing shots. The cost is crisp cover, since sharp corners are what hide-and-strike play relies on. That's why it's per level: some levels stay square and tactical, others go round and flowing, and a run can mix both.
+  - **When:** medium cost, independent of stories. It could land in M8 as a variety tool for levels 4 and 5, or just after.
 - **Trick shots:** the achievements in the section above, with their first-time gold bonuses. Most can be built now; the two pit shots need the bottomless pit.
 - **Red barrel blast push:** a red barrel's explosion also shoves nearby balls. Every ball, hero or enemy, within 2 tiles of the barrel's centre is pushed straight away from it with a quick burst of speed, up to 6 tiles/s at the centre, falling off to nothing at the edge. Only balls the blast can reach get pushed: a wall between the barrel and a ball shields it, using the same line check as sight. The push deals no damage by itself; only the ball that touched the barrel takes the 1 damage. A push that sends an enemy into another enemy counts as a combo, and one that sends an enemy into a barrel counts as your knock during your shot. Blasts can chain into other red barrels.
 
@@ -322,6 +330,13 @@ Changes agreed during development that aren't built yet. (Trait cards are schedu
 ## Out of scope for the MVP
 
 These are good ideas that wait until the five-level loop is fun.
+
+- **Stories (elevation):** floors at different heights joined by ramps, as in isometric dungeon sketches; the ball never leaves the floor.
+  - **Physics:** stays 2D. Each tile gets a floor height (story 0, 1, 2…), and ramp tiles slope in one direction between two heights. On a ramp, gravity pulls a ball downhill along the slope, so shots curve on slopes and an uphill shot can run out of speed and roll back.
+  - **Drops between stories:** a drop acts as a wall at first. Rolling off a ledge onto the story below is a later, riskier addition.
+  - **Level format:** a level file gains an optional second grid below the first: a height map of digits, plus ramp characters (`^` `v` `<` `>`) for each ramp's downhill direction. A level without one is all floor, so existing levels stay valid.
+  - **What else it touches:** the aim preview runs the real physics, so it shows slopes for free. Sight is blocked by story drops, perhaps allowing a view down but not up. Patrols stay on their story unless their route uses a ramp, and a lunge downhill gains speed, so high ground is dangerous. Taller stories hide balls behind them, so the pickup see-through silhouette extends to balls. The camera tracks the ball's height.
+  - **Cost:** a milestone of its own ("Stories", after M8), starting with ramps between two heights. Most of the work is drawing floors, cliff faces and ramps at different heights, and the level format.
 
 - Multiple weapon and shield tiers, or any gear comparison
 - XP, leveling and permanent upgrades between runs

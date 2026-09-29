@@ -19,7 +19,7 @@
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
 import { parseLevel, tileCenter, tileAt, coinStrips } from './level.js';
-import { createWorld, createBall, stepWorld, isAtRest, speedOf } from './physics.js';
+import { createWorld, createBall, stepWorld, isAtRest, speedOf, overlapsSolid } from './physics.js';
 import { createCombat, createEnemy } from './combat.js';
 import { canSee } from './sight.js';
 import { lungeVelocity, patrolMove, pickPatrollers } from './turns.js';
@@ -340,16 +340,73 @@ export function createGame(container, levels, startIndex = 0) {
   }
 
   // --- Events ------------------------------------------------------------------
-  /** Barrel loot lands on the floor where the barrel stood; roll over it to take it. */
+  /**
+   * Barrel loot lands on the floor where the barrel stood; roll over it to
+   * take it. Gold comes out as that many single coins, scattered.
+   */
   function dropLoot(x, z) {
-    world.items.push({ ...rollLoot(), x, z });
+    const loot = rollLoot();
+    if (loot.kind === 'gold') scatterCoins(x, z, loot.value);
+    else world.items.push({ ...loot, x, z });
+  }
+
+  /**
+   * Throw `n` single coins (the same coins as strips) out from (x, z): each
+   * flies to a random clear spot at a random distance, with a random arc
+   * height and flight time, so they land one after another, and bounces once.
+   * A spot is clear if the coin fits there and the way to it crosses no wall,
+   * door or bumper; after a few misses it just drops close by.
+   */
+  function scatterCoins(x, z, n) {
+    const L = CONFIG.loot;
+    const r = CONFIG.objects.itemRadius;
+    const blocked = (px, pz) =>
+      overlapsSolid(level, px, pz, r) || world.statics.some((s) => Math.hypot(s.x - px, s.z - pz) < (s.radius ?? Math.hypot(s.halfX, s.halfZ)) + r);
+    const rand = (a, b) => a + Math.random() * (b - a);
+    for (let i = 0; i < n; i++) {
+      let to = null;
+      for (let tries = 0; tries < 12 && !to; tries++) {
+        const a = Math.random() * Math.PI * 2;
+        const d = rand(L.scatterMin, L.scatterMax);
+        const tx = x + Math.cos(a) * d;
+        const tz = z + Math.sin(a) * d;
+        let clear = true;
+        for (let k = 1; k <= 6 && clear; k++) clear = !blocked(x + (tx - x) * (k / 6), z + (tz - z) * (k / 6));
+        if (clear) to = { x: tx, z: tz };
+      }
+      to ??= { x: x + rand(-0.15, 0.15), z: z + rand(-0.15, 0.15) };
+      world.items.push({
+        kind: 'coin',
+        value: 1,
+        x,
+        z,
+        fly: { fromX: x, fromZ: z, toX: to.x, toZ: to.z, t: 0, dur: rand(L.scatterTimeMin, L.scatterTimeMax), height: rand(L.scatterHeightMin, L.scatterHeightMax) },
+      });
+    }
+  }
+
+  /** Move flying coins along their arcs; a coin can be taken once it has landed. */
+  function updateFlyingCoins(dt) {
+    for (const item of world.items) {
+      const f = item.fly;
+      if (!f) continue;
+      f.t += dt;
+      // Across the ground during the first arc; the bounce lands on the spot.
+      const k = Math.min(1, f.t / (f.dur * CONFIG.loot.scatterBounceAt));
+      item.x = f.fromX + (f.toX - f.fromX) * k;
+      item.z = f.fromZ + (f.toZ - f.fromZ) * k;
+      if (f.t >= f.dur) {
+        delete item.fly;
+        sfx.play('coin', 0.12, { pitch: 1.6 + Math.random() * 0.4, minInterval: 0.05 }); // a faint tink as it settles
+      }
+    }
   }
 
   /** The ball labels about you should follow, or null to leave them in place (config). */
   const heroFollow = () => (CONFIG.render.heroLabelsFollowBall ? hero : null);
 
-  const PICKUP_SOUND = { gold: 'coin', coins: 'coin', potion: 'potion', superPotion: 'potion', shield: 'gear', sword: 'gear', oneUp: 'oneUp', key: 'key' };
-  const PICKUP_STYLE = { gold: 'gold', coins: 'gold', potion: 'heal', superPotion: 'heal', shield: 'gear', sword: 'gear', oneUp: 'gear', key: 'gear' };
+  const PICKUP_SOUND = { potion: 'potion', superPotion: 'potion', shield: 'gear', sword: 'gear', oneUp: 'oneUp', key: 'key' };
+  const PICKUP_STYLE = { potion: 'heal', superPotion: 'heal', shield: 'gear', sword: 'gear', oneUp: 'gear', key: 'gear' };
 
   function pickUp(item) {
     if (item.kind === 'coin') {
@@ -372,15 +429,17 @@ export function createGame(container, levels, startIndex = 0) {
   }
 
   /**
-   * A strip coin: no label (a run of them would spam), just a tick that rises
-   * in pitch with each coin this shot. Taking a whole strip within one of
-   * your shots is a Clean Sweep, which pays a bonus.
+   * A single coin: no label (a run of them would spam), just a tick that
+   * rises in pitch with each coin this shot. Taking a whole strip within one
+   * of your shots is a Clean Sweep, which pays a bonus. (Scattered coins
+   * belong to no strip.)
    */
   function pickUpStripCoin(item) {
     collect(item, hero, state);
     state.shotCoins++;
     sfx.play('coin', 0.45, { pitch: Math.min(2, 0.9 + 0.07 * state.shotCoins) });
     const strip = item.strip;
+    if (!strip) return;
     if (state.phase !== 'shot') {
       strip.thisShot = -Infinity; // picked up outside your shot: no sweep for this strip
       return;
@@ -397,7 +456,7 @@ export function createGame(container, levels, startIndex = 0) {
   function checkPickups() {
     const reach = hero.radius + CONFIG.objects.itemRadius;
     for (const item of [...world.items]) {
-      if (Math.hypot(item.x - hero.x, item.z - hero.z) > reach || !canCollect(item, hero)) continue;
+      if (item.fly || Math.hypot(item.x - hero.x, item.z - hero.z) > reach || !canCollect(item, hero)) continue;
       world.items.splice(world.items.indexOf(item), 1);
       pickUp(item);
     }
@@ -478,7 +537,8 @@ export function createGame(container, levels, startIndex = 0) {
         enemyViews.get(o.target)?.die();
         overlay.removeBar(o.target);
         // A kill drops coins worth the enemy's level where it died.
-        world.items.push({ kind: 'coins', value: o.target.level * CONFIG.loot.killGoldPerLevel, x: o.target.x, z: o.target.z });
+        // A kill scatters coins worth the enemy's level around where it died.
+        scatterCoins(o.target.x, o.target.z, o.target.level * CONFIG.loot.killGoldPerLevel);
         if (o.shotKills >= 2 && state.phase === 'shot') {
           sfx.play('comboKill', 0.9);
           state.comboKillAt = performance.now();
@@ -661,6 +721,7 @@ export function createGame(container, levels, startIndex = 0) {
     doorsView.update(dt);
     objectsView.fadeChests(hero, state.aiming, dt);
     itemsView.sync(world.items);
+    updateFlyingCoins(dt);
     itemsView.update(dt);
     for (const [enemy, view] of enemyViews) {
       view.update(dt);

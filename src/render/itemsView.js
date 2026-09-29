@@ -1,5 +1,7 @@
-// Floor pickups: coins dropped by kills, barrel loot, and keys. Small bobbing, turning
-// toon primitives so they read as collectable.
+// Floor pickups: coins (strip coins, and the ones kills and barrels scatter),
+// barrel loot, and keys. Small bobbing, turning toon primitives so they read
+// as collectable. A scattered coin flies out in an arc and bounces once
+// (item.fly, advanced by the game) before it settles.
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
@@ -45,16 +47,8 @@ function itemMesh(item) {
   const { kind } = item;
   const g = new THREE.Group();
   switch (kind) {
-    case 'coins':
-    case 'gold':
-      for (let i = 0; i < 3; i++) {
-        const coin = outlined(new THREE.CylinderGeometry(0.11, 0.11, 0.035, 16), C.coin, 1.15);
-        coin.position.set((i - 1) * 0.06, 0.02 + i * 0.04, (i % 2) * 0.03);
-        g.add(coin);
-      }
-      break;
     case 'coin': {
-      // A single strip coin, standing on edge and spinning, like a dot to eat.
+      // A single coin, standing on edge and spinning, like a dot to eat.
       const coin = outlined(new THREE.CylinderGeometry(0.1, 0.1, 0.03, 16), C.coin, 1.15);
       coin.rotation.x = Math.PI / 2;
       coin.position.y = 0.16;
@@ -113,6 +107,18 @@ function itemMesh(item) {
   return g;
 }
 
+/** Height of a flying coin: one arc out, then a small bounce. */
+function flightHeight(fly) {
+  const u = Math.min(1, fly.t / fly.dur);
+  const main = CONFIG.loot.scatterBounceAt;
+  if (u < main) {
+    const s = u / main;
+    return 0.04 + fly.height * 4 * s * (1 - s);
+  }
+  const s = (u - main) / (1 - main);
+  return 0.04 + fly.height * CONFIG.loot.scatterBounceHeight * 4 * s * (1 - s);
+}
+
 export function createItemsView(scene) {
   const root = new THREE.Group();
   scene.add(root);
@@ -139,9 +145,11 @@ export function createItemsView(scene) {
     },
     update(dt) {
       t += dt;
-      for (const g of views.values()) {
-        g.rotation.y += dt * 1.6;
-        g.position.y = 0.04 + Math.sin(t * 3 + g.userData.phase) * 0.03;
+      for (const [item, g] of views) {
+        g.rotation.y += dt * (item.fly ? 9 : 1.6); // spins fast while flying
+        g.position.x = item.x;
+        g.position.z = item.z;
+        g.position.y = item.fly ? flightHeight(item.fly) : 0.04 + Math.sin(t * 3 + g.userData.phase) * 0.03;
       }
     },
   };

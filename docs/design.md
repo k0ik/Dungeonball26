@@ -184,14 +184,14 @@ Barrels, chests, keys and doors are the level's furniture. Chest gold is granted
 | Door | Solid and opaque until the hero is within half a tile while holding the matching key. Then it opens for good (it sinks into the floor with a clunk and "Unlocked!") and the key is consumed; the check runs every physics step, so a ball rolling at a door with its key usually goes straight through. A closed door is a block in its key's colour, a little lower than the walls, with a keyhole on its faces. Enemies can pass through an open door. |
 | Exit | Ends the level when the hero's center enters its tile. |
 | Coin strip | Single coins placed in the level with `*`, 1 gold each, set out in rows or columns like Pac-Man dots. Coins that touch side by side form one strip. They don't block the ball and are collected by rolling over them (enemies don't take them), with a quick tick that rises in pitch with each coin in the same shot instead of a floating label. Collecting a whole strip of 3 or more within one of your shots is a **Clean Sweep**: +5 gold, a sparkle sound and a "Clean Sweep! +5" label. A strip also shows you a line: a trail of coins toward a wall hints at a bank shot, and it can draw you across a room into enemies' sight. Money Magnet (a trait card) sweeps up strips from a near miss. |
-| Coins | Dropped where an enemy dies, worth its level in gold. Collected by rolling over them, so grabbing them can pull you back into an enemy's sight. |
+| Coins | There is one coin: the single 1-gold coin of the strips. A killed enemy scatters as many as its level, and barrel gold scatters its 1 to 5 the same way. Each coin flies out from the spot in an arc to a random clear spot 0.5 to 1.7 tiles away (never into a wall, door or bumper, nor across one), with a random arc height and flight time, so they land one after another, each with a single small bounce and a faint tink. A coin can be taken once it has landed. Collected by rolling over them, so grabbing them can pull you back into an enemy's sight. Scattered coins belong to no strip. |
 | Explosive barrel (red) | Solid bumper with the same physics as a barrel. Any contact from the hero or an enemy, at any speed, detonates it: the ball that touched it takes 1 flat damage, ignoring ATK, and the barrel is destroyed with no loot. If it's you and you hold a shield, the shield takes the blast instead ("Blocked!") and is used up. |
 
 Every barrel drops something, left on the floor where the barrel was. You collect it by rolling over it, unless you can't use it right now: a shield while you already hold one, or a potion (or super potion) while your HP is full. Then it stays there, visible, until you roll over it once you can use it. Starting weights, to tune by feel:
 
 | Result | Chance | Effect |
 | --- | --- | --- |
-| Gold | 45% | +1 to +5 gold, added to your score |
+| Gold | 45% | 1 to 5 coins scattered around the barrel, 1 gold each |
 | Health potion | 25% | +1 HP, capped at max |
 | Super health potion | 8% | +5 HP, capped at max |
 | Shield | 12% | You now hold a shield: it cancels the next enemy hit or red-barrel blast on you, then is used up. Shields don't stack |

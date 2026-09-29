@@ -116,6 +116,17 @@ export const CONFIG = {
     stripCoinValue: 1,
     sweepBonus: 5,
     sweepMinCoins: 3, // shorter strips pay no sweep bonus
+    // Kills and barrel gold scatter that many single coins (the same coins as
+    // strips) around the spot: each flies out to a random clear spot at a
+    // random distance, arc height and speed, bounces once, then can be taken.
+    scatterMin: 0.5, // tiles from the spot
+    scatterMax: 1.7,
+    scatterHeightMin: 0.5, // arc height, tiles
+    scatterHeightMax: 1.0,
+    scatterTimeMin: 0.4, // seconds in the air, bounce included
+    scatterTimeMax: 0.85,
+    scatterBounceAt: 0.75, // fraction of the flight spent on the first arc; the rest is the bounce
+    scatterBounceHeight: 0.25, // bounce height as a fraction of the arc
   },
 
   hero: {

@@ -179,7 +179,7 @@ Barrels, chests, keys and doors are the level's furniture. Chest gold is granted
 | Object | Behavior |
 | --- | --- |
 | Barrel | Solid bumper. Each contact above 0.4 tiles/s, from the hero or an enemy (say one you knocked into it), cracks it one stage, with a 0.15 s cooldown per barrel. The second hit breaks it and leaves random loot on the floor where it stood, collected like enemy coins by rolling over it (so taking the loot is the "third hit"). The crack is obvious at a glance: the barrel gets darker, shorter and more faceted, and leans. |
-| Chest | Solid bumper. The first contact opens it and grants a random 8 to 24 gold. It's hollow, lined with darker wood: as the lid swings up you see a heap of gold inside, which holds for a moment and then sinks away as the gold floats up to you, leaving it open and empty. |
+| Chest | Solid bumper. The first contact opens it and grants a random 8 to 24 gold. It's hollow, lined with darker wood, so once the lid swings up you see its empty inside while the gold floats up to you. |
 | Key | Floor pickup (a standing key in red, blue or yellow), collected by rolling over it. Color-matched to one door and shown in a HUD slot at the top right until used. |
 | Door | Solid and opaque until the hero is within half a tile while holding the matching key. Then it opens for good (it sinks into the floor with a clunk and "Unlocked!") and the key is consumed; the check runs every physics step, so a ball rolling at a door with its key usually goes straight through. A closed door is a block in its key's colour, a little lower than the walls, with a keyhole on its faces. Enemies can pass through an open door. |
 | Exit | Ends the level when the hero's center enters its tile. |

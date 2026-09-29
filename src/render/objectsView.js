@@ -70,26 +70,6 @@ function chestMesh() {
   outline.position.y = CHEST_HEIGHT / 2;
   base.add(outline);
 
-  // Gold heaped inside, seen as the lid swings up; it sinks away as the
-  // gold flies to you.
-  const coinMat = toonMaterial(0xfff07a); // brighter than the coin colour, to pop against the orange wood
-  const loot = new THREE.Group();
-  const coinGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.035, 12);
-  const heap = [
-    [-0.12, 0, -0.05], [0, 0, -0.06], [0.12, 0, -0.04], [-0.07, 0, 0.07], [0.07, 0, 0.06],
-    [-0.13, 1, 0.06], [0.13, 1, 0.05],
-    [-0.05, 1, -0.01], [0.06, 1, 0], [-0.02, 2, -0.03], [0.04, 2, 0.04], [0, 3, 0.01],
-  ];
-  for (const [x, layer, z] of heap) {
-    const coin = new THREE.Mesh(coinGeo, coinMat);
-    coin.position.set(x, layer * 0.028, z);
-    coin.rotation.set((Math.random() - 0.5) * 0.4, 0, (Math.random() - 0.5) * 0.4);
-    loot.add(coin);
-  }
-  loot.position.y = CHEST_HEIGHT * 0.82; // heaped to the rim, so it shows over the front wall
-  loot.visible = false;
-  base.add(loot);
-
   // The lid pivots on its back edge (-z, away from the camera).
   const hinge = new THREE.Group();
   hinge.position.set(0, CHEST_HEIGHT, -d / 2);
@@ -105,7 +85,7 @@ function chestMesh() {
   hinge.add(lid);
 
   group.add(base, hinge);
-  return { group, hinge, loot, lootT: 0, fadeMaterials: [mat, band, lines, inner, coinMat], opacity: 1 };
+  return { group, hinge, fadeMaterials: [mat, band, lines, inner], opacity: 1 };
 }
 
 export function createObjectsView(scene) {
@@ -160,9 +140,7 @@ export function createObjectsView(scene) {
     },
     openChest(s) {
       const v = views.get(s);
-      if (!v) return;
-      v.opening = true;
-      v.loot.visible = true;
+      if (v) v.opening = true;
     },
     /** An expanding, fading fireball where a red barrel went off. */
     blast(x, z) {
@@ -205,14 +183,6 @@ export function createObjectsView(scene) {
         if (v.opening && v.open < 1) {
           v.open = Math.min(1, v.open + dt * 4);
           v.hinge.rotation.x = -1.9 * (1 - (1 - v.open) ** 3);
-        }
-        // The heap holds a moment once the lid is up, then sinks and shrinks away.
-        if (v.loot?.visible) {
-          v.lootT += dt;
-          const t = Math.max(0, (v.lootT - 0.7) / 0.5);
-          v.loot.scale.setScalar(Math.max(0.01, 1 - t));
-          v.loot.position.y = CHEST_HEIGHT * (0.82 - 0.6 * Math.min(1, t));
-          if (t >= 1) v.loot.visible = false;
         }
         if (v.pop >= 0) {
           v.pop += dt;

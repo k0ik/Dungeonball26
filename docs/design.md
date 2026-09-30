@@ -146,7 +146,7 @@ Starting cards (numbers are defaults to tune):
 | Doppleganger | +1 life, and +1 to the lives you're restored to on a game over |
 | Junk Hunter | Swords and shields turn up twice as often in barrels |
 | Bullionaire | All gold you collect is worth 1.5× (rounded up) |
-| Scavenger | Barrels break in one hit |
+| Barrel of Fun | Barrels break in one hit |
 | Locksmith | Doors open without keys |
 | Athletic | Your ball rolls faster and farther: 25% less friction on it (enemies unaffected; the aim preview includes it) |
 | Money Magnet | Gold on the floor (enemy coins, barrel gold and strip coins) is collected from farther away: within 1.5 tiles of your ball's centre instead of just on contact (about 0.6 tiles), drawn in to you as you roll past. Other loot still needs contact |
@@ -166,14 +166,13 @@ Defaults assumed until you say otherwise: an offer never includes a card you alr
 | Ninja | Enemies see a shorter distance (sight range down), so sneaking is easier | |
 | Rogue | After you hit an enemy, a dagger flies at the nearest other enemy you can see, for 1 damage | Once per shot, or once per hit? Open |
 | Chainsmoker | Any kill earns a bonus turn, not just a combo kill | Toggle; doesn't stack |
-| Barrel of Fun | Barrels break in one hit | Same as Scavenger; keep one of the two |
-| Clairvoyance | The aim preview shows twice as far (two bounces instead of one) | |
+| Clairvoyance | The aim preview shows twice as far (two bounces instead of one) | For this to matter, the normal preview gets shorter when cards arrive (M7), so the default only hints at the path |
 | Fleet Feet | 10% less friction on your ball | Overlaps Athletic (25%); could be its smaller, stackable version |
 | Bomb Squad | Explosions (red barrels, bomb enemies) don't hurt you | Toggle; doesn't stack |
 
 Medic, Warrior and Paladin overlap Junk Hunter (swords and shields twice as often); if they go in, Junk Hunter could be dropped, or kept as the all-in-one.
 
-**To explore: stackable cards.** Holding more than one copy of a card could stack its effect, for example Medic at +5%, +10%, +15% potion chance for 1, 2 or 3 copies; Ninja at −5%, −10%, −15% sight range; Fleet Feet at −2%, −5%, −8% friction. Cards that are simple on/off toggles (Chainsmoker, Barrel of Fun, Bomb Squad, Locksmith) can't stack meaningfully, so the offer would never show a toggle you already hold. That changes the default above: offers could include a stackable card you already hold (as a way to level it up), but never a toggle you hold. Since only 3 slots exist, stacking trades breadth for depth.
+**To explore: stackable cards.** Copies of a card add up, each in its own slot: one Medic is +5% potion chance, two Medics (two slots) +10%, three Medics (all three slots) +15%. That's all a stack gives: each copy adds the same step, with no extra bonus for matching sets and no levelling up. Likewise Ninja at −5%, −10%, −15% sight range, and Fleet Feet at −2%, −5%, −8% friction. Since there are only 3 slots, stacking trades breadth for depth. Cards that are simple on/off toggles (Chainsmoker, Barrel of Fun, Bomb Squad, Locksmith) do nothing extra as a second copy, so you can only ever hold one of each. This changes the default above: an offer can include a stackable card you already hold (taking it fills another slot with another copy), but never a toggle you already hold.
 
 ## End-of-level scorecard
 
@@ -383,7 +382,7 @@ More enemy types, to add variety after the MVP. Each keeps the core rules (a bal
 | Brute | Big, heavy ball with high HP; moves fast and hits hard, but barely moves when hit | Needs mass in the physics (every ball is equal mass today); it knocks you further than you knock it |
 | Slider | Very low friction, so it travels far on every move | Great for long combos; dangerous from across the room |
 | Bomb | Rolls like a normal enemy. The first hit lights its fuse. At the start of the next move (yours or an enemy's) the fuse burns down to half and the bomb turns red; at the start of the move after that it explodes where it lies. It can still be hit and moved while lit | The blast uses the red-barrel rules: 1 damage and the push, walls shield. Knock it into a group before it goes |
-| Rubber | Hitting it doubles your speed on the rebound, so it's risky: you can't be sure where you'll end up | The aim preview shows the rebound (it runs the real rules), which makes it a reading test rather than a lottery |
+| Rubber | Hitting it doubles your speed on the rebound, so it's risky: you can't be sure where you'll end up | The aim preview runs the real rules, so it bends correctly at the rubber ball, but it's short (and shorter still once cards arrive, see Clairvoyance): the doubled rebound runs far past the visible path, so where you end up stays a gamble |
 | Seeker | Knows roughly where you are even without sight, and its patrols drift toward you | Rather than full pathfinding, it tries 5 to 8 of its usual patrol moves and plays the one that ends closest to you, measured by walking distance on the tile grid (a quick breadth-first search). Cheap, and it naturally goes around walls |
 | Golem | 3 HP. When hit, it splits into two 2-HP golems that roll off along your hit, as if they'd just been struck (the split doesn't damage them). When one of those is destroyed, it splits into two 1-HP ones | Splits carry the golem's momentum; the pieces can combo each other |
 | Slime | A green orb. Hitting it doesn't hurt it: your ball is absorbed and sits inside it. While you're inside, enemy attacks damage the slime instead of you until it's gone, and your hits on other enemies damage them as normal and the slime too | You move the slime by shooting from inside it. It's both armour and a trap, since it slows you |

@@ -168,10 +168,18 @@ function resolveBallPair(world, a, b) {
   world.events.push({ type: 'ball', a, b, speed: approach, nx, nz, before });
 }
 
+/** A solid tile's box: the whole tile, or a closed door's slab across the middle of it. */
+function tileBox(level, col, row) {
+  const d = level.doorShapes?.get(row * level.width + col);
+  if (d && tileAt(level, col, row) === 'door') return { x0: col + 0.5 - d.halfX, x1: col + 0.5 + d.halfX, z0: row + 0.5 - d.halfZ, z1: row + 0.5 + d.halfZ };
+  return { x0: col, x1: col + 1, z0: row, z1: row + 1 };
+}
+
 /** Closest-point test of a circle against one solid tile. Returns contact or null. */
-function tileContact(x, z, r, col, row) {
-  const cx = Math.min(Math.max(x, col), col + 1);
-  const cz = Math.min(Math.max(z, row), row + 1);
+function tileContact(level, x, z, r, col, row) {
+  const { x0, x1, z0, z1 } = tileBox(level, col, row);
+  const cx = Math.min(Math.max(x, x0), x1);
+  const cz = Math.min(Math.max(z, z0), z1);
   const dx = x - cx;
   const dz = z - cz;
   const d2 = dx * dx + dz * dz;
@@ -182,10 +190,10 @@ function tileContact(x, z, r, col, row) {
   }
   // Center inside the tile (shouldn't happen at our speeds): push out the nearest face.
   const faces = [
-    { nx: -1, nz: 0, depth: x - col + r },
-    { nx: 1, nz: 0, depth: col + 1 - x + r },
-    { nx: 0, nz: -1, depth: z - row + r },
-    { nx: 0, nz: 1, depth: row + 1 - z + r },
+    { nx: -1, nz: 0, depth: x - x0 + r },
+    { nx: 1, nz: 0, depth: x1 - x + r },
+    { nx: 0, nz: -1, depth: z - z0 + r },
+    { nx: 0, nz: 1, depth: z1 - z + r },
   ];
   faces.sort((p, q) => p.depth - q.depth);
   return { ...faces[0], d2: 0 };
@@ -232,14 +240,15 @@ function resolveWalls(world, b) {
   // Resolve nearest tiles first so a ball sliding along a flat wall is pushed off
   // the face before the neighbouring tile's corner can give it a bogus normal.
   const dist2 = ({ col, row }) => {
-    const cx = Math.min(Math.max(b.x, col), col + 1);
-    const cz = Math.min(Math.max(b.z, row), row + 1);
+    const { x0, x1, z0, z1 } = tileBox(world.level, col, row);
+    const cx = Math.min(Math.max(b.x, x0), x1);
+    const cz = Math.min(Math.max(b.z, z0), z1);
     return (b.x - cx) ** 2 + (b.z - cz) ** 2;
   };
   tiles.sort((p, q) => dist2(p) - dist2(q));
 
   for (const { col, row } of tiles) {
-    const c = tileContact(b.x, b.z, b.radius, col, row);
+    const c = tileContact(world.level, b.x, b.z, b.radius, col, row);
     if (c) bounceOffWall(world, b, c.nx, c.nz, c.depth, col, row);
   }
 }
@@ -250,7 +259,7 @@ export function overlapsSolid(level, x, z, r) {
     if (insideWall(level.geometry, x, z, tileAt(level, Math.floor(x), Math.floor(z)) === 'wall')) return true;
     if (wallContacts(level.geometry, x, z, r).length) return true;
   }
-  return nearbySolidTiles(level, x, z, r).some(({ col, row }) => tileContact(x, z, r, col, row));
+  return nearbySolidTiles(level, x, z, r).some(({ col, row }) => tileContact(level, x, z, r, col, row));
 }
 
 /**
@@ -294,7 +303,7 @@ function contactNormal(level, x, z, r, dx, dz, eps) {
     }
   }
   for (const { col, row } of nearbySolidTiles(level, px, pz, r)) {
-    const c = tileContact(px, pz, r, col, row);
+    const c = tileContact(level, px, pz, r, col, row);
     if (c) {
       // Depth-weighted, so a neighbouring tile's corner barely grazed at a
       // seam doesn't tilt a flat wall's normal.

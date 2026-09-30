@@ -33,6 +33,9 @@ function xrayMaterial(color) {
   return xrayMaterials.get(color);
 }
 
+// A fixed spin/bob offset per kind, so different kinds don't all move alike.
+const KIND_PHASE = { coin: 0, potion: 1.1, superPotion: 2.3, shield: 3.4, sword: 4.2, key: 5.1, oneUp: 0.6 };
+
 function outlined(geo, color, scale = 1.12) {
   const g = new THREE.Group();
   const hull = new THREE.Mesh(geo, outlineHullMaterial);
@@ -168,7 +171,6 @@ export function createItemsView(scene) {
         if (views.has(item)) continue;
         const g = itemMesh(item);
         g.position.set(item.x, 0, item.z);
-        g.userData.phase = Math.random() * Math.PI * 2;
         root.add(g);
         views.set(item, g);
       }
@@ -198,13 +200,15 @@ export function createItemsView(scene) {
         }
       }
       for (const [item, g] of views) {
-        // Every coin on the floor turns in step (one shared angle); a flying
-        // one spins fast. Other pickups turn on their own.
-        if (item.kind === 'coin' && !item.fly) g.rotation.y = t * CONFIG.loot.coinSpin;
-        else g.rotation.y += dt * (item.fly ? 9 : 1.6);
+        // Matching pickups on the floor move in step: every coin shares one
+        // angle, every shield another, and so on (each kind with its own
+        // offset), and bob together. A flying one spins fast.
+        const kindPhase = KIND_PHASE[item.kind] ?? 0;
+        if (item.fly) g.rotation.y += dt * 9;
+        else g.rotation.y = t * (item.kind === 'coin' ? CONFIG.loot.coinSpin : CONFIG.loot.itemSpin) + kindPhase;
         g.position.x = item.x;
         g.position.z = item.z;
-        g.position.y = item.fly ? flightHeight(item.fly) : 0.04 + Math.sin(t * 3 + g.userData.phase) * 0.03;
+        g.position.y = item.fly ? flightHeight(item.fly) : 0.04 + Math.sin(t * 3 + kindPhase) * 0.03;
       }
     },
   };

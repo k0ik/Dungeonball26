@@ -142,8 +142,9 @@ test('loot rolls follow the table and gold is 1 to 5', () => {
     if (l.kind === 'gold') assert.ok(l.value >= 1 && l.value <= 5);
   }
   const share = (k) => counts[k] / 4000;
-  assert.ok(Math.abs(share('gold') - 0.45) < 0.04, JSON.stringify(counts));
-  assert.ok(Math.abs(share('potion') - 0.25) < 0.04);
+  assert.ok(Math.abs(share('empty') - 0.4) < 0.04, JSON.stringify(counts));
+  assert.ok(Math.abs(share('gold') - 0.3) < 0.04, JSON.stringify(counts));
+  assert.ok(Math.abs(share('potion') - 0.12) < 0.04);
   assert.ok(counts.oneUp > 0 && counts.sword > 0 && counts.superPotion > 0 && counts.shield > 0);
 });
 

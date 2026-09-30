@@ -41,16 +41,21 @@ export function createDoorsView(scene) {
 
   return {
     /** Draw the level's doors (clearing any from the last level). */
-    build(doors) {
+    build(level) {
+      const doors = level.doors;
       for (const v of views.values()) root.remove(v.group);
       views.clear();
       for (const door of doors) {
         const color = CONFIG.colors.keys[door.color];
-        const geo = new THREE.BoxGeometry(0.98, H, 0.98);
-        const side = seeThrough(markOccluder(toonMaterial(0xffffff, { map: keyholeTexture(color) })));
+        // A slab across the tile (level.doorShapes), a hair inside the walls either side.
+        const { halfX, halfZ } = level.doorShapes.get(door.row * level.width + door.col);
+        const geo = new THREE.BoxGeometry(halfX * 2 - 0.02, H, halfZ * 2 - 0.02);
+        const face = seeThrough(markOccluder(toonMaterial(0xffffff, { map: keyholeTexture(color) })));
         const top = seeThrough(markOccluder(toonMaterial(new THREE.Color(color).multiplyScalar(1.1))));
-        // Box faces: +x, -x, +y, -y, +z, -z.
-        const body = new THREE.Mesh(geo, [side, side, top, top, side, side]);
+        const edge = seeThrough(markOccluder(toonMaterial(new THREE.Color(color).multiplyScalar(0.7))));
+        // Box faces: +x, -x, +y, -y, +z, -z. The keyhole goes on the two broad faces.
+        const alongX = halfX > halfZ;
+        const body = new THREE.Mesh(geo, alongX ? [edge, edge, top, top, face, face] : [face, face, top, top, edge, edge]);
         body.renderOrder = 5; // with the walls (levelView)
         const hull = new THREE.Mesh(geo, outlineHullMaterial);
         hull.scale.setScalar(1.03);

@@ -127,6 +127,15 @@ export function parseLevel(text, name = 'level') {
   });
 
   if (!level.start) throw new Error(`${name}: no hero start 'S'`);
+  // Each door is a slab across its tile, running the way the wall runs:
+  // along x between walls to its left and right, else along z.
+  const blocks = (c, r) => ['wall', 'door'].includes(tileAt(level, c, r));
+  const half = CONFIG.objects.doorThickness / 2;
+  level.doorShapes = new Map();
+  for (const d of level.doors) {
+    const alongX = (blocks(d.col - 1, d.row) && blocks(d.col + 1, d.row)) || !(blocks(d.col, d.row - 1) && blocks(d.col, d.row + 1));
+    level.doorShapes.set(d.row * level.width + d.col, { halfX: alongX ? 0.5 : half, halfZ: alongX ? half : 0.5 });
+  }
   {
     const r = settings.round ?? String(CONFIG.walls.defaultRound);
     if (r !== 'max' && !(Number(r) >= 0)) throw new Error(`${name}: round must be a number of tiles or 'max', not '${r}'`);

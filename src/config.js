@@ -97,6 +97,9 @@ export const CONFIG = {
     // centre to the door tile's edge) holding the matching key.
     doorReach: 0.5,
     doorOpenSeconds: 0.35, // the door sinks into the floor this fast
+    // A door is a slab this thick (tiles) across the middle of its tile, in
+    // line with the walls either side, so it sits in an indent in the wall.
+    doorThickness: 0.3,
     // While you aim, chests this close to the ball turn see-through so an
     // open lid never hides it.
     chestFadeRadius: 2.2,
@@ -106,12 +109,13 @@ export const CONFIG = {
   // Barrel loot (design doc: "Objects"). Weights are relative.
   loot: {
     table: [
-      { kind: 'gold', weight: 45 },
-      { kind: 'potion', weight: 25 },
-      { kind: 'superPotion', weight: 8 },
-      { kind: 'shield', weight: 12 },
-      { kind: 'sword', weight: 5 },
-      { kind: 'oneUp', weight: 5 },
+      { kind: 'empty', weight: 40 }, // nothing inside
+      { kind: 'gold', weight: 30 },
+      { kind: 'potion', weight: 12 },
+      { kind: 'superPotion', weight: 4 },
+      { kind: 'shield', weight: 7 },
+      { kind: 'sword', weight: 4 },
+      { kind: 'oneUp', weight: 3 },
     ],
     goldMin: 1,
     goldMax: 5,
@@ -153,6 +157,7 @@ export const CONFIG = {
     chestCoinStagger: 0.035, // seconds between one coin and the next
     chestCoinFlash: 0.3, // fraction of the flight, at the end, spent flashing
     coinSpin: 1.6, // radians per second; every coin on the floor shares one angle
+    itemSpin: 1.6, // other pickups: every one of a kind shares one angle and bob
     collectHopHeight: 0.8, // a taken coin hops this high (tiles), flashes and vanishes
     collectHopTime: 0.4,
   },

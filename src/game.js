@@ -127,7 +127,7 @@ export function createGame(container, levels, startIndex = 0) {
     state.shotCoins = 0;
     state.keys = []; // unused keys don't carry over (and a game over takes them back)
     objectsView.build(world.statics);
-    doorsView.build(level.doors);
+    doorsView.build(level);
     applyCards(); // hero-side card effects (Athletic)
 
     for (const view of enemyViews.values()) {
@@ -414,13 +414,13 @@ export function createGame(container, levels, startIndex = 0) {
 
   // --- Events ------------------------------------------------------------------
   /**
-   * Barrel loot lands on the floor where the barrel stood; roll over it to
-   * take it. Gold comes out as that many single coins, scattered.
+   * Barrel loot lands on the floor where the barrel stood (or there's
+   * nothing inside); roll over it to take it. Gold comes out as that many single coins, scattered.
    */
   function dropLoot(x, z) {
     const loot = rollLoot(Math.random, { gearWeight: card('junkHunter') ? CONFIG.cards.junkHunter : 1 });
     if (loot.kind === 'gold') scatterCoins(x, z, loot.value);
-    else world.items.push({ ...loot, x, z });
+    else if (loot.kind !== 'empty') world.items.push({ ...loot, x, z });
   }
 
   /**

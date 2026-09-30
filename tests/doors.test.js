@@ -60,3 +60,25 @@ test('a key is always collectable and goes on your key list', () => {
   assert.equal(collect(item, {}, run), 'Red key');
   assert.deepEqual(run.keys, ['red']);
 });
+
+test('a closed door is a thin slab: a ball rolls into its indent before stopping', async () => {
+  const { parseLevel } = await import('../src/level.js');
+  const { createWorld, createBall, stepWorld } = await import('../src/physics.js');
+  const { CONFIG } = await import('../src/config.js');
+  const level = parseLevel(`#####
+#.S.#
+##R##
+#...#
+#####`);
+  const world = createWorld(level);
+  const b = createBall({ x: 2.5, z: 1.5 });
+  b.vz = 3;
+  world.balls.push(b);
+  let reach = 0;
+  for (let i = 0; i < 240; i++) {
+    stepWorld(world);
+    reach = Math.max(reach, b.z + b.radius);
+  }
+  assert.ok(reach > 2.2, `got past the tile edge (z 2) into the indent: ${reach}`);
+  assert.ok(reach < 2.5 - CONFIG.objects.doorThickness / 2 + 0.01, `but not through the slab: ${reach}`);
+});

@@ -166,7 +166,10 @@ export const heroFaces = { confident: confidentFace, determined: determinedFace,
 
 /** A camera-facing face sprite for a ball of radius `r`. */
 export function faceSprite(texture, r, toCamera) {
-  const face = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true }));
+  // alphaTest: the sprite's empty corners must not write depth, or a wall
+  // drawn after it (walls are in the transparent pass, for the see-through
+  // zone) is cut away there, leaving a dark square corner behind the ball.
+  const face = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, alphaTest: 0.1 }));
   face.scale.setScalar(r * 1.7);
   // On the sphere's tangent plane facing the camera, so the sphere never cuts it.
   face.position.set(0, r, 0).addScaledVector(toCamera, r * 1.02);

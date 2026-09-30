@@ -25,6 +25,7 @@ import { canSee } from './sight.js';
 import { lungeVelocity, patrolMove, pickPatrollers } from './turns.js';
 import { shotFromDrag, canGrab, previewPath } from './aim.js';
 import { buildLevelView } from './render/levelView.js';
+import { setSeeThrough } from './render/materials.js';
 import { createBallView } from './render/ballView.js';
 import { createEnemyView } from './render/enemyView.js';
 import { createTurnRing } from './render/turnRing.js';
@@ -105,6 +106,7 @@ export function createGame(container, levels, startIndex = 0) {
   let world = null;
   let start = null;
   let levelView = null;
+  const viewDir = new THREE.Vector3(); // scratch for the see-through walls
 
   const enemies = () => world.balls.filter((b) => b.kind === 'enemy');
 
@@ -760,6 +762,7 @@ export function createGame(container, levels, startIndex = 0) {
         break;
     }
 
+    let seePath = null;
     if (state.aiming) {
       const shot = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z });
       state.shownShot = shot; // what release will fire
@@ -769,11 +772,15 @@ export function createGame(container, levels, startIndex = 0) {
             barrelHits: card('barrelOfFun') ? 1 : CONFIG.objects.barrelHits,
           });
       aimView.show(hero, shot, preview, rig.viewWidth / rig.aimStartWidth);
+      seePath = preview?.points ?? null;
     } else if (state.phase === 'aim') {
       aimView.showTurn(hero, dt);
     } else {
       aimView.hide();
     }
+    // Walls in front of your ball and aim path turn see-through.
+    setSeeThrough(hero, seePath, rig.camera.getWorldDirection(viewDir));
+
     // Red rings under every enemy moving this round, from the telegraph until the moves end.
     const ringed = new Set(state.phase === 'enemyWait' || state.phase === 'enemyMove' ? state.moves.map((m) => m.enemy) : []);
     for (const enemy of ringed) {

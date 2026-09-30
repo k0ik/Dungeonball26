@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { tileAt } from '../level.js';
 import { loopPolygons } from '../wallGeometry.js';
-import { outlineLineMaterial, markOccluder } from './materials.js';
+import { outlineLineMaterial, markOccluder, seeThrough } from './materials.js';
 
 const C = CONFIG.colors;
 const W = CONFIG.walls;
@@ -18,7 +18,11 @@ function pushQuad(pos, col, a, b, c, d, color) {
 }
 
 const flatMaterial = new THREE.MeshBasicMaterial({ vertexColors: true });
-const wallMaterial = markOccluder(new THREE.MeshBasicMaterial({ vertexColors: true }));
+// See-through where it hides the hero or the aim path. Walls then draw in the
+// transparent pass: after the ground marks (aim path, rings) so those show
+// through, before the pickup x-ray (renderOrder 10), which needs their depth.
+const wallMaterial = seeThrough(markOccluder(new THREE.MeshBasicMaterial({ vertexColors: true })));
+const WALL_ORDER = 5;
 
 function meshFrom(pos, col, material = flatMaterial) {
   const geo = new THREE.BufferGeometry();
@@ -74,6 +78,7 @@ export function buildLevelView(level) {
   }
   if (wallPos.length) {
     const walls = meshFrom(wallPos, wallCol, wallMaterial);
+    walls.renderOrder = WALL_ORDER;
     group.add(walls);
     if (CONFIG.render.wallOutlines) {
       group.add(new THREE.LineSegments(new THREE.EdgesGeometry(walls.geometry, 30), outlineLineMaterial));
@@ -177,6 +182,7 @@ function addOutlineWalls(group, level, h) {
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geo.deleteAttribute('uv');
   const walls = new THREE.Mesh(geo, wallMaterial);
+  walls.renderOrder = WALL_ORDER;
   group.add(walls);
   if (CONFIG.render.wallOutlines) {
     group.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo, 30), outlineLineMaterial));

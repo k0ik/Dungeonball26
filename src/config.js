@@ -239,6 +239,12 @@ export const CONFIG = {
     bonusReminderAfter: 1.5, // s after "Combo Kill!" before a separate "Bonus turn!" banner is worth showing
     hpBarMinPx: 14,
     itemXrayOpacity: 0.6, // floor pickups hidden behind a wall show through it as a silhouette this opaque
+    // Walls and doors between the camera and your ball (or your aim path
+    // while aiming) fade to this opacity, over these distances (tiles, on
+    // the ground behind the wall) around the ball and the path.
+    seeThroughOpacity: 0.25,
+    seeThroughBallRadius: 1.0,
+    seeThroughPathRadius: 0.45,
   },
 
   // Flat greys from the mockup.

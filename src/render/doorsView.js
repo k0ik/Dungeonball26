@@ -4,7 +4,7 @@
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
-import { toonMaterial, outlineHullMaterial, markOccluder } from './materials.js';
+import { toonMaterial, outlineHullMaterial, markOccluder, seeThrough } from './materials.js';
 
 const H = CONFIG.render.wallHeight * 0.92;
 
@@ -47,10 +47,11 @@ export function createDoorsView(scene) {
       for (const door of doors) {
         const color = CONFIG.colors.keys[door.color];
         const geo = new THREE.BoxGeometry(0.98, H, 0.98);
-        const side = markOccluder(toonMaterial(0xffffff, { map: keyholeTexture(color) }));
-        const top = markOccluder(toonMaterial(new THREE.Color(color).multiplyScalar(1.1)));
+        const side = seeThrough(markOccluder(toonMaterial(0xffffff, { map: keyholeTexture(color) })));
+        const top = seeThrough(markOccluder(toonMaterial(new THREE.Color(color).multiplyScalar(1.1))));
         // Box faces: +x, -x, +y, -y, +z, -z.
         const body = new THREE.Mesh(geo, [side, side, top, top, side, side]);
+        body.renderOrder = 5; // with the walls (levelView)
         const hull = new THREE.Mesh(geo, outlineHullMaterial);
         hull.scale.setScalar(1.03);
         const group = new THREE.Group();

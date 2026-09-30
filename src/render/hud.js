@@ -23,6 +23,28 @@ export function createHud(container) {
   hand.hidden = true;
   container.appendChild(hand);
   let shownCards = null;
+  // Tapping a held card pauses the game and shows the card; a tap anywhere
+  // closes it and play resumes.
+  const view = document.createElement('div');
+  view.className = 'card-view';
+  view.setAttribute('role', 'dialog');
+  container.appendChild(view);
+  let paused = false;
+  function showCardView(id) {
+    const c = cardById(id);
+    view.innerHTML = '<div class="card big"><span class="card-icon" aria-hidden="true"></span><span class="card-name"></span><span class="card-text"></span></div><p class="card-view-hint">Paused · tap anywhere to continue</p>';
+    view.querySelector('.card-icon').textContent = c.icon;
+    view.querySelector('.card-name').textContent = c.name;
+    view.querySelector('.card-text').textContent = c.text;
+    view.setAttribute('aria-label', c.name);
+    view.classList.add('on');
+    paused = true;
+  }
+  view.addEventListener('click', () => {
+    view.classList.remove('on');
+    paused = false;
+  });
+
   const pick = document.createElement('div');
   pick.className = 'card-pick';
   pick.setAttribute('role', 'dialog');
@@ -81,6 +103,10 @@ export function createHud(container) {
   }
 
   return {
+    /** True while a card is open (the game holds still). */
+    get paused() {
+      return paused;
+    },
     setGold(n) {
       if (n === shownGold) return;
       const up = n > shownGold && shownGold >= 0;
@@ -193,12 +219,14 @@ export function createHud(container) {
       hand.innerHTML = '';
       for (const id of ids) {
         const c = cardById(id);
-        const chip = document.createElement('span');
+        const chip = document.createElement('button');
+        chip.type = 'button';
         chip.className = 'card-chip';
-        chip.title = `${c.name}: ${c.text}`;
+        chip.setAttribute('aria-label', `${c.name}: ${c.text}`);
         chip.innerHTML = '<span aria-hidden="true"></span><b></b>';
         chip.firstChild.textContent = c.icon;
         chip.lastChild.textContent = c.name;
+        chip.addEventListener('click', () => showCardView(id));
         hand.appendChild(chip);
       }
       hand.hidden = ids.length === 0;

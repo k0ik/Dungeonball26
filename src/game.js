@@ -681,7 +681,8 @@ export function createGame(container, levels, startIndex = 0) {
   let fps = 60;
 
   function frame(now) {
-    const dt = Math.min(0.25, (now - last) / 1000);
+    // Paused (a card is open): time stands still, but the scene keeps drawing.
+    const dt = hud.paused ? 0 : Math.min(0.25, (now - last) / 1000);
     last = now;
     fps += (1 / Math.max(dt, 1e-3) - fps) * 0.05;
 

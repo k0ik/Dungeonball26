@@ -8,9 +8,9 @@ import { CONFIG } from '../src/config.js';
 const R = CONFIG.ball.diameter / 2;
 const inside = (level, x, z) => insideWall(level.geometry, x, z, level.tiles[Math.floor(z)]?.[Math.floor(x)] === 'wall');
 
-const pillarRoom = (round) =>
-  parseLevel(`round: ${round}
-#########
+// `curve`: the curviness digit, 1 (square) to 5 (roundest).
+const pillarRoom = (curve) =>
+  parseLevel(`${curve}########
 #.......#
 #.......#
 #.......#
@@ -20,17 +20,24 @@ const pillarRoom = (round) =>
 #S......#
 #########`);
 
-test('walls are rounded by default; round: 0 keeps them square', () => {
+test('walls are roundest by default; the top-left digit sets curviness 1 (square) to 5', () => {
   assert.ok(parseLevel('###\n#S#\n###').geometry);
-  assert.equal(parseLevel('round: 0\n###\n#S#\n###').geometry, undefined);
-  assert.ok(pillarRoom(0.5).geometry);
-  assert.throws(() => parseLevel('round: soft\n###\n#S#\n###'), /round/);
-  assert.throws(() => parseLevel('bogus: 1\n###\n#S#\n###'), /unknown setting/);
+  const square = parseLevel('1##\n#S#\n###');
+  assert.equal(square.geometry, undefined);
+  assert.equal(square.tiles[0][0], 'wall', 'the digit is a wall tile');
+  assert.equal(square.enemies.length, 0, 'not an enemy');
+  // Radius steps evenly: 2 -> a quarter of the biggest, 3 -> half, 5 -> all of it.
+  const radius = (c) => Math.max(...pillarRoom(c).geometry.prims.filter((p) => p.type === 'arc' && !p.convex).map((p) => p.r));
+  assert.equal(radius(2), CONFIG.walls.maxRound / 4);
+  assert.equal(radius(3), CONFIG.walls.maxRound / 2);
+  assert.equal(radius(5), CONFIG.walls.maxRound);
+  assert.throws(() => parseLevel('6##\n#S#\n###'), /curviness/);
+  assert.throws(() => parseLevel('0##\n#S#\n###'), /curviness/);
+  assert.throws(() => parseLevel('###\n.S#\n###'), /edge must be all walls/);
 });
 
 test("a room's corner curve shrinks to keep whatever sits in the corner clear", () => {
-  const level = parseLevel(`round: max
-#########
+  const level = parseLevel(`5########
 #C......#
 #.......#
 #.......#
@@ -45,7 +52,7 @@ test("a room's corner curve shrinks to keep whatever sits in the corner clear", 
 });
 
 test('max rounding turns a lone pillar into a round post', () => {
-  const level = pillarRoom('max');
+  const level = pillarRoom(5);
   // The pillar (4,4) has centre (4.5, 4.5): a circle of radius 0.5.
   for (let i = 0; i < 16; i++) {
     const a = (i / 16) * Math.PI * 2;
@@ -58,7 +65,7 @@ test('max rounding turns a lone pillar into a round post', () => {
 });
 
 test("a room's corners curve in: max rounding on a 7x7 room makes it nearly round", () => {
-  const level = pillarRoom(3);
+  const level = pillarRoom(5);
   // Room interior spans x, z in [1, 8]; the corner tile at (1,1) is now inside the curve...
   assert.ok(inside(level, 1.2, 1.2));
   assert.ok(overlapsSolid(level, 1.5, 1.5, 0.05));
@@ -66,11 +73,11 @@ test("a room's corners curve in: max rounding on a 7x7 room makes it nearly roun
   assert.ok(!inside(level, 4.5, 1.05));
   assert.ok(inside(level, 4.5, 0.95));
   // Out in the solid rock, far from any curve: still solid.
-  assert.ok(overlapsSolid(parseLevel('round: 1\n#####\n#####\n##S##\n#####\n#####'), 0.5, 0.5, 0.1));
+  assert.ok(overlapsSolid(parseLevel('3####\n#####\n#####\n##S##\n#####\n#####'), 0.5, 0.5, 0.1));
 });
 
 test('a ball bounces off a round post like a bumper, radially', () => {
-  const level = pillarRoom('max');
+  const level = pillarRoom(5);
   const world = createWorld(level);
   // Aim at the post's centre from the left, offset up a little: it glances off upward.
   const b = createBall({ x: 2, z: 4.3 });
@@ -89,7 +96,7 @@ test('a ball bounces off a round post like a bumper, radially', () => {
 });
 
 test('a ball rolling into a rounded room corner stays in the room and keeps moving', () => {
-  const level = pillarRoom(3);
+  const level = pillarRoom(5);
   const world = createWorld(level);
   const b = createBall({ x: 2.5, z: 6.5 });
   b.vx = -3;
@@ -105,8 +112,7 @@ test('a ball rolling into a rounded room corner stays in the room and keeps movi
 });
 
 test('diagonal wall tiles stay joined: no gap opens at their shared corner', () => {
-  const level = parseLevel(`round: max
-#######
+  const level = parseLevel(`5######
 #.....#
 #..#..#
 #...#.#
@@ -117,8 +123,7 @@ test('diagonal wall tiles stay joined: no gap opens at their shared corner', () 
 });
 
 test('corners next to a door stay square', () => {
-  const level = parseLevel(`round: max
-#######
+  const level = parseLevel(`5######
 #..S..#
 ###R###
 #.....#
@@ -147,8 +152,7 @@ test('nothing in a rounded level starts buried in a curved wall', async () => {
 });
 
 test('a narrow corridor bend stays open: the outer curve is kept inside the corridor', () => {
-  const level = parseLevel(`round: max
-#########
+  const level = parseLevel(`5########
 #S......#
 #######.#
 #######.#

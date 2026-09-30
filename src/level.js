@@ -3,6 +3,11 @@
 //
 // World coordinates: 1 unit = 1 tile. Tile (col, row) spans x in [col, col+1]
 // and z in [row, row+1]; row 0 is the top line of the file (far from the camera).
+//
+// The whole grid must be ringed by walls. The top-left corner may hold a digit
+// instead, the level's curviness: 1 keeps right-angled walls, 5 is the
+// roundest (CONFIG.walls.maxRound), 3 halfway, 2 and 4 in between. Without
+// one, CONFIG.walls.defaultCurve applies. The corner is always a wall tile.
 
 export const LEGEND = {
   '#': 'wall',
@@ -29,8 +34,6 @@ export const LEGEND = {
 import { CONFIG } from './config.js';
 import { buildWallGeometry } from './wallGeometry.js';
 
-const SETTINGS = ['round'];
-
 const KEY_COLORS = { r: 'red', b: 'blue', y: 'yellow', R: 'red', B: 'blue', Y: 'yellow' };
 
 /**
@@ -39,28 +42,23 @@ const KEY_COLORS = { r: 'red', b: 'blue', y: 'yellow', R: 'red', B: 'blue', Y: '
  */
 export function parseLevel(text, name = 'level') {
   const lines = text.replace(/\r/g, '').split('\n').map((l) => l.trimEnd());
-  const settings = {};
-  while (lines.length) {
-    if (lines[0] === '') {
-      lines.shift();
-      continue;
-    }
-    const m = /^([a-z]+)\s*:\s*(\S+)$/i.exec(lines[0]);
-    if (!m) break;
-    const key = m[1].toLowerCase();
-    if (!SETTINGS.includes(key)) throw new Error(`${name}: unknown setting '${m[1]}'`);
-    settings[key] = m[2].toLowerCase();
-    lines.shift();
-  }
+  while (lines.length && lines[0] === '') lines.shift();
   while (lines.length && lines[lines.length - 1] === '') lines.pop();
   if (!lines.length) throw new Error(`${name}: level is empty`);
 
+  // Curviness digit in the top-left corner (see the top of this file).
+  let curve = CONFIG.walls.defaultCurve;
+  if (/^\d/.test(lines[0])) {
+    curve = Number(lines[0][0]);
+    if (curve < 1 || curve > 5) throw new Error(`${name}: curviness (top-left corner) must be 1 to 5, not ${curve}`);
+    lines[0] = '#' + lines[0].slice(1);
+  }
   const width = lines[0].length;
   const height = lines.length;
   const tiles = [];
   const level = {
     name,
-    settings,
+    curve,
     width,
     height,
     tiles,
@@ -136,12 +134,17 @@ export function parseLevel(text, name = 'level') {
     const alongX = (blocks(d.col - 1, d.row) && blocks(d.col + 1, d.row)) || !(blocks(d.col, d.row - 1) && blocks(d.col, d.row + 1));
     level.doorShapes.set(d.row * level.width + d.col, { halfX: alongX ? 0.5 : half, halfZ: alongX ? half : 0.5 });
   }
-  {
-    const r = settings.round ?? String(CONFIG.walls.defaultRound);
-    if (r !== 'max' && !(Number(r) >= 0)) throw new Error(`${name}: round must be a number of tiles or 'max', not '${r}'`);
-    // Rounded walls: physics, sight and drawing use this outline instead of square tiles.
-    if (r === 'max' || Number(r) > 0) level.geometry = buildWallGeometry(level, r, CONFIG.walls.maxRound, placedSpots(level));
+  // Only walls around the edge, so rooms never open onto the void.
+  for (let row = 0; row < height; row++) {
+    for (let col = 0; col < width; col++) {
+      if ((row === 0 || col === 0 || row === height - 1 || col === width - 1) && tiles[row][col] !== 'wall') {
+        throw new Error(`${name}: the edge must be all walls, but row ${row + 1}, column ${col + 1} isn't`);
+      }
+    }
   }
+  // Rounded walls: physics, sight and drawing use this outline instead of square tiles.
+  const radius = ((curve - 1) / 4) * CONFIG.walls.maxRound;
+  if (radius > 0) level.geometry = buildWallGeometry(level, radius, CONFIG.walls.maxRound, placedSpots(level));
   return level;
 }
 

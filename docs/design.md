@@ -263,6 +263,7 @@ Each level is a plain text file with one character per tile. The screen shows ab
 | `R` `B` `Y` | Door matching that key |
 | `E` | Explosive barrel (red) |
 | `*` | Coin (touching coins form a strip) |
+| `1` to `5` in the top-left corner only | Curviness of the walls (1 square to 5 roundest); that corner is still a wall, not an enemy |
 
 An illustrative level in this format, with one enemy, two barrels, a chest, a red key and a red door in front of the exit, which sits in its alcove at the top:
 
@@ -281,17 +282,19 @@ An illustrative level in this format, with one enemy, two barrels, a chest, a re
 #########
 ```
 
+Every level is ringed by walls: the loader rejects a grid with anything else on its edge. The one exception is the top-left corner, which may hold the level's curviness digit (see Rounded walls below); the loader reads it and then treats that corner as wall like the rest.
+
 Every exit is tucked into a one-tile alcove in the outer wall (walls on three sides, open to the room on one), so you only leave on purpose, by aiming into the gap, never by rolling across it by accident. A test enforces this for every shipped level.
 
 Barrel loot is random by default. Per-barrel overrides can be added later without changing the format.
 
 ### Rounded walls
 
-Every level has rounded walls by default (`walls.defaultRound`: `max`). A settings line above the grid changes it for one level: `round: <tiles>` for a set radius, `round: max`, or `round: 0` to keep square right angles (a level that relies on crisp cover). The grid itself doesn't change: the level builder traces the outline of every wall mass and rounds its corners.
+Each level sets how curvy its walls are with a single digit, 1 to 5, in the top-left corner of its grid in place of that `#`: 1 keeps square right angles (a level that relies on crisp cover), 5 is the roundest, 3 is halfway, and 2 and 4 are subtler steps between. A level without a digit there gets 5 (`walls.defaultCurve`). The digit is only read, never drawn: that corner is always a wall. The rest of the grid doesn't change: the level builder traces the outline of every wall mass and rounds its corners.
 
 - **Outside corners** (a pillar or a wall end sticking into a room) become rounded bumps; a lone 1×1 pillar becomes a round post.
 - **Inside corners** (a room's corners) become curved walls, so square rooms turn rounded and, with big enough curves, nearly circular.
-- **How round:** the number is each corner's radius in tiles. Every corner's radius is also limited to half of the straight wall on either side, so neighbouring curves never overlap. `max` makes each curve as big as that limit allows, up to 3 tiles (`walls.maxRound`), giving round chambers and pill-shaped corridors and end caps. Draw rooms as plain rectangles and let the rounding shape them: a stair-stepped edge (drawn to look diagonal or round) comes out wavy, since each 1-tile step gets its own small curve. A character to force one room round or square can come later if needed.
+- **How round:** the digit sets the corner radius in even steps: 1 is 0 (square), 2 is ¾ of a tile, 3 is 1½, 4 is 2¼ and 5 is 3 tiles (`walls.maxRound`). Every corner's radius is also limited to half of the straight wall on either side, so neighbouring curves never overlap; at 5, that turns rooms into round chambers and corridors into pills with round end caps. Draw rooms as plain rectangles and let the rounding shape them: a stair-stepped edge (drawn to look diagonal or round) comes out wavy, since each 1-tile step gets its own small curve. A character to force one room round or square can come later if needed.
 - **Doors:** corners touching a door stay square, so doors still fit their openings, and doors keep their box shape (they can open).
 - **Walls touching only at a corner** (diagonal neighbours) stay joined, as square walls are, so no gap opens between them.
 - **Physics:** the ball collides with the traced outline: straight runs, rounded outside corners (a round bump that keeps 90% of speed, like any wall) and rounded inside corners (the ball runs around the inside of the curve). The aim preview runs the same physics, so it draws curved bank shots correctly. Sight, patrol paths and scattered coins use the same rounded shapes, so what an enemy can see matches what a ball can hit.
@@ -300,7 +303,7 @@ Every level has rounded walls by default (`walls.defaultRound`: `max`). A settin
 - **Narrow bends stay open:** an inside curve is also no bigger than the open square of floor in its corner, so the outside of a 1-wide corridor's turn curves by at most 1 tile and can't pinch the bend shut against the inner corner. A test rolls a ball's footprint through every level to check the exits and keys can still be reached.
 - **Play:** round rooms act like bowls where a hard shot circles the edge and sweeps enemies; rounded pillars bend shots instead of stopping them; pill corridors make long, flowing shots. The cost is crisp cover, since sharp corners are what hide-and-strike play relies on. That's why it's per level: some levels stay square and tactical, others go round and flowing, and a run can mix both.
 
-**Bowls** (15×22) was the trial level for rounded walls and is still first in the run for now: two rectangular rooms that round into bowls, joined by a pill-shaped corridor with a red barrel in it, with four round posts in the lower room and one in the upper, three barrels, three enemies above and one below, and a strip of 7 coins across the top bowl.
+**Bowls** (15×22, curviness 5) was the trial level for rounded walls and is still first in the run for now: two rectangular rooms that round into bowls, joined by a pill-shaped corridor with a red barrel in it, with four round posts in the lower room and one in the upper, three barrels, three enemies above and one below, and a strip of 7 coins across the top bowl.
 
 The five MVP levels ramp one idea at a time. Sizes are suggestions in tiles.
 

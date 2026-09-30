@@ -8,8 +8,8 @@ import { createCombat, createEnemy } from '../src/combat.js';
 import { CONFIG } from '../src/config.js';
 
 // Square walls: these tests are about sight lines past a sharp pillar.
-const room = parseLevel(`round: 0
-############
+const room = parseLevel(`
+1###########
 #..........#
 #..........#
 #....#.....#

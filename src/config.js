@@ -17,11 +17,11 @@ export const CONFIG = {
     diameter: 0.65,
   },
 
-  // Rounded walls: a level opts in with a `round: <tiles|max>` line at the
-  // top of its file (docs/design.md, Levels).
+  // Rounded walls: a level sets its curviness, 1 to 5, with a digit in the
+  // top-left corner of its grid (docs/design.md, Levels).
   walls: {
-    defaultRound: 'max', // for levels without a `round:` line
-    maxRound: 3, // biggest corner radius, tiles ('max' uses this, limited by the straight runs)
+    defaultCurve: 5, // for levels without a digit there
+    maxRound: 3, // corner radius at curviness 5, tiles; 1 is square, 2-4 in even steps (each corner is also limited by the straight runs)
     chordsPerTile: 12, // drawing: chords per tile of curve radius on each quarter circle
     minChords: 4, // ...but at least this many per quarter circle
   },

@@ -1,6 +1,6 @@
 // Rounded walls: turns a level's block walls into outlines of straight
 // segments and quarter-circle arcs, used by physics, sight and rendering when
-// the level file asks for rounding (a `round:` line at its top).
+// the level asks for rounding (a curviness digit, 2 to 5, in its top-left corner).
 //
 // The outline traces every boundary between wall tiles and open tiles, then
 // rounds each corner of it:
@@ -86,8 +86,8 @@ function touchesDoor(level, x, z) {
 
 /**
  * Build the rounded outline of a level's walls.
- * `round` is the corner radius in tiles, or 'max' for the biggest curves the
- * straight runs allow (capped at `maxRound`).
+ * `round` is the corner radius in tiles (at most `maxRound`); each corner is
+ * also limited by the straight runs either side of it.
  * `spots` ({ x, z, clear }) are things placed in the level: an inside curve
  * shrinks until each keeps `clear` tiles between its centre and the wall, so
  * nothing starts buried in a room's rounded corner.
@@ -97,7 +97,7 @@ function touchesDoor(level, x, z) {
  *   { type: 'arc', cx, cz, r, convex, a0, sweep, ... }          (quarter circle)
  */
 export function buildWallGeometry(level, round, maxRound, spots = []) {
-  const want = round === 'max' ? maxRound : Math.min(Number(round) || 0, maxRound);
+  const want = Math.min(round, maxRound);
   const loops = traceLoops(boundaryEdges(level)).map((pts) => {
     const n = pts.length;
     const lenTo = (i) => {

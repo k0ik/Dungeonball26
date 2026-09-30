@@ -194,6 +194,7 @@ export const CONFIG = {
     // Matched to the mockup: the grid is turned so level columns run gently
     // down-right and rows run steeply down-left, seen from ~37° above the ground.
     elevationDeg: 37, // camera angle above the ground plane
+    panStartPx: 8, // a drag off the ball must move this far (screen px) before it pans the map
     yawDeg: 30, // grid rotation on screen
     baseViewWidth: 9, // world units across the screen at rest
     maxViewWidth: 13, // speed zoom: world units across at max launch speed

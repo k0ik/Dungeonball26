@@ -159,6 +159,14 @@ export function createCameraRig() {
         maxY: Math.max(...corners.map((c) => c.sy)),
       };
     },
+    /** Slide the view by (dx, dz) on the ground (a map drag), kept inside the level. */
+    panBy(dx, dz) {
+      Object.assign(goal, { x: target.x + dx, z: target.z + dz, width: viewWidth });
+      clampGoal();
+      target.x = goal.x;
+      target.z = goal.z;
+      place();
+    },
     /** Jump straight to a ground point at the resting zoom. */
     snapTo(x, z) {
       Object.assign(goal, { x, z, width: K.baseViewWidth });

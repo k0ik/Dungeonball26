@@ -15,6 +15,7 @@ const EDGE_MARGIN = 18; // px kept clear at the screen edges for pinned markers
 // px kept clear at the top: the gold, and the turn label under it (which ends
 // at about 77px), so a "!" pinned to the top edge is never hidden behind them.
 const TOP_RESERVED = 84;
+const BOTTOM_RESERVED = 56; // the row of held cards
 
 export function createOverlay(container, camera) {
   const layer = document.createElement('div');
@@ -37,6 +38,20 @@ export function createOverlay(container, camera) {
     return el;
   }
 
+  // Your ball's marker: shown pinned to the screen edge when a map drag has
+  // left the ball off screen. Tapping it brings the view back (onHeroMarker).
+  const heroMarker = document.createElement('button');
+  heroMarker.className = 'hero-edge';
+  heroMarker.hidden = true;
+  heroMarker.setAttribute('aria-label', 'Back to your ball');
+  layer.appendChild(heroMarker);
+  let heroMarkerBall = null;
+  let onHeroMarker = null;
+  heroMarker.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+    onHeroMarker?.();
+  });
+
   function toScreen(x, y, z) {
     v.set(x, y, z).project(camera);
     return { left: ((v.x + 1) / 2) * layer.clientWidth, top: ((1 - v.y) / 2) * layer.clientHeight };
@@ -57,6 +72,12 @@ export function createOverlay(container, camera) {
   }
 
   return {
+    /** Track `ball` (or null for none) with an edge marker whenever it's off screen; `onTap` runs when it's tapped. */
+    setHeroMarker(ball, onTap) {
+      heroMarkerBall = ball;
+      onHeroMarker = onTap;
+      if (!ball) heroMarker.hidden = true;
+    },
     /** Where a world point is on the page (viewport pixels), for effects that fly into the HUD. */
     pagePoint(x, y, z) {
       const p = toScreen(x, y, z);
@@ -168,6 +189,18 @@ export function createOverlay(container, camera) {
       }
       const w = layer.clientWidth;
       const h = layer.clientHeight;
+      if (heroMarkerBall) {
+        const b = heroMarkerBall;
+        const p = toScreen(b.x, b.radius, b.z);
+        const r = 10; // about the ball's size on screen at the resting zoom
+        const off = p.left < -r || p.left > w + r || p.top < -r || p.top > h + r;
+        heroMarker.hidden = !off;
+        if (off) {
+          const left = Math.min(w - EDGE_MARGIN - 6, Math.max(EDGE_MARGIN + 6, p.left));
+          const top = Math.min(h - BOTTOM_RESERVED - EDGE_MARGIN, Math.max(TOP_RESERVED + EDGE_MARGIN, p.top));
+          heroMarker.style.transform = `translate(${left.toFixed(1)}px, ${top.toFixed(1)}px) translate(-50%, -50%)`;
+        }
+      }
       for (const [ball, a] of alerts) {
         if (!a.on) continue;
         const p = toScreen(ball.x, ball.radius * 2 + ALERT_HEIGHT, ball.z);

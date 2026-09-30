@@ -60,6 +60,29 @@ body {
   will-change: transform;
 }
 
+/* Your ball, pinned to the screen edge while a map drag has it off screen.
+   Silver like the ball, ringed like the enemies' edge "!"; tap to go back. */
+.hero-edge {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffffff 0 18%, #c3c8d0 45%, #868c95 70%, #5a606a 100%);
+  box-shadow: 0 0 0 2px #e8ebf0, 0 2px 6px rgba(0, 0, 0, 0.6);
+  pointer-events: auto;
+  cursor: pointer;
+  /* Pulse the ring, not the size: a scale here would also scale the
+     translate that places it. */
+  animation: hero-edge-pulse 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes hero-edge-pulse {
+  to {
+    box-shadow: 0 0 0 5px rgba(232, 235, 240, 0.55), 0 2px 6px rgba(0, 0, 0, 0.6);
+  }
+}
+
 /* HP bars, after the mockup's pill bars. Width is set per ball. */
 .tag {
   display: flex;

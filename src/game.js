@@ -94,6 +94,7 @@ export function createGame(container, levels, startIndex = 0) {
     returnBoost: 0, // seconds left of the camera's fast return to you
     shotCoins: 0, // coins taken this shot: the streak count (and the tick's pitch)
     keys: [], // colours of the keys you hold; this level only
+    panned: false, // you dragged the map to look around; the view holds until you shoot
     entry: null, // HP, gear and gold when this level was entered; game over restores them
     moves: [], // this enemy phase: { enemy, kind: 'lunge' } or { enemy, kind: 'patrol', vx, vz, target }
     timer: 0,
@@ -187,10 +188,30 @@ export function createGame(container, levels, startIndex = 0) {
     return raycaster.ray.intersectPlane(plane, out);
   }
 
+  // On your turn, a drag that doesn't start on your ball pans the map, so
+  // you can look around (keys, doors, the exit). The view then holds still
+  // until you shoot or tap the ball's edge marker; to shoot you still drag
+  // from the ball itself.
+  const pan = { pointerId: null, grab: new THREE.Vector3(), moved: false };
+  function stopPanning() {
+    if (!state.panned) return;
+    state.panned = false;
+    state.returnBoost = CONFIG.camera.returnBoostSeconds; // glide back briskly
+  }
+  overlay.setHeroMarker(hero, stopPanning);
+
   canvas.addEventListener('pointerdown', (e) => {
     sfx.unlock();
-    if (state.phase !== 'aim' || state.aiming || e.button > 0) return;
-    if (!pointerOn(grabPlane, e, tmp) || !canGrab(hero, { x: tmp.x, z: tmp.z })) return;
+    if (state.phase !== 'aim' || state.aiming || pan.pointerId !== null || e.button > 0) return;
+    if (!pointerOn(grabPlane, e, tmp) || !canGrab(hero, { x: tmp.x, z: tmp.z })) {
+      if (!pointerOn(groundPlane, e, pan.grab)) return;
+      pan.pointerId = e.pointerId;
+      pan.moved = false;
+      pan.startX = e.clientX;
+      pan.startY = e.clientY;
+      canvas.setPointerCapture(e.pointerId);
+      return;
+    }
     state.aiming = true;
     state.shownShot = null; // nothing shown yet for this drag
     state.pointerId = e.pointerId;
@@ -202,11 +223,23 @@ export function createGame(container, levels, startIndex = 0) {
   });
 
   canvas.addEventListener('pointermove', (e) => {
+    if (e.pointerId === pan.pointerId) {
+      if (!pan.moved && Math.hypot(e.clientX - pan.startX, e.clientY - pan.startY) < CONFIG.camera.panStartPx) return;
+      pan.moved = true;
+      state.panned = true;
+      // Keep the ground point you grabbed under your finger.
+      if (pointerOn(groundPlane, e, tmp)) rig.panBy(pan.grab.x - tmp.x, pan.grab.z - tmp.z);
+      return;
+    }
     if (!state.aiming || e.pointerId !== state.pointerId) return;
     pointerOn(groundPlane, e, state.pointer, aimCamera);
   });
 
   function endAim(e, fire) {
+    if (e.pointerId === pan.pointerId) {
+      pan.pointerId = null;
+      return;
+    }
     if (!state.aiming || e.pointerId !== state.pointerId) return;
     state.aiming = false;
     aimView.hide();
@@ -855,6 +888,10 @@ export function createGame(container, levels, startIndex = 0) {
       const fill = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z }).fill;
       const from = rig.aimStartWidth;
       rig.aimZoom(hero, from + (Math.max(from, CONFIG.camera.aimMaxWidth) - from) * fill, dt);
+    } else if (state.panned && state.phase !== 'aim') {
+      state.panned = false; // you shot (or the turn moved on): follow the play again
+    } else if (state.panned) {
+      // Looking around the map (a drag off the ball): hold the view where you left it.
     } else {
       // Enemy phase: stay centred on you, pulled out only as far as it takes
       // to show where the moving enemies stood when the phase began, up to

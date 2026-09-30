@@ -88,12 +88,15 @@ function touchesDoor(level, x, z) {
  * Build the rounded outline of a level's walls.
  * `round` is the corner radius in tiles, or 'max' for the biggest curves the
  * straight runs allow (capped at `maxRound`).
+ * `spots` ({ x, z, clear }) are things placed in the level: an inside curve
+ * shrinks until each keeps `clear` tiles between its centre and the wall, so
+ * nothing starts buried in a room's rounded corner.
  * Returns { loops, prims, bucket(x, z) } where each loop is a list of
  * primitives in order, and prims are:
  *   { type: 'seg', ax, az, bx, bz, nx, nz, len, capA, capB }  (n: floor normal)
  *   { type: 'arc', cx, cz, r, convex, a0, sweep, ... }          (quarter circle)
  */
-export function buildWallGeometry(level, round, maxRound) {
+export function buildWallGeometry(level, round, maxRound, spots = []) {
   const want = round === 'max' ? maxRound : Math.min(Number(round) || 0, maxRound);
   const loops = traceLoops(boundaryEdges(level)).map((pts) => {
     const n = pts.length;
@@ -107,6 +110,7 @@ export function buildWallGeometry(level, round, maxRound) {
       const p = pts[i];
       p.convex = p.din.x * p.dout.z - p.din.z * p.dout.x > 0;
       p.r = touchesDoor(level, p.x, p.z) ? 0 : Math.min(want, lenTo((i + n - 1) % n) / 2, lenTo(i) / 2);
+      if (!p.convex) p.r = clearOfSpots(p, Math.min(p.r, openSquare(level, p, p.r)), spots);
     }
     // Pieces: for each corner its arc (if rounded), then the straight run to the next corner.
     const prims = [];
@@ -150,6 +154,44 @@ export function buildWallGeometry(level, round, maxRound) {
       return buckets.get(Math.floor(z) * 100000 + Math.floor(x)) ?? none;
     },
   };
+}
+
+const SHRINK_STEP = 0.05;
+
+/**
+ * Size of the open square of tiles in the room's corner at concave corner p,
+ * up to `limit`: the curve stays inside it, so it can't pinch a narrow bend
+ * shut against the wall across from it (the inner corner of a corridor's turn).
+ */
+function openSquare(level, p, limit) {
+  const open = (i, j) => {
+    const x = p.x - p.din.x * (i + 0.5) + p.dout.x * (j + 0.5);
+    const z = p.z - p.din.z * (i + 0.5) + p.dout.z * (j + 0.5);
+    const c = Math.floor(x);
+    const r = Math.floor(z);
+    return r >= 0 && r < level.height && c >= 0 && c < level.width && level.tiles[r][c] !== 'wall' && level.tiles[r][c] !== 'door';
+  };
+  let k = 0;
+  while (k < limit) {
+    let ok = true;
+    for (let i = 0; i <= k && ok; i++) ok = open(i, k) && open(k, i);
+    if (!ok) break;
+    k++;
+  }
+  return k;
+}
+
+/** The biggest radius up to `r` for concave corner `p` that keeps every spot clear of its curve. */
+function clearOfSpots(p, r, spots) {
+  for (const s of spots) {
+    // Distances from the two walls meeting at the corner (both positive in the room).
+    const a = -((s.x - p.x) * p.din.x + (s.z - p.z) * p.din.z);
+    const b = (s.x - p.x) * p.dout.x + (s.z - p.z) * p.dout.z;
+    if (a < 0 || b < 0) continue;
+    const buried = (q) => a < q && b < q && Math.hypot(q - a, q - b) > q - s.clear;
+    while (r > 0 && buried(r)) r = Math.max(0, r - SHRINK_STEP);
+  }
+  return r;
 }
 
 function makeArc(p) {

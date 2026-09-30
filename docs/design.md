@@ -286,7 +286,7 @@ Barrel loot is random by default. Per-barrel overrides can be added later withou
 
 ### Rounded walls
 
-A level can ask for rounded walls with a settings line above its grid, `round: <tiles>` or `round: max`. Without one (or with `round: 0`) the walls keep today's right angles. The grid itself doesn't change: the level builder traces the outline of every wall mass and rounds its corners.
+Every level has rounded walls by default (`walls.defaultRound`: `max`). A settings line above the grid changes it for one level: `round: <tiles>` for a set radius, `round: max`, or `round: 0` to keep square right angles (a level that relies on crisp cover). The grid itself doesn't change: the level builder traces the outline of every wall mass and rounds its corners.
 
 - **Outside corners** (a pillar or a wall end sticking into a room) become rounded bumps; a lone 1×1 pillar becomes a round post.
 - **Inside corners** (a room's corners) become curved walls, so square rooms turn rounded and, with big enough curves, nearly circular.
@@ -295,10 +295,11 @@ A level can ask for rounded walls with a settings line above its grid, `round: <
 - **Walls touching only at a corner** (diagonal neighbours) stay joined, as square walls are, so no gap opens between them.
 - **Physics:** the ball collides with the traced outline: straight runs, rounded outside corners (a round bump that keeps 90% of speed, like any wall) and rounded inside corners (the ball runs around the inside of the curve). The aim preview runs the same physics, so it draws curved bank shots correctly. Sight, patrol paths and scattered coins use the same rounded shapes, so what an enemy can see matches what a ball can hit.
 - **Drawing:** the outlines are raised to wall height, curves included, instead of one block per tile, with the same face colours (blended around curves). The floor, exit tiles, doors and barrels are unchanged.
-- **Placement:** a big inside curve covers part of a room's corner tiles, so nothing may start inside one; a test checks every rounded level for this.
+- **Keeping things clear:** an inside curve shrinks as far as it needs to so that anything placed in the room's corner (the hero's start, an enemy, a barrel, a chest, a key, a coin) keeps its full size clear of the wall; the other corners keep their full curves. A test checks every level for this.
+- **Narrow bends stay open:** an inside curve is also no bigger than the open square of floor in its corner, so the outside of a 1-wide corridor's turn curves by at most 1 tile and can't pinch the bend shut against the inner corner. A test rolls a ball's footprint through every level to check the exits and keys can still be reached.
 - **Play:** round rooms act like bowls where a hard shot circles the edge and sweeps enemies; rounded pillars bend shots instead of stopping them; pill corridors make long, flowing shots. The cost is crisp cover, since sharp corners are what hide-and-strike play relies on. That's why it's per level: some levels stay square and tactical, others go round and flowing, and a run can mix both.
 
-**Bowls** (15×22, `round: max`) is a trial level for rounded walls, placed first in the run for now so it's quick to reach: two rectangular rooms that round into bowls, joined by a pill-shaped corridor with a red barrel in it, with four round posts in the lower room and one in the upper, three barrels, three enemies above and one below, and a strip of 7 coins across the top bowl.
+**Bowls** (15×22) was the trial level for rounded walls and is still first in the run for now: two rectangular rooms that round into bowls, joined by a pill-shaped corridor with a red barrel in it, with four round posts in the lower room and one in the upper, three barrels, three enemies above and one below, and a strip of 7 coins across the top bowl.
 
 The five MVP levels ramp one idea at a time. Sizes are suggestions in tiles.
 

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseLevel } from '../src/level.js';
+import { parseLevel, placedSpots } from '../src/level.js';
 import { createWorld, createBall, stepWorld, isAtRest, overlapsSolid } from '../src/physics.js';
 import { insideWall } from '../src/wallGeometry.js';
 import { CONFIG } from '../src/config.js';
@@ -20,13 +20,28 @@ const pillarRoom = (round) =>
 #S......#
 #########`);
 
-test('square levels have no outline; a round setting builds one', () => {
-  const square = parseLevel('###\n#S#\n###');
-  assert.equal(square.geometry, undefined);
+test('walls are rounded by default; round: 0 keeps them square', () => {
+  assert.ok(parseLevel('###\n#S#\n###').geometry);
   assert.equal(parseLevel('round: 0\n###\n#S#\n###').geometry, undefined);
   assert.ok(pillarRoom(0.5).geometry);
   assert.throws(() => parseLevel('round: soft\n###\n#S#\n###'), /round/);
   assert.throws(() => parseLevel('bogus: 1\n###\n#S#\n###'), /unknown setting/);
+});
+
+test("a room's corner curve shrinks to keep whatever sits in the corner clear", () => {
+  const level = parseLevel(`round: max
+#########
+#C......#
+#.......#
+#.......#
+#.......#
+#......S#
+#########`);
+  const chest = placedSpots(level).find((s) => s.x === 1.5 && s.z === 1.5);
+  assert.ok(!overlapsSolid(level, 1.5, 1.5, chest.clear - 1e-3), 'chest corner stays clear');
+  assert.ok(!overlapsSolid(level, 7.5, 5.5, R - 1e-3), 'hero corner stays clear');
+  // The empty corners still get the full curve.
+  assert.ok(inside(level, 7.2, 1.2));
 });
 
 test('max rounding turns a lone pillar into a round post', () => {
@@ -125,7 +140,62 @@ test('nothing in a rounded level starts buried in a curved wall', async () => {
   for (const f of readdirSync('src/levels')) {
     const level = parseLevel(readFileSync(`src/levels/${f}`, 'utf8'), f);
     if (!level.geometry) continue;
-    const spots = [level.start, ...level.enemies, ...level.barrels, ...level.explosives, ...level.chests, ...level.keys, ...level.coins, ...level.exits];
-    for (const s of spots) assert.ok(!overlapsSolid(level, s.col + 0.5, s.row + 0.5, R * 0.8), `${f}: something at column ${s.col + 1}, row ${s.row + 1} sits in a curved wall`);
+    for (const s of placedSpots(level)) {
+      assert.ok(!overlapsSolid(level, s.x, s.z, s.clear - 1e-3), `${f}: something at column ${s.x + 0.5}, row ${s.z + 0.5} sits in a curved wall`);
+    }
+  }
+});
+
+test('a narrow corridor bend stays open: the outer curve is kept inside the corridor', () => {
+  const level = parseLevel(`round: max
+#########
+#S......#
+#######.#
+#######.#
+#######.#
+#######.#
+#########`);
+  // The ball's centre along the corridor's middle, turning on a half-tile curve at the bend.
+  const path = [];
+  for (let x = 1.5; x <= 7; x += 0.05) path.push({ x, z: 1.5 });
+  for (let a = 0; a <= Math.PI / 2; a += 0.05) path.push({ x: 7 + Math.sin(a) * 0.5, z: 2 - Math.cos(a) * 0.5 });
+  for (let z = 2; z <= 5.5; z += 0.05) path.push({ x: 7.5, z });
+  for (const p of path) assert.ok(!overlapsSolid(level, p.x, p.z, R), `blocked at ${p.x.toFixed(2)}, ${p.z.toFixed(2)}`);
+  // Without the limit the outer curve (runs of 7 and 5) would be 2.5 tiles and close the bend.
+  assert.ok(level.geometry.prims.every((p) => p.type !== 'arc' || p.convex || p.r <= 1));
+});
+
+test('in every level a ball can still roll to every exit and key', async () => {
+  const { readdirSync, readFileSync } = await import('node:fs');
+  const STEP = 0.125;
+  for (const f of readdirSync('src/levels')) {
+    const level = parseLevel(readFileSync(`src/levels/${f}`, 'utf8'), f);
+    // Flood fill on a fine grid of ball positions; doors count as open (they unlock).
+    const doors = level.doors;
+    for (const d of doors) level.tiles[d.row][d.col] = 'floor';
+    const W = Math.round(level.width / STEP);
+    const H = Math.round(level.height / STEP);
+    const seen = new Uint8Array(W * H);
+    const fits = (i, j) => !overlapsSolid(level, (i + 0.5) * STEP, (j + 0.5) * STEP, R - 0.02);
+    const cell = (x, z) => [Math.floor(x / STEP), Math.floor(z / STEP)];
+    const [si, sj] = cell(level.start.col + 0.5, level.start.row + 0.5);
+    const stack = [[si, sj]];
+    seen[sj * W + si] = 1;
+    while (stack.length) {
+      const [i, j] = stack.pop();
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const a = i + di;
+        const b = j + dj;
+        if (a < 0 || b < 0 || a >= W || b >= H || seen[b * W + a] || !fits(a, b)) continue;
+        seen[b * W + a] = 1;
+        stack.push([a, b]);
+      }
+    }
+    for (const t of [...level.exits, ...level.keys]) {
+      const [i, j] = cell(t.col + 0.5, t.row + 0.5);
+      let hit = false;
+      for (let dj = -2; dj <= 2 && !hit; dj++) for (let di = -2; di <= 2 && !hit; di++) hit = !!seen[(j + dj) * W + i + di];
+      assert.ok(hit, `${f}: can't roll to column ${t.col + 1}, row ${t.row + 1}`);
+    }
   }
 });

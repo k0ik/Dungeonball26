@@ -127,13 +127,27 @@ export function parseLevel(text, name = 'level') {
   });
 
   if (!level.start) throw new Error(`${name}: no hero start 'S'`);
-  if (settings.round !== undefined) {
-    const r = settings.round;
+  {
+    const r = settings.round ?? String(CONFIG.walls.defaultRound);
     if (r !== 'max' && !(Number(r) >= 0)) throw new Error(`${name}: round must be a number of tiles or 'max', not '${r}'`);
     // Rounded walls: physics, sight and drawing use this outline instead of square tiles.
-    if (r === 'max' || Number(r) > 0) level.geometry = buildWallGeometry(level, r, CONFIG.walls.maxRound);
+    if (r === 'max' || Number(r) > 0) level.geometry = buildWallGeometry(level, r, CONFIG.walls.maxRound, placedSpots(level));
   }
   return level;
+}
+
+/** Everything placed in the level, as tile centres with the clearance each needs from a wall. */
+export function placedSpots(level) {
+  const O = CONFIG.objects;
+  const ball = CONFIG.ball.diameter / 2;
+  const at = (list, clear) => list.map((t) => ({ x: t.col + 0.5, z: t.row + 0.5, clear }));
+  return [
+    ...at([level.start, ...level.enemies], ball),
+    ...at([...level.barrels, ...level.explosives], O.barrelRadius),
+    ...at(level.chests, Math.hypot(O.chestHalfX, O.chestHalfZ)),
+    ...at([...level.keys, ...level.coins], O.itemRadius),
+    ...at(level.exits, ball),
+  ];
 }
 
 /**

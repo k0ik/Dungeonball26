@@ -20,6 +20,7 @@ export const CONFIG = {
   // Rounded walls: a level opts in with a `round: <tiles|max>` line at the
   // top of its file (docs/design.md, Levels).
   walls: {
+    defaultRound: 'max', // for levels without a `round:` line
     maxRound: 3, // biggest corner radius, tiles ('max' uses this, limited by the straight runs)
     chordsPerTile: 12, // drawing: chords per tile of curve radius on each quarter circle
     minChords: 4, // ...but at least this many per quarter circle

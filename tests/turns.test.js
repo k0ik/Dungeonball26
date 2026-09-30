@@ -7,7 +7,8 @@ import { nextActor, lungeVelocity, patrolMove, heroDamage, pickPatrollers } from
 import { createCombat, createEnemy } from '../src/combat.js';
 import { CONFIG } from '../src/config.js';
 
-const room = parseLevel(`
+// Square walls: these tests are about sight lines past a sharp pillar.
+const room = parseLevel(`round: 0
 ############
 #..........#
 #..........#

@@ -7,7 +7,7 @@
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
-import { SWORD_ICON, SWORD_BROKEN_ICON, SHIELD_ICON } from './icons.js';
+import { SWORD_ICON, SHIELD_ICON } from './icons.js';
 
 const BAR_HEIGHT = 0.3; // tiles above the top of the ball
 const ALERT_HEIGHT = 0.75; // tiles above the top of the ball
@@ -118,15 +118,15 @@ export function createOverlay(container, camera) {
         floats.delete(f);
       });
     },
-    /** Show the hero's gear: sword 'whole' | 'broken' | null, shield true/false. */
+    /** Show the hero's gear: sword 'whole' | null, shield true/false. */
     setGear(ball, { sword, shield }) {
       gear.ball = ball;
       const key = `${sword}|${shield}`;
       if (key === gear.shown) return;
       gear.shown = key;
       gear.sword.hidden = !sword;
-      gear.sword.innerHTML = sword === 'broken' ? SWORD_BROKEN_ICON : sword ? SWORD_ICON : '';
-      gear.sword.title = sword === 'broken' ? 'Broken sword: +3 attack for one more hit' : 'Sword: +3 attack for two hits';
+      gear.sword.innerHTML = sword ? SWORD_ICON : '';
+      gear.sword.title = 'Sword: +3 attack for your next shot';
       gear.shield.hidden = !shield;
       gear.shield.innerHTML = shield ? SHIELD_ICON : '';
       gear.shield.title = 'Shield: blocks the next enemy hit';

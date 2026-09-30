@@ -100,7 +100,7 @@ D_{\text{enemy}} = \text{ATK} \qquad D_{\text{hero}} = 1 \qquad \text{HP}_{\text
 | Stat | Start value | Notes |
 | --- | --- | --- |
 | Hero max HP | 10 | A health potion heals 1 and a super health potion 5, capped at max |
-| Hero ATK | 1 | A sword adds 3 (ATK 4) for your next two hits on enemies |
+| Hero ATK | 1 | A sword adds 3 (ATK 4) for one round: every hit of your next shot |
 | Shield | None held | A held shield cancels the next enemy hit or red-barrel blast on you and is used up by it (replaces DEF, now that every hit costs 1 HP) |
 | Enemy level L | 1 to 3 in the MVP | Read from the enemy's HP bar: one notch per HP, and the bar grows longer for tougher enemies |
 | Kill reward | L gold | Drops as coins where it died |
@@ -153,6 +153,27 @@ Starting cards (numbers are defaults to tune):
 | Elasticity | Barrels, chests and enemies act like pinball bumpers for you: each time your ball bounces off one, it's kicked away with +1.5 tiles/s of extra speed along the bounce (never above the 9 tiles/s max launch speed). Walls bounce as normal. The aim preview includes the kick |
 
 Defaults assumed until you say otherwise: an offer never includes a card you already hold, and a card you replace goes back into the pool. Cards carry over between levels like HP and gold, and a game over restores the cards you entered the level with.
+
+**Card ideas** (candidates for the pool, not yet in the starting set; numbers to tune):
+
+| Card | Effect | Notes |
+| --- | --- | --- |
+| Wizard | When you hit an enemy, lightning zaps other enemies within about 2 tiles: each takes 1 damage and is pushed away as if hit | Zapped enemies count as combos |
+| Medic | Potions turn up more often in barrels and kill drops | Alt: start each level at full HP |
+| Warrior | Swords turn up more often | Alt: start each level holding a sword |
+| Paladin | Shields turn up more often | Alt: start each level holding a shield |
+| Poisoner | Each enemy you hit directly (not by combo) is poisoned: it turns green and loses 1 HP at the start of each round, stopping at 1 HP | Poison never kills, so the last hit is still yours |
+| Ninja | Enemies see a shorter distance (sight range down), so sneaking is easier | |
+| Rogue | After you hit an enemy, a dagger flies at the nearest other enemy you can see, for 1 damage | Once per shot, or once per hit? Open |
+| Chainsmoker | Any kill earns a bonus turn, not just a combo kill | Toggle; doesn't stack |
+| Barrel of Fun | Barrels break in one hit | Same as Scavenger; keep one of the two |
+| Clairvoyance | The aim preview shows twice as far (two bounces instead of one) | |
+| Fleet Feet | 10% less friction on your ball | Overlaps Athletic (25%); could be its smaller, stackable version |
+| Bomb Squad | Explosions (red barrels, bomb enemies) don't hurt you | Toggle; doesn't stack |
+
+Medic, Warrior and Paladin overlap Junk Hunter (swords and shields twice as often); if they go in, Junk Hunter could be dropped, or kept as the all-in-one.
+
+**To explore: stackable cards.** Holding more than one copy of a card could stack its effect, for example Medic at +5%, +10%, +15% potion chance for 1, 2 or 3 copies; Ninja at −5%, −10%, −15% sight range; Fleet Feet at −2%, −5%, −8% friction. Cards that are simple on/off toggles (Chainsmoker, Barrel of Fun, Bomb Squad, Locksmith) can't stack meaningfully, so the offer would never show a toggle you already hold. That changes the default above: offers could include a stackable card you already hold (as a way to level it up), but never a toggle you hold. Since only 3 slots exist, stacking trades breadth for depth.
 
 ## End-of-level scorecard
 
@@ -211,14 +232,14 @@ Every barrel drops something, left on the floor where the barrel was. You collec
 | Health potion | 25% | +1 HP, capped at max |
 | Super health potion | 8% | +5 HP, capped at max |
 | Shield | 12% | You now hold a shield: it cancels the next enemy hit or red-barrel blast on you, then is used up. Shields don't stack |
-| Sword | 5% | +3 ATK (ATK 4) for two hits on enemies: after the first it shows as a broken half-blade, after the second it's gone |
+| Sword | 5% | +3 ATK (ATK 4) for one round: every hit of your next shot, then it breaks as that shot comes to rest ("Sword broke!"). Picked up mid-shot, it also counts for the rest of that shot |
 | 1-up | 5% | +1 life |
 
-There is no inventory. Each pickup floats above the hero, for example "+1 HP", "+5 HP", "+3", "Shield", "Sword" or "1-up". Like every floating value (damage numbers, "Combo!", labels), it's set large (about twice the HUD text size), rises for about half a second and then holds still for another half second before fading, so it can be read. Anything about you (gold, including a chest's, health, gear, "Blocked!", damage you take) floats above your ball and rides along with it; labels about an enemy stay where they were earned. (A config switch, `render.heroLabelsFollowBall`, leaves your labels in place instead, if that reads better.) Floating values are always kept inside the visible screen. While you hold gear, its icon sits beside your ball: the sword (whole or broken) to the right, the shield to the left. Barrels crack from any ball, so knocking an enemy into one breaks it too; only the hero opens chests.
+There is no inventory. Each pickup floats above the hero, for example "+1 HP", "+5 HP", "+3", "Shield", "Sword" or "1-up". Like every floating value (damage numbers, "Combo!", labels), it's set large (about twice the HUD text size), rises for about half a second and then holds still for another half second before fading, so it can be read. Anything about you (gold, including a chest's, health, gear, "Blocked!", damage you take) floats above your ball and rides along with it; labels about an enemy stay where they were earned. (A config switch, `render.heroLabelsFollowBall`, leaves your labels in place instead, if that reads better.) Floating values are always kept inside the visible screen. While you hold gear, its icon sits beside your ball: the sword to the right, the shield to the left. Barrels crack from any ball, so knocking an enemy into one breaks it too; only the hero opens chests.
 
 A red barrel is a hazard, not a reward: it can hurt an enemy that bumps it as easily as it can hurt you, so it's worth luring enemies into one.
 
-You hold at most one shield; while you hold one, another shield stays on the floor until yours is used up. Likewise, a sword stays on the floor while you hold an unbroken one; picking one up over a broken sword restores it to two hits.
+You hold at most one shield; while you hold one, another shield stays on the floor until yours is used up. Likewise, a sword stays on the floor while you hold one.
 
 ## Levels
 
@@ -326,6 +347,12 @@ Two habits keep tuning cheap. Put every number from this doc in one config file.
 
 Changes agreed during development that aren't built yet. (Trait cards are scheduled as M7.)
 
+- **Kill cam:** on a combo kill (2 or more kills in one shot), the camera zooms in on the last kill and time slows to about a quarter speed for a moment, then eases back to normal speed and framing. It must never cost you control: it happens only during your own shot, while balls are rolling, and the slow-motion stretch is short (well under a second of real time).
+- **Tutorial:** a tutorial level, or a short series of them, before Long Hall, each teaching one thing: aim and shoot; bouncing and the preview; hitting enemies; enemy turns and hiding; pickups and gear; keys and doors. It needs a message box, in one of two forms:
+  - a persistent message panel at the bottom of the screen that changes as you progress ("Drag back from the ball and release"), or
+  - a dismissable modal that pauses play until you tap it.
+  - The panel is lighter and keeps play flowing, so it's the likely default, with a modal only for the first message of each lesson. Messages would be triggered by level events (first shot, first bounce, first enemy seen). The level file would carry them, perhaps as a short script section below the grid.
+
 - **Rounded walls:** the level builder rounds the corners of the block-based text levels, so level files don't change.
   - **Outside corners** (a pillar or a wall end sticking into a room) become rounded bumps; a lone 1×1 pillar becomes a round post.
   - **Inside corners** (a room's corners) become curved walls, so square rooms turn rounded and, with big enough curves, nearly circular.
@@ -344,6 +371,23 @@ Changes agreed during development that aren't built yet. (Trait cards are schedu
   - **Everything else:** patrols never pick a route over a pit, and a lunge can still end in one. The aim preview shows a path ending in a pit, which marks the end with a warning. Sight passes over pits, since they're holes, not walls.
   - **Look:** a black hole in the floor with a darker rim.
   - **Level format:** a proposed character, `_`, joins the legend and the loader when it's built.
+
+## Enemy ideas
+
+More enemy types, to add variety after the MVP. Each keeps the core rules (a ball that rolls, takes turns and can be hit) and changes one thing. The notes fill in details to settle when building.
+
+| Enemy | Behaviour | Notes |
+| --- | --- | --- |
+| Double | Moves or attacks twice per enemy turn | The second move starts once the first is at rest; its "!" and ring show twice |
+| Ghost | Semi-transparent every other round: while faded it can't deal or take damage, and balls pass through it | Shown by opacity; its turn ring still shows, so you know it's there |
+| Brute | Big, heavy ball with high HP; moves fast and hits hard, but barely moves when hit | Needs mass in the physics (every ball is equal mass today); it knocks you further than you knock it |
+| Slider | Very low friction, so it travels far on every move | Great for long combos; dangerous from across the room |
+| Bomb | Rolls like a normal enemy. The first hit lights its fuse. At the start of the next move (yours or an enemy's) the fuse burns down to half and the bomb turns red; at the start of the move after that it explodes where it lies. It can still be hit and moved while lit | The blast uses the red-barrel rules: 1 damage and the push, walls shield. Knock it into a group before it goes |
+| Rubber | Hitting it doubles your speed on the rebound, so it's risky: you can't be sure where you'll end up | The aim preview shows the rebound (it runs the real rules), which makes it a reading test rather than a lottery |
+| Seeker | Knows roughly where you are even without sight, and its patrols drift toward you | Rather than full pathfinding, it tries 5 to 8 of its usual patrol moves and plays the one that ends closest to you, measured by walking distance on the tile grid (a quick breadth-first search). Cheap, and it naturally goes around walls |
+| Golem | 3 HP. When hit, it splits into two 2-HP golems that roll off along your hit, as if they'd just been struck (the split doesn't damage them). When one of those is destroyed, it splits into two 1-HP ones | Splits carry the golem's momentum; the pieces can combo each other |
+| Slime | A green orb. Hitting it doesn't hurt it: your ball is absorbed and sits inside it. While you're inside, enemy attacks damage the slime instead of you until it's gone, and your hits on other enemies damage them as normal and the slime too | You move the slime by shooting from inside it. It's both armour and a trap, since it slows you |
+| Jekyll | Passive until hit; then it turns angry, and on its next turn attacks the nearest ball it can see, you or another enemy. After that turn it calms down again until hit again | A tool as much as a threat: hit it next to enemies to set it on them |
 
 ## Out of scope for the MVP
 
@@ -387,7 +431,7 @@ The rules above use these defaults where your answers left a gap. Change any tha
 - Each enemy attacks at most once per round, and only enemies moving that round can damage the hero. Red barrels are the exception: they damage whichever ball touches them, hero included, in any phase.
 - If the hero dies mid-round, the round ends there: anything still rolling stops under the death screen and the hero respawns with the first move.
 - Sight range is 6 tiles, not the screen width, because a portrait screen is only 9 tiles wide. Other enemies also block sight, so they can shield you.
-- Gear is the shield, a one-hit consumable held until an enemy hit or a red-barrel blast uses it up (they don't stack), and the sword, +3 ATK for two hits on enemies (combo and blast damage don't use it up).
+- Gear is the shield, a one-hit consumable held until an enemy hit or a red-barrel blast uses it up (they don't stack), and the sword, +3 ATK for one round (your next shot; combo and blast damage don't use it).
 - Chest gold is granted at once with a floating label. Barrel loot, keys and enemy coins lie on the floor until you roll over them.
 - Respawn restores full HP, and keys you hold are kept.
 - Aiming is a slingshot pull-back rather than dragging toward the target.

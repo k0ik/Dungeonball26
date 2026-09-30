@@ -2,7 +2,9 @@
 // whether you can use a pickup right now, and what collecting it does.
 //
 // `run` is the player's run state: { gold, lives, keys }. The hero ball carries
-// hp, maxHp, atk, shield (bool) and swordHits (uses left: 2 whole, 1 broken, 0 none).
+// hp, maxHp, atk, shield (bool) and sword: 0 (none), 'ready' (picked up, waiting
+// for your next shot) or 'swinging' (that shot is under way; it breaks when the
+// shot comes to rest).
 
 import { CONFIG } from './config.js';
 
@@ -46,21 +48,27 @@ export function rollEnemyDrops(rng = Math.random) {
 export function canCollect(item, hero) {
   if (item.kind === 'potion' || item.kind === 'superPotion') return hero.hp < hero.maxHp;
   if (item.kind === 'shield') return !hero.shield;
-  // A new sword waits on the floor while you hold an unbroken one.
-  if (item.kind === 'sword') return hero.swordHits < L.swordUses;
+  // A new sword waits on the floor while you hold one.
+  if (item.kind === 'sword') return !hero.sword;
   return true;
 }
 
 /**
- * Your hit on an enemy used the sword (if you hold one). Returns 'broken'
- * when it's down to its last hit, 'gone' when it's used up, or null.
+ * A sword lasts one round: it powers every hit of your next shot, then
+ * breaks when that shot comes to rest. (Picked up mid-shot, it also counts
+ * for the rest of that shot, and still gets your next one.) Call as each of
+ * your shots starts.
  */
-export function useSwordHit(hero) {
-  if (!hero.swordHits) return null;
-  hero.swordHits--;
-  if (hero.swordHits > 0) return 'broken';
+export function swingSword(hero) {
+  if (hero.sword === 'ready') hero.sword = 'swinging';
+}
+
+/** Call as your shot comes to rest. Returns true if the sword broke. */
+export function endSwordShot(hero) {
+  if (hero.sword !== 'swinging') return false;
+  hero.sword = 0;
   hero.atk -= L.swordAtk;
-  return 'gone';
+  return true;
 }
 
 /** Apply a pickup. Returns the short label that floats above the hero. */
@@ -81,9 +89,8 @@ export function collect(item, hero, run) {
       hero.shield = true;
       return 'Shield';
     case 'sword':
-      // A fresh sword; picking one up over a broken one restores it.
-      if (hero.swordHits === 0) hero.atk += L.swordAtk;
-      hero.swordHits = L.swordUses;
+      hero.atk += L.swordAtk;
+      hero.sword = 'ready';
       return 'Sword';
     case 'oneUp':
       run.lives += 1;

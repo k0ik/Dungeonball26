@@ -56,7 +56,7 @@ test('a closed door blocks sight; an open one does not', () => {
 test('a key is always collectable and goes on your key list', () => {
   const run = { gold: 0, lives: 3, keys: [] };
   const item = { kind: 'key', color: 'red' };
-  assert.ok(canCollect(item, { hp: 10, maxHp: 10, shield: true, swordHits: 2 }));
+  assert.ok(canCollect(item, { hp: 10, maxHp: 10, shield: true, sword: 'ready' }));
   assert.equal(collect(item, {}, run), 'Red key');
   assert.deepEqual(run.keys, ['red']);
 });

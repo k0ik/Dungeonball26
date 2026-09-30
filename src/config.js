@@ -108,8 +108,7 @@ export const CONFIG = {
     goldMax: 5,
     potionHeal: 1,
     superPotionHeal: 5,
-    swordAtk: 3, // added to ATK while you hold a sword
-    swordUses: 2, // hits on enemies before it breaks: whole -> broken half -> gone
+    swordAtk: 3, // added to ATK while you hold a sword (it lasts one round: your next shot)
     killGoldPerLevel: 1, // a kill drops coins worth the enemy's level
     // Besides its coins, a kill has these separate, rare chances of dropping
     // gear or a potion (rolled independently, so more than one can drop).

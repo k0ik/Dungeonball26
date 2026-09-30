@@ -34,7 +34,7 @@ import { createAimView } from './render/aimView.js';
 import { createCameraRig } from './render/cameraRig.js';
 import { createAudio } from './audio.js';
 import { createObjects, resolveObjects } from './objects.js';
-import { rollLoot, rollEnemyDrops, canCollect, collect, useSwordHit } from './loot.js';
+import { rollLoot, rollEnemyDrops, canCollect, collect, swingSword, endSwordShot } from './loot.js';
 import { createObjectsView } from './render/objectsView.js';
 import { createItemsView } from './render/itemsView.js';
 import { createDoorsView } from './render/doorsView.js';
@@ -61,7 +61,7 @@ export function createGame(container, levels, startIndex = 0) {
 
   // The hero persists across levels; the level, its world and its view don't.
   const hero = createBall({ x: 0, z: 0, kind: 'hero', id: 'hero' });
-  Object.assign(hero, { atk: CONFIG.hero.atk, maxHp: CONFIG.hero.maxHp, hp: CONFIG.hero.maxHp, shield: false, swordHits: 0 });
+  Object.assign(hero, { atk: CONFIG.hero.atk, maxHp: CONFIG.hero.maxHp, hp: CONFIG.hero.maxHp, shield: false, sword: 0 });
   const heroView = createBallView(hero, { color: CONFIG.colors.hero, silver: true, toCamera: rig.toCamera });
   scene.add(heroView.object);
   overlay.addBar(hero, 'hero');
@@ -144,7 +144,7 @@ export function createGame(container, levels, startIndex = 0) {
 
     start = tileCenter(level.start);
     rig.setBounds(0, level.width, 0, level.height);
-    state.entry = { hp: hero.hp, atk: hero.atk, shield: hero.shield, swordHits: hero.swordHits, gold: state.gold };
+    state.entry = { hp: hero.hp, atk: hero.atk, shield: hero.shield, sword: hero.sword, gold: state.gold };
     respawn();
     rig.snapTo(hero.x, hero.z);
   }
@@ -222,6 +222,7 @@ export function createGame(container, levels, startIndex = 0) {
     state.phase = 'shot';
     state.shots++;
     combat.beginShot();
+    swingSword(hero);
     // A new shot: strip sweeps and the coin tick's pitch start over.
     for (const strip of state.strips) strip.thisShot = 0;
     state.shotCoins = 0;
@@ -301,8 +302,8 @@ export function createGame(container, levels, startIndex = 0) {
       // Game over: the level starts from scratch, with the HP, gear and gold
       // you entered it with.
       state.lives = CONFIG.hero.lives;
-      const { hp, atk, shield, swordHits, gold } = state.entry;
-      Object.assign(hero, { hp, atk, shield, swordHits });
+      const { hp, atk, shield, sword, gold } = state.entry;
+      Object.assign(hero, { hp, atk, shield, sword });
       state.gold = gold;
       loadLevel(levelIndex);
     }
@@ -338,7 +339,7 @@ export function createGame(container, levels, startIndex = 0) {
 
   /** A fresh run from level 1: full HP, no gear, 3 lives, no gold. */
   function newRun() {
-    Object.assign(hero, { atk: CONFIG.hero.atk, maxHp: CONFIG.hero.maxHp, hp: CONFIG.hero.maxHp, shield: false, swordHits: 0 });
+    Object.assign(hero, { atk: CONFIG.hero.atk, maxHp: CONFIG.hero.maxHp, hp: CONFIG.hero.maxHp, shield: false, sword: 0 });
     state.lives = CONFIG.hero.lives;
     state.gold = 0;
     loadLevel(0);
@@ -525,13 +526,6 @@ export function createGame(container, levels, startIndex = 0) {
       if (o.type === 'hit' || o.type === 'combo') {
         if (o.type === 'hit') {
           sfx.play('hit', 0.9, { pitch: 0.95 + Math.random() * 0.1 });
-          // Each of your hits wears the sword: whole -> broken -> gone.
-          const sword = useSwordHit(hero);
-          if (sword === 'broken') floatAt(hero, 'Sword cracked', 'gear', 0.8);
-          else if (sword === 'gone') {
-            floatAt(hero, 'Sword broke!', 'gear', 0.8);
-            sfx.play('blocked', 0.6, { pitch: 0.8 });
-          }
         }
         else if (!comboSounded) {
           sfx.play('combo', 0.9);
@@ -646,6 +640,11 @@ export function createGame(container, levels, startIndex = 0) {
     switch (state.phase) {
       case 'shot':
         if (isAtRest(world)) {
+          // A sword lasts one round: it breaks as the shot it powered comes to rest.
+          if (endSwordShot(hero)) {
+            overlay.float('Sword broke!', hero.x, hero.z, hero.radius * 2 + 1, 'gear', heroFollow());
+            sfx.play('blocked', 0.6, { pitch: 0.8 });
+          }
           // A combo kill (2+ enemies in one shot) earns a bonus turn: the
           // enemy phase is skipped and you shoot again.
           if (combat.shotKills >= 2) {
@@ -778,7 +777,7 @@ export function createGame(container, levels, startIndex = 0) {
     // the enemies' from the first enemy move until it's back to you.
     hud.setTurn(['enemyWait', 'enemyMove', 'down'].includes(state.phase) ? 'enemy' : 'player');
     overlay.setGear(hero, {
-      sword: hero.swordHits >= CONFIG.loot.swordUses ? 'whole' : hero.swordHits > 0 ? 'broken' : null,
+      sword: hero.sword ? 'whole' : null,
       shield: hero.shield,
     });
 
@@ -790,7 +789,7 @@ export function createGame(container, levels, startIndex = 0) {
         `speed  ${speedOf(hero).toFixed(2)} tiles/s`,
         `view   ${rig.viewWidth.toFixed(2)} units`,
         `shots  ${state.shots}   exits  ${state.clears}`,
-        `enemies ${enemies().length} left   gold ${state.gold}   atk ${hero.atk}${hero.swordHits ? ` (sword ${hero.swordHits})` : ''}${hero.shield ? '  shield' : ''}`,
+        `enemies ${enemies().length} left   gold ${state.gold}   atk ${hero.atk}${hero.sword ? ` (sword ${hero.sword})` : ''}${hero.shield ? '  shield' : ''}`,
         `[d] debug  [r] respawn  [n] next level`,
       ].join('\n');
     }

@@ -190,7 +190,7 @@ Later candidates: coins collected (n of N, strips included), Clean Sweeps, trick
 
 ## Trick shots
 
-Trick shots are special one-shot combos, tracked as achievements. Each one pays a gold bonus the first time you land it, with a big centre banner naming it, like "Trick shot: Double Kill! +10". After that it still shows its name, but pays nothing extra. All of them happen within a single shot of yours; the enemy turn never counts.
+Trick shots are special one-shot combos, tracked as achievements. Each one pays a gold bonus the first time you land it, with a big centre banner naming it, like "Trick shot: Double Kill! +10". After that it still shows its name, but pays nothing extra. All of them happen within a single shot of yours, except Backfire, which happens on the enemy turn.
 
 | Trick shot | How to land it | First-time bonus |
 | --- | --- | --- |
@@ -202,6 +202,7 @@ Trick shots are special one-shot combos, tracked as achievements. Each one pays 
 | Drop Shot | Knock an enemy into a bottomless pit (needs pits) | +15 gold |
 | Long Drop | Combo an enemy into a pit: it falls in after being hit by another knocked enemy, not by you directly (needs pits) | +30 gold |
 | Boomerang | Hit enemy A, it bounces off enemy B and comes back into you, and that return hit kills it (your hits count whichever ball is moving) | +25 gold |
+| Backfire | On the enemy turn, an enemy hits you, bounces off into a barrel and dies. Only a red barrel can kill it, since plain barrels don't deal damage; if plain barrels ever learn to hurt (a card, say), they'd count too. A shield that blocks the hit still counts | +20 gold |
 
 The names and bonus amounts are placeholders to tune.
 - **Tracking:** credit for a hit passes along a chain. An enemy you hit is "knocked by you", and an enemy it hits is "combo-knocked". Whatever a knocked enemy touches next (a barrel, a pit, another enemy) is credited to the chain for the rest of the shot.

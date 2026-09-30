@@ -85,6 +85,10 @@ function chestMesh() {
   hinge.add(lid);
 
   group.add(base, hinge);
+  // After the walls (renderOrder 5, see-through while aiming, see levelView):
+  // a faded chest doesn't write depth, so a wall drawn after it would paint
+  // over the parts of it that stand in front of that wall.
+  group.traverse((o) => (o.renderOrder = 6));
   return { group, hinge, fadeMaterials: [mat, band, lines, inner], opacity: 1 };
 }
 

@@ -79,17 +79,25 @@ function reachable(level) {
   return seen;
 }
 
-test('every shipped level can be finished: keys first, then doors, then the exit', () => {
+test('every shipped level can be finished: keys open doors, which reach more keys, and finally the exit', () => {
   for (const file of readdirSync(levelsDir).filter((f) => f.endsWith('.txt'))) {
     const level = parseLevel(readFileSync(new URL(file, levelsDir), 'utf8'), file);
-    const before = reachable(level);
-    for (const k of level.keys) assert.ok(before.has(`${k.col},${k.row}`), `${file}: ${k.color} key reachable before any door`);
-    for (const d of level.doors) level.tiles[d.row][d.col] = 'floor';
-    const after = reachable(level);
-    for (const e of level.exits) assert.ok(after.has(`${e.col},${e.row}`), `${file}: exit reachable`);
-    if (level.doors.length) {
-      assert.ok(!level.exits.some((e) => before.has(`${e.col},${e.row}`)), `${file}: the doors really guard the exit`);
+    const exitReached = () => level.exits.some((e) => reachable(level).has(`${e.col},${e.row}`));
+    assert.ok(!level.doors.length || !exitReached(), `${file}: the doors really guard the exit`);
+    // Keep taking every key you can reach and opening its doors, until nothing changes.
+    const held = new Set();
+    for (let changed = true; changed; ) {
+      changed = false;
+      const seen = reachable(level);
+      for (const k of level.keys) {
+        if (held.has(k) || !seen.has(`${k.col},${k.row}`)) continue;
+        held.add(k);
+        changed = true;
+        for (const d of level.doors) if (d.color === k.color) level.tiles[d.row][d.col] = 'floor';
+      }
     }
+    assert.equal(held.size, level.keys.length, `${file}: every key can be reached`);
+    assert.ok(exitReached(), `${file}: exit reachable`);
   }
 });
 

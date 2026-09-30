@@ -284,7 +284,7 @@ Barrel loot is random by default. Per-barrel overrides can be added later withou
 
 The five MVP levels ramp one idea at a time. Sizes are suggestions in tiles.
 
-Levels 1 to 3 are built (M6), followed for now by **Warrens** (24×21, your design): a wide warren of tunnels and rooms with six enemies (levels 1 to 3) and a two-key chain. The blue key waits at the end of the left tunnel behind two barrels; it opens the blue door to the bottom-right room with the red key, which opens the red door to the exit room. Levels 4 and 5 from the table below may still arrive in M8. Each has a few coin strips: one of 5 near the start to learn the Clean Sweep on, and others that lead somewhere (Long Hall's right-hand corridor, One Key's trail toward the key nook).
+Levels 1 to 3 are built (M6), followed for now by **Warrens** (24×21, your design): a wide warren of tunnels and rooms with six enemies (levels 1 to 3) and a two-key chain. The blue key sits in the top-left room, guarded by the level-2 enemy; it opens the blue door to the bottom-right room with the red key, which opens the red door to the exit room. Levels 4 and 5 from the table below may still arrive in M8. Each has a few coin strips: one of 5 near the start to learn the Clean Sweep on, and others that lead somewhere (Long Hall's right-hand corridor, One Key's trail toward the key nook).
 
 | # | Name | Size | Enemies | Keys and doors | Teaches |
 | --- | --- | --- | --- | --- | --- |

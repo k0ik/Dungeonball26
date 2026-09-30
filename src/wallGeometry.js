@@ -86,8 +86,9 @@ function touchesDoor(level, x, z) {
 
 /**
  * Build the rounded outline of a level's walls.
- * `round` is the corner radius in tiles (at most `maxRound`); each corner is
- * also limited by the straight runs either side of it.
+ * Each corner's biggest possible curve is `maxRound`, or half the straight
+ * run on either side if shorter; `share` (0 to 1) is how much of that it
+ * gets, so a lower curviness softens every corner, short steps included.
  * `spots` ({ x, z, clear }) are things placed in the level: an inside curve
  * shrinks until each keeps `clear` tiles between its centre and the wall, so
  * nothing starts buried in a room's rounded corner.
@@ -96,8 +97,7 @@ function touchesDoor(level, x, z) {
  *   { type: 'seg', ax, az, bx, bz, nx, nz, len, capA, capB }  (n: floor normal)
  *   { type: 'arc', cx, cz, r, convex, a0, sweep, ... }          (quarter circle)
  */
-export function buildWallGeometry(level, round, maxRound, spots = []) {
-  const want = Math.min(round, maxRound);
+export function buildWallGeometry(level, share, maxRound, spots = []) {
   const loops = traceLoops(boundaryEdges(level)).map((pts) => {
     const n = pts.length;
     const lenTo = (i) => {
@@ -109,7 +109,7 @@ export function buildWallGeometry(level, round, maxRound, spots = []) {
     for (let i = 0; i < n; i++) {
       const p = pts[i];
       p.convex = p.din.x * p.dout.z - p.din.z * p.dout.x > 0;
-      p.r = touchesDoor(level, p.x, p.z) ? 0 : Math.min(want, lenTo((i + n - 1) % n) / 2, lenTo(i) / 2);
+      p.r = touchesDoor(level, p.x, p.z) ? 0 : share * Math.min(maxRound, lenTo((i + n - 1) % n) / 2, lenTo(i) / 2);
       if (!p.convex) p.r = clearOfSpots(p, Math.min(p.r, openSquare(level, p, p.r)), spots);
     }
     // Pieces: for each corner its arc (if rounded), then the straight run to the next corner.
@@ -146,7 +146,7 @@ export function buildWallGeometry(level, round, maxRound, spots = []) {
   }
   const none = [];
   return {
-    round: want,
+    share,
     loops,
     prims,
     /** Pieces that could be within NEAR of a point in tile (floor(x), floor(z)). */

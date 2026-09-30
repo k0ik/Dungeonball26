@@ -26,11 +26,15 @@ test('walls are roundest by default; the top-left digit sets curviness 1 (square
   assert.equal(square.geometry, undefined);
   assert.equal(square.tiles[0][0], 'wall', 'the digit is a wall tile');
   assert.equal(square.enemies.length, 0, 'not an enemy');
-  // Radius steps evenly: 2 -> a quarter of the biggest, 3 -> half, 5 -> all of it.
+  // Radius steps evenly: 2 -> a quarter of the biggest, 3 -> half, 5 -> all of it...
   const radius = (c) => Math.max(...pillarRoom(c).geometry.prims.filter((p) => p.type === 'arc' && !p.convex).map((p) => p.r));
   assert.equal(radius(2), CONFIG.walls.maxRound / 4);
   assert.equal(radius(3), CONFIG.walls.maxRound / 2);
   assert.equal(radius(5), CONFIG.walls.maxRound);
+  // ...short steps included: a 1x1 pillar's corners are at most 0.5, so 2 gives 0.125.
+  const post = (c) => Math.max(...pillarRoom(c).geometry.prims.filter((p) => p.type === 'arc' && p.convex).map((p) => p.r));
+  assert.equal(post(2), 0.125);
+  assert.equal(post(5), 0.5);
   assert.throws(() => parseLevel('6##\n#S#\n###'), /curviness/);
   assert.throws(() => parseLevel('0##\n#S#\n###'), /curviness/);
   assert.throws(() => parseLevel('###\n.S#\n###'), /edge must be all walls/);

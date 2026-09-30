@@ -6,7 +6,8 @@
 //
 // The whole grid must be ringed by walls. The top-left corner may hold a digit
 // instead, the level's curviness: 1 keeps right-angled walls, 5 is the
-// roundest (CONFIG.walls.maxRound), 3 halfway, 2 and 4 in between. Without
+// roundest, 3 halfway, 2 and 4 in between (a share of each corner's biggest
+// possible curve: see buildWallGeometry). Without
 // one, CONFIG.walls.defaultCurve applies. The corner is always a wall tile.
 
 export const LEGEND = {
@@ -143,8 +144,8 @@ export function parseLevel(text, name = 'level') {
     }
   }
   // Rounded walls: physics, sight and drawing use this outline instead of square tiles.
-  const radius = ((curve - 1) / 4) * CONFIG.walls.maxRound;
-  if (radius > 0) level.geometry = buildWallGeometry(level, radius, CONFIG.walls.maxRound, placedSpots(level));
+  const share = (curve - 1) / 4; // of each corner's biggest possible curve
+  if (share > 0) level.geometry = buildWallGeometry(level, share, CONFIG.walls.maxRound, placedSpots(level));
   return level;
 }
 

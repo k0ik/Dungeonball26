@@ -125,9 +125,20 @@ function floorSample(prim) {
 function addOutlineWalls(group, level, h) {
   const geom = level.geometry;
   const polys = loopPolygons(geom, (r) => Math.max(W.minChords, Math.ceil(r * W.chordsPerTile)));
+  // A tiny fixed wobble on every point: grid-aligned outlines have many
+  // exactly collinear points, and the triangulator can leave one sitting on
+  // another triangle's long edge (a T-junction), which shows as a dotted
+  // crack across the wall tops.
+  let seed = 1;
+  const wobble = () => ((seed = (seed * 16807) % 2147483647) / 2147483647 - 0.5) * 4e-4;
   const toPath = (poly, path) => {
     // Shape space (x, -z), so rotating -90° about x stands it on the ground.
-    poly.forEach((p, i) => (i ? path.lineTo(p.x, -p.z) : path.moveTo(p.x, -p.z)));
+    poly.forEach((p, i) => {
+      const x = p.x + wobble();
+      const y = -p.z + wobble();
+      if (i) path.lineTo(x, y);
+      else path.moveTo(x, y);
+    });
     path.closePath();
     return path;
   };

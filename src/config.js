@@ -21,7 +21,7 @@ export const CONFIG = {
   // top-left corner of its grid (docs/design.md, Levels).
   walls: {
     defaultCurve: 5, // for levels without a digit there
-    maxRound: 3, // corner radius at curviness 5, tiles; 1 is square, 2-4 in even steps (each corner is also limited by the straight runs)
+    maxRound: 3, // biggest corner radius, tiles, also limited to half the straight run either side; curviness 5 gets all of that, 3 half, 1 none
     chordsPerTile: 12, // drawing: chords per tile of curve radius on each quarter circle
     minChords: 4, // ...but at least this many per quarter circle
   },

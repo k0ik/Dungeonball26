@@ -5,9 +5,11 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { tileAt } from '../level.js';
+import { loopPolygons } from '../wallGeometry.js';
 import { outlineLineMaterial, markOccluder } from './materials.js';
 
 const C = CONFIG.colors;
+const W = CONFIG.walls;
 
 function pushQuad(pos, col, a, b, c, d, color) {
   // Two triangles a-b-c, a-c-d, wound counter-clockwise seen from outside.
@@ -45,6 +47,11 @@ export function buildLevelView(level) {
   }
   group.add(meshFrom(floorPos, floorCol));
 
+  if (level.geometry) {
+    addOutlineWalls(group, level, h);
+    return group;
+  }
+
   // Walls: top face per wall tile, side faces only where the neighbour is open,
   // so the merged outline traces the wall mass instead of every tile.
   const wallPos = [];
@@ -74,4 +81,104 @@ export function buildLevelView(level) {
   }
 
   return group;
+}
+
+function signedArea(poly) {
+  let a = 0;
+  for (let i = 0; i < poly.length; i++) {
+    const p = poly[i];
+    const q = poly[(i + 1) % poly.length];
+    a += p.x * q.z - q.x * p.z;
+  }
+  return a / 2;
+}
+
+function pointInPolygon(poly, x, z) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i];
+    const b = poly[j];
+    if (a.z > z !== b.z > z && x < ((b.x - a.x) * (z - a.z)) / (b.z - a.z) + a.x) inside = !inside;
+  }
+  return inside;
+}
+
+/** A point just inside the open side of a loop's first piece. */
+function floorSample(prim) {
+  if (prim.type === 'seg') return { x: (prim.ax + prim.bx) / 2 + prim.nx * 0.01, z: (prim.az + prim.bz) / 2 + prim.nz * 0.01 };
+  const d = prim.r + (prim.convex ? 0.01 : -0.01);
+  return { x: prim.cx + prim.mx * d, z: prim.cz + prim.mz * d };
+}
+
+/**
+ * Rounded walls: the outline loops extruded to wall height. Loops that go
+ * round a wall mass (positive area in x, z) are shapes; loops that go round
+ * open floor are holes in the smallest wall mass around them, or in the
+ * level's bounding rectangle when none is. Faces are coloured by which way
+ * they face, blending on curves, like the block walls.
+ */
+function addOutlineWalls(group, level, h) {
+  const geom = level.geometry;
+  const polys = loopPolygons(geom, (r) => Math.max(W.minChords, Math.ceil(r * W.chordsPerTile)));
+  const toPath = (poly, path) => {
+    // Shape space (x, -z), so rotating -90° about x stands it on the ground.
+    poly.forEach((p, i) => (i ? path.lineTo(p.x, -p.z) : path.moveTo(p.x, -p.z)));
+    path.closePath();
+    return path;
+  };
+  const islands = [];
+  const floors = [];
+  polys.forEach((poly, i) => (signedArea(poly) > 0 ? islands : floors).push({ poly, area: Math.abs(signedArea(poly)), prims: geom.loops[i] }));
+  const outer = new THREE.Shape();
+  toPath(
+    [
+      { x: 0, z: 0 },
+      { x: level.width, z: 0 },
+      { x: level.width, z: level.height },
+      { x: 0, z: level.height },
+    ],
+    outer,
+  );
+  const shapes = islands.map((isl) => ({ ...isl, shape: toPath(isl.poly, new THREE.Shape()) }));
+  for (const f of floors) {
+    const p = floorSample(f.prims[0]);
+    let host = null;
+    for (const s of shapes) if (pointInPolygon(s.poly, p.x, p.z) && (!host || s.area < host.area)) host = s;
+    (host ? host.shape : outer).holes.push(toPath(f.poly, new THREE.Path()));
+  }
+  const geo = new THREE.ExtrudeGeometry([outer, ...shapes.map((s) => s.shape)], { depth: h, bevelEnabled: false });
+  geo.rotateX(-Math.PI / 2);
+  geo.computeVertexNormals();
+
+  const top = new THREE.Color(C.wallTop);
+  const front = new THREE.Color(C.wallFront); // +z
+  const side = new THREE.Color(C.wallSide); // +x
+  const back = new THREE.Color(C.wallBack); // -z and -x
+  const n = geo.attributes.normal;
+  const colors = new Float32Array(n.count * 3);
+  const c = new THREE.Color();
+  for (let i = 0; i < n.count; i++) {
+    const nx = n.getX(i);
+    const ny = n.getY(i);
+    const nz = n.getZ(i);
+    if (Math.abs(ny) > 0.5) {
+      c.copy(top);
+    } else {
+      const wf = Math.max(0, nz);
+      const ws = Math.max(0, nx);
+      const wb = Math.max(0, -nz) + Math.max(0, -nx);
+      const sum = wf + ws + wb || 1;
+      c.setRGB((front.r * wf + side.r * ws + back.r * wb) / sum, (front.g * wf + side.g * ws + back.g * wb) / sum, (front.b * wf + side.b * ws + back.b * wb) / sum);
+    }
+    colors[i * 3] = c.r;
+    colors[i * 3 + 1] = c.g;
+    colors[i * 3 + 2] = c.b;
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geo.deleteAttribute('uv');
+  const walls = new THREE.Mesh(geo, wallMaterial);
+  group.add(walls);
+  if (CONFIG.render.wallOutlines) {
+    group.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo, 30), outlineLineMaterial));
+  }
 }

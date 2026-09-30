@@ -26,6 +26,11 @@ export const LEGEND = {
   Y: 'door',
 };
 
+import { CONFIG } from './config.js';
+import { buildWallGeometry } from './wallGeometry.js';
+
+const SETTINGS = ['round'];
+
 const KEY_COLORS = { r: 'red', b: 'blue', y: 'yellow', R: 'red', B: 'blue', Y: 'yellow' };
 
 /**
@@ -34,7 +39,19 @@ const KEY_COLORS = { r: 'red', b: 'blue', y: 'yellow', R: 'red', B: 'blue', Y: '
  */
 export function parseLevel(text, name = 'level') {
   const lines = text.replace(/\r/g, '').split('\n').map((l) => l.trimEnd());
-  while (lines.length && lines[0] === '') lines.shift();
+  const settings = {};
+  while (lines.length) {
+    if (lines[0] === '') {
+      lines.shift();
+      continue;
+    }
+    const m = /^([a-z]+)\s*:\s*(\S+)$/i.exec(lines[0]);
+    if (!m) break;
+    const key = m[1].toLowerCase();
+    if (!SETTINGS.includes(key)) throw new Error(`${name}: unknown setting '${m[1]}'`);
+    settings[key] = m[2].toLowerCase();
+    lines.shift();
+  }
   while (lines.length && lines[lines.length - 1] === '') lines.pop();
   if (!lines.length) throw new Error(`${name}: level is empty`);
 
@@ -43,6 +60,7 @@ export function parseLevel(text, name = 'level') {
   const tiles = [];
   const level = {
     name,
+    settings,
     width,
     height,
     tiles,
@@ -109,6 +127,12 @@ export function parseLevel(text, name = 'level') {
   });
 
   if (!level.start) throw new Error(`${name}: no hero start 'S'`);
+  if (settings.round !== undefined) {
+    const r = settings.round;
+    if (r !== 'max' && !(Number(r) >= 0)) throw new Error(`${name}: round must be a number of tiles or 'max', not '${r}'`);
+    // Rounded walls: physics, sight and drawing use this outline instead of square tiles.
+    if (r === 'max' || Number(r) > 0) level.geometry = buildWallGeometry(level, r, CONFIG.walls.maxRound);
+  }
   return level;
 }
 

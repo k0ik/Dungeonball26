@@ -4,9 +4,12 @@ import breakables from './levels/breakables.txt?raw';
 import oneKey from './levels/one-key.txt?raw';
 import warrens from './levels/warrens.txt?raw';
 import untitled from './levels/untitled.txt?raw';
+import bowls from './levels/bowls.txt?raw';
 
 // The run, in order (design doc: "Levels"). Levels 4 and 5 arrive in M8.
 const LEVELS = [
+  // Rounded-walls trial level, first for now so it's quick to reach.
+  { id: 'bowls', name: 'Bowls', text: bowls },
   { id: 'long-hall', name: 'Long Hall', text: longHall },
   { id: 'breakables', name: 'Breakables', text: breakables },
   { id: 'one-key', name: 'One Key', text: oneKey },

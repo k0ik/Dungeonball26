@@ -17,6 +17,14 @@ export const CONFIG = {
     diameter: 0.65,
   },
 
+  // Rounded walls: a level opts in with a `round: <tiles|max>` line at the
+  // top of its file (docs/design.md, Levels).
+  walls: {
+    maxRound: 3, // biggest corner radius, tiles ('max' uses this, limited by the straight runs)
+    chordsPerTile: 12, // drawing: chords per tile of curve radius on each quarter circle
+    minChords: 4, // ...but at least this many per quarter circle
+  },
+
   aim: {
     cancelRadius: 0.6, // releasing closer than this to the hero cancels the shot
     fullPowerDrag: 1.6, // drag distance that reaches max launch speed

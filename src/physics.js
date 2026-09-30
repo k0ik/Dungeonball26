@@ -1,10 +1,13 @@
 // Custom 2D circle solver on the ground plane (x, z), fixed timestep.
-// Walls are the level's solid tiles, treated as axis-aligned unit boxes.
+// Walls are the level's solid tiles, treated as axis-aligned unit boxes, or,
+// on a level with rounded walls, its outline of segments and arcs
+// (wallGeometry.js); doors stay boxes either way.
 // Statics are immovable bumpers inside the room (barrels, chests): circles or
 // boxes that keep `bumperRestitution` of a ball's speed.
 
 import { CONFIG } from './config.js';
-import { isSolid } from './level.js';
+import { isSolid, tileAt } from './level.js';
+import { wallContacts, insideWall } from './wallGeometry.js';
 
 const P = CONFIG.physics;
 
@@ -188,17 +191,42 @@ function tileContact(x, z, r, col, row) {
   return { ...faces[0], d2: 0 };
 }
 
+/** Solid tiles a circle could touch: every wall and door tile, or only doors when the level has a rounded outline. */
 function nearbySolidTiles(level, x, z, r) {
   const tiles = [];
   for (let row = Math.floor(z - r); row <= Math.floor(z + r); row++) {
     for (let col = Math.floor(x - r); col <= Math.floor(x + r); col++) {
-      if (isSolid(level, col, row)) tiles.push({ col, row });
+      if (level.geometry ? tileAt(level, col, row) === 'door' : isSolid(level, col, row)) tiles.push({ col, row });
     }
   }
   return tiles;
 }
 
+function bounceOffWall(world, b, nx, nz, depth, col, row) {
+  b.x += nx * depth;
+  b.z += nz * depth;
+  const vn = b.vx * nx + b.vz * nz;
+  if (vn >= 0) return;
+  // Reflect, then keep a fraction of the total speed ("keeps 90% of speed").
+  b.vx = (b.vx - 2 * vn * nx) * P.wallRestitution;
+  b.vz = (b.vz - 2 * vn * nz) * P.wallRestitution;
+  world.events.push({ type: 'wall', ball: b, speed: -vn, col, row });
+}
+
+/** Rounded walls: push out of (and bounce off) each overlapped piece, deepest first, re-testing after each push. */
+function resolveOutline(world, b) {
+  const geom = world.level.geometry;
+  const first = wallContacts(geom, b.x, b.z, b.radius);
+  if (!first.length) return;
+  first.sort((p, q) => q.depth - p.depth);
+  for (const { prim } of first) {
+    const c = wallContacts({ near: () => [prim] }, b.x, b.z, b.radius)[0];
+    if (c) bounceOffWall(world, b, c.nx, c.nz, c.depth, Math.floor(b.x), Math.floor(b.z));
+  }
+}
+
 function resolveWalls(world, b) {
+  if (world.level.geometry) resolveOutline(world, b);
   const tiles = nearbySolidTiles(world.level, b.x, b.z, b.radius);
   if (!tiles.length) return;
   // Resolve nearest tiles first so a ball sliding along a flat wall is pushed off
@@ -212,20 +240,16 @@ function resolveWalls(world, b) {
 
   for (const { col, row } of tiles) {
     const c = tileContact(b.x, b.z, b.radius, col, row);
-    if (!c) continue;
-    b.x += c.nx * c.depth;
-    b.z += c.nz * c.depth;
-    const vn = b.vx * c.nx + b.vz * c.nz;
-    if (vn >= 0) continue;
-    // Reflect, then keep a fraction of the total speed ("keeps 90% of speed").
-    b.vx = (b.vx - 2 * vn * c.nx) * P.wallRestitution;
-    b.vz = (b.vz - 2 * vn * c.nz) * P.wallRestitution;
-    world.events.push({ type: 'wall', ball: b, speed: -vn, col, row });
+    if (c) bounceOffWall(world, b, c.nx, c.nz, c.depth, col, row);
   }
 }
 
-/** True if a circle at (x, z) overlaps any solid tile. */
+/** True if a circle at (x, z) overlaps any solid tile (or rounded wall). */
 export function overlapsSolid(level, x, z, r) {
+  if (level.geometry) {
+    if (insideWall(level.geometry, x, z, tileAt(level, Math.floor(x), Math.floor(z)) === 'wall')) return true;
+    if (wallContacts(level.geometry, x, z, r).length) return true;
+  }
   return nearbySolidTiles(level, x, z, r).some(({ col, row }) => tileContact(x, z, r, col, row));
 }
 
@@ -263,6 +287,12 @@ function contactNormal(level, x, z, r, dx, dz, eps) {
   const pz = z + dz * (eps + 1e-4);
   let nx = 0;
   let nz = 0;
+  if (level.geometry) {
+    for (const c of wallContacts(level.geometry, px, pz, r)) {
+      nx += c.nx * c.depth;
+      nz += c.nz * c.depth;
+    }
+  }
   for (const { col, row } of nearbySolidTiles(level, px, pz, r)) {
     const c = tileContact(px, pz, r, col, row);
     if (c) {

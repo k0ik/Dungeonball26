@@ -234,9 +234,11 @@ export function createHud(container) {
       hand.hidden = ids.length === 0;
     },
     /**
-     * A key you just picked up, at page point `from`: it floats up there,
-     * then flies into its slot in the top-right, and the slot fills as it lands.
-     * Call after the key is added to your keys (it flies to the last slot).
+     * A key you just picked up, at page point `from`: it flies to the middle
+     * of the screen, growing and spinning, holds there a moment, then flies
+     * into its slot in the top-right (settling its spin), and the slot fills
+     * as it lands. Call after the key is added to your keys (it flies to the
+     * last slot).
      */
     flyKey(color, from) {
       const K = CONFIG.render;
@@ -248,29 +250,46 @@ export function createHud(container) {
       shownKeys = null;
       const start = performance.now();
       const ease = (u) => (u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2);
+      const t1 = K.keyToCenterSeconds;
+      const t2 = t1 + K.keyHoldSeconds;
+      const t3 = t2 + K.keyToSlotSeconds;
+      const spinAt = (t) => t * K.keySpinTurns * 360; // degrees, while spinning freely
+      const spinEnd = Math.ceil(spinAt(t2) / 360 + 0.5) * 360; // the next full turn after the hold: faces front
       const frame = (now) => {
         const t = (now - start) / 1000;
-        const rise = Math.min(1, t / K.keyFloatSeconds);
-        const up = { x: from.x, y: from.y - K.keyFloatPx * (1 - (1 - rise) ** 3) };
-        let x = up.x;
-        let y = up.y;
-        let scale = K.keyFlyScale;
-        if (t > K.keyFloatSeconds) {
-          const u = ease(Math.min(1, (t - K.keyFloatSeconds) / K.keyFlySeconds));
+        const mid = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+        let x;
+        let y;
+        let scale;
+        let spin;
+        if (t < t1) {
+          const u = ease(t / t1);
+          x = from.x + (mid.x - from.x) * u;
+          y = from.y + (mid.y - from.y) * u;
+          scale = 1 + (K.keyCenterScale - 1) * u;
+          spin = spinAt(t);
+        } else if (t < t2) {
+          x = mid.x;
+          y = mid.y;
+          scale = K.keyCenterScale;
+          spin = spinAt(t);
+        } else {
+          const u = ease(Math.min(1, (t - t2) / K.keyToSlotSeconds));
           const slots = keySlots.querySelectorAll('.key-slot');
           const slot = slots[slots.length - arriving] ?? slots[slots.length - 1];
           const r = slot ? slot.getBoundingClientRect() : keySlots.getBoundingClientRect();
-          x = up.x + (r.left + r.width / 2 - up.x) * u;
-          y = up.y + (r.top + r.height / 2 - up.y) * u;
-          scale = K.keyFlyScale + (1 - K.keyFlyScale) * u;
-          if (u >= 1) {
+          x = mid.x + (r.left + r.width / 2 - mid.x) * u;
+          y = mid.y + (r.top + r.height / 2 - mid.y) * u;
+          scale = K.keyCenterScale + (1 - K.keyCenterScale) * u;
+          spin = spinAt(t2) + (spinEnd - spinAt(t2)) * u;
+          if (t >= t3) {
             el.remove();
             arriving--;
             shownKeys = null; // re-render on the next setKeys, showing the slot
             return;
           }
         }
-        el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -50%) scale(${scale.toFixed(3)})`;
+        el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -50%) perspective(200px) rotateY(${spin.toFixed(1)}deg) scale(${scale.toFixed(3)})`;
         requestAnimationFrame(frame);
       };
       requestAnimationFrame(frame);

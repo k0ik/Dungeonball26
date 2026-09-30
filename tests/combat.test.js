@@ -164,6 +164,10 @@ test('enemies moving together can each hurt the hero once; a bystander cannot', 
   const out = combat.resolve(world, hero);
   assert.deepEqual(out.map((o) => `${o.type}:${o.source.id}`), ['hurt:a', 'hurt:b']);
   assert.equal(hero.hp, 8);
+  // Both are spent until the phase ends (the game drops their "!" meanwhile).
+  assert.ok(combat.hasHitHero(a) && combat.hasHitHero(b) && !combat.hasHitHero(idle));
+  combat.beginShot();
+  assert.ok(!combat.hasHitHero(a), 'your next shot: nobody is spent');
 });
 
 test('a killing blow ricochets off the enemy instead of stopping dead', () => {

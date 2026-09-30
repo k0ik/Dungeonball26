@@ -830,11 +830,18 @@ export function createGame(container, levels, startIndex = 0) {
       }
     }
 
-    // "!" over every enemy that can see you right now, even mid-shot.
-    const lungers = new Set(
-      state.phase === 'enemyWait' || state.phase === 'enemyMove' ? state.moves.filter((m) => m.kind === 'lunge').map((m) => m.enemy) : [],
-    );
+    // "!" over every enemy that can see you right now, even mid-shot. An
+    // enemy that has already hit you this enemy move is spent: it calms down
+    // and shows no "!" until everything rests, so the balls still rolling at
+    // you that can hurt you stand out.
+    const enemyMove = state.phase === 'enemyWait' || state.phase === 'enemyMove';
+    const lungers = new Set(enemyMove ? state.moves.filter((m) => m.kind === 'lunge').map((m) => m.enemy) : []);
     for (const enemy of enemies()) {
+      if (enemyMove && combat.hasHitHero(enemy)) {
+        overlay.setAlert(enemy, false, false);
+        enemyViews.get(enemy)?.setAngry(false);
+        continue;
+      }
       const lunging = lungers.has(enemy);
       const aware = lunging || canSee(level, enemy, hero, world.balls, world.statics);
       overlay.setAlert(enemy, aware, lunging);

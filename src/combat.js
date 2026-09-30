@@ -68,6 +68,10 @@ export function createCombat() {
     get shotKills() {
       return killsThisShot;
     },
+    /** True if `enemy` already hit the hero (or its shield) in the current enemy phase. */
+    hasHitHero(enemy) {
+      return !!actors && haveHit.has(enemy);
+    },
     /** Call at each launch: the once-per-pair combo rule resets per shot. */
     beginShot() {
       pairsThisShot = new Set();

@@ -121,3 +121,26 @@ test('a ball bounces off a box bumper on the face it hits', () => {
   assert.ok(b.vz < 0 && Math.abs(b.vx) < 1e-9, 'straight back off the flat face');
   assert.ok(b.z <= 5.5 - 0.25 - b.radius + 1e-9);
 });
+
+test('Elasticity: a ball pinned between a bumper and a wall is kicked once, not forever', async () => {
+  const { applyBumperKick, createStaticBox } = await import('../src/physics.js');
+  const level = parseLevel('1######\n#S....#\n#######');
+  const world = createWorld(level);
+  // A chest just far enough from the right wall for the ball to rattle between them.
+  world.statics.push(createStaticBox({ x: 4.3, z: 1.5, halfX: 0.36, halfZ: 0.28, kind: 'chest' }));
+  const b = createBall({ x: 5.35, z: 1.5 });
+  b.friction = CONFIG.cards.athleticFriction; // the Athletic card
+  b.vx = 6;
+  world.balls.push(b);
+  const kicked = new Set();
+  let kicks = 0;
+  let t = 0;
+  while (!isAtRest(world) && t < 30) {
+    stepWorld(world);
+    if (applyBumperKick(world, b, CONFIG.cards.elasticityKick, CONFIG.aim.maxLaunchSpeed, kicked)) kicks++;
+    world.events.length = 0;
+    t += CONFIG.physics.step;
+  }
+  assert.equal(kicks, 1);
+  assert.ok(isAtRest(world), `still bouncing after ${t.toFixed(1)} s`);
+});

@@ -75,6 +75,8 @@ Aim is a slingshot pull-back: press on the hero, drag away from the target, rele
 - **Preview accuracy:** the preview must match the real shot exactly. It runs the same combat and object rules on copies of the enemies (with their HP) and of the barrels and chests (with their cracks), so a killing blow's ricochet, a barrel breaking on its second crack and a red barrel going off all show in the path. Releasing fires exactly the shot the preview last showed, rather than re-reading the release point, so a finger's lift-off jitter can't nudge the angle. A test fires many shots through the real simulation and checks each against its preview.
 - **Locked:** while any ball is moving or during the enemy phase.
 
+- **Stall failsafe:** if balls have been moving for more than 10 seconds straight (`physics.stallSeconds`), every ball loses speed steadily (`physics.stallDamping`) until everything rests, so a turn can never hang on something caught bouncing in a tight spot.
+
 ## Combat rules and formulas
 
 Who takes damage depends on whose phase it is, never on ball speed. Speed only decides how far things travel.
@@ -153,7 +155,7 @@ Starting cards (numbers are defaults to tune):
 | Locksmith | Doors open without keys |
 | Athletic | Your ball rolls faster and farther: 25% less friction on it (enemies unaffected; the aim preview includes it) |
 | Money Magnet | Gold on the floor (enemy coins, barrel gold and strip coins) is collected from farther away: within 1.5 tiles of your ball's centre instead of just on contact (about 0.6 tiles), drawn in to you as you roll past. Other loot still needs contact |
-| Elasticity | Barrels, chests and enemies act like pinball bumpers for you: each time your ball bounces off one, it's kicked away with +1.5 tiles/s of extra speed along the bounce (never above the 9 tiles/s max launch speed). Walls bounce as normal. The aim preview includes the kick |
+| Elasticity | Barrels, chests and enemies act like pinball bumpers for you: when your ball bounces off one, it's kicked away with +1.5 tiles/s of extra speed along the bounce (never above the 9 tiles/s max launch speed). Each bumper kicks once per shot, so a ball caught rattling between a chest and a wall (worst with Athletic) runs down instead of bouncing forever. Walls bounce as normal. The aim preview includes the kick |
 
 Defaults assumed until you say otherwise: an offer never includes a card you already hold, and a card you replace goes back into the pool. Cards carry over between levels like HP and gold, and a game over restores the cards you entered the level with.
 

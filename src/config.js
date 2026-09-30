@@ -11,6 +11,11 @@ export const CONFIG = {
     wallRestitution: 0.9, // fraction of speed kept after a wall bounce
     bumperRestitution: 0.7, // barrels and chests (M5)
     ballRestitution: 0.9, // equal-mass ball-to-ball
+    // Failsafe against a ball caught bouncing forever (say, pinned between a
+    // bumper and a wall): after this long in continuous motion, every ball
+    // loses speed at this rate (per second, exponential) until all rest.
+    stallSeconds: 10,
+    stallDamping: 1.5,
   },
 
   ball: {

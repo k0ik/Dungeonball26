@@ -94,6 +94,7 @@ export function createGame(container, levels, startIndex = 0) {
     returnBoost: 0, // seconds left of the camera's fast return to you
     shotCoins: 0, // coins taken this shot: the streak count (and the tick's pitch)
     keys: [], // colours of the keys you hold; this level only
+    kicked: new Set(), // bumpers that gave their Elasticity kick this shot
     panned: false, // you dragged the map to look around; the view holds until you shoot
     entry: null, // HP, gear and gold when this level was entered; game over restores them
     moves: [], // this enemy phase: { enemy, kind: 'lunge' } or { enemy, kind: 'patrol', vx, vz, target }
@@ -258,6 +259,7 @@ export function createGame(container, levels, startIndex = 0) {
     state.phase = 'shot';
     state.shots++;
     combat.beginShot();
+    state.kicked = new Set(); // Elasticity: each bumper kicks once per shot
     // A new shot: the coin streak and the coin tick's pitch start over.
     state.shotCoins = 0;
     sfx.play('launch', 0.4 + 0.6 * shot.fill, { pitch: 0.9 + 0.2 * shot.fill });
@@ -509,6 +511,25 @@ export function createGame(container, levels, startIndex = 0) {
     }
   }
 
+  /**
+   * Failsafe: if balls have been moving for more than `stallSeconds` in a
+   * row (something caught bouncing in a tight spot), drain their speed
+   * steadily so the turn always ends.
+   */
+  function dampStalls(dt) {
+    if (isAtRest(world)) {
+      state.movingFor = 0;
+      return;
+    }
+    state.movingFor = (state.movingFor ?? 0) + dt;
+    if (state.movingFor < CONFIG.physics.stallSeconds) return;
+    const k = Math.exp(-CONFIG.physics.stallDamping * dt);
+    for (const b of world.balls) {
+      b.vx *= k;
+      b.vz *= k;
+    }
+  }
+
   /** The ball labels about you should follow, or null to leave them in place (config). */
   const heroFollow = () => (CONFIG.render.heroLabelsFollowBall ? hero : null);
 
@@ -732,11 +753,12 @@ export function createGame(container, levels, startIndex = 0) {
     let steps = 0;
     while (acc >= step && steps < CONFIG.physics.maxStepsPerFrame) {
       stepWorld(world, step);
+      dampStalls(step);
       // Both read this step's events before handleEvents clears them.
       const outcomes = combat.resolve(world, hero);
       const objectOutcomes = resolveObjects(world, hero, Math.random, { barrelHits: card('barrelOfFun') ? 1 : CONFIG.objects.barrelHits });
       // Elasticity: barrels, chests and enemies kick your ball on like pinball bumpers.
-      if (card('elasticity')) applyBumperKick(world, hero, CONFIG.cards.elasticityKick, CONFIG.aim.maxLaunchSpeed);
+      if (card('elasticity')) applyBumperKick(world, hero, CONFIG.cards.elasticityKick, CONFIG.aim.maxLaunchSpeed, state.kicked);
       handleEvents(outcomes, objectOutcomes);
       checkPickups();
       checkDoors();

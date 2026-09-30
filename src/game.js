@@ -361,8 +361,7 @@ export function createGame(container, levels, startIndex = 0) {
     state.lives = CONFIG.hero.lives;
     state.gold = 0;
     state.goldFraction = 0;
-    state.cards = [];
-    applyCards();
+    dealStartingCards();
     loadLevel(0);
     hud.hideScreen();
     levelBanner();
@@ -370,6 +369,16 @@ export function createGame(container, levels, startIndex = 0) {
 
   // --- Cards -------------------------------------------------------------------
   const card = (id) => has(state.cards, id);
+
+  /**
+   * A new game's hand: empty, or (testing aid, CONFIG.cards.startDealt)
+   * that many random cards already dealt. A dealt Doppleganger gives its life.
+   */
+  function dealStartingCards() {
+    state.cards = offerCards([], Math.random, CONFIG.cards.startDealt);
+    if (has(state.cards, 'doppleganger')) state.lives += 1;
+    applyCards();
+  }
 
   /** Effects that sit on the hero rather than being checked as they happen. */
   function applyCards() {
@@ -866,6 +875,7 @@ export function createGame(container, levels, startIndex = 0) {
 
     requestAnimationFrame(frame);
   }
+  dealStartingCards();
   loadLevel(startIndex);
   levelBanner();
   requestAnimationFrame(frame);

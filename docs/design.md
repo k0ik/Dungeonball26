@@ -139,6 +139,7 @@ Trait cards are the roguelike layer. Each is an always-on ability that lasts for
 - **Always on:** cards have no activation and no cooldown; their effect simply applies while you hold them. The cards you hold sit as a small row of chips (icon and name) along the bottom of the screen.
 - **The pick screen:** reaching an exit (except the last level's) darkens the board and shows the 3 offered cards, each with its icon, name and effect. Tap one to take it. With 3 cards already held, a second step shows your cards ("Take Bullionaire: tap the card to give up for it"), with "Keep my cards" to back out. "Skip" is always there. The next level loads once you've chosen.
 - **Carry-over:** cards carry between levels; a game over restores the cards you entered the level with; a new run starts with none.
+- **Testing aid:** while cards are being tuned, every new game starts with 3 random cards already dealt (`cards.startDealt`; set it to 0 for the real game). A dealt Doppleganger gives its extra life.
 
 Starting cards (numbers are defaults to tune):
 

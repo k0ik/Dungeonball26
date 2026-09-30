@@ -197,6 +197,7 @@ Trick shots are special one-shot combos, tracked as achievements. Each one pays 
 | Trick shot | How to land it | First-time bonus |
 | --- | --- | --- |
 | Pit Stop | Collect a potion or super potion, then kill an enemy, in the same shot | +10 gold |
+| Bring a Sword to a Ball Fight | Collect a sword, then kill an enemy, in the same shot (the sword's +3 is often what makes the kill) | +10 gold |
 | Double Kill | Kill 2 enemies in one shot (this also earns the combo-kill bonus turn) | +10 gold |
 | Triple Kill | Kill 3 enemies in one shot | +25 gold |
 | Barrel Roll | Knock an enemy into a barrel: you hit it and it cracks or breaks a barrel | +10 gold |

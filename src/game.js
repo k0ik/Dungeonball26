@@ -90,6 +90,7 @@ export function createGame(container, levels, startIndex = 0) {
     gold: 0, // the score
     goldFraction: 0, // Bullionaire's leftover fraction of a gold, carried to the next pickup
     cards: [], // trait cards held (ids), at most CONFIG.cards.slots
+    returnBoost: 0, // seconds left of the camera's fast return to you
     shotCoins: 0, // coins taken this shot: the streak count (and the tick's pitch)
     keys: [], // colours of the keys you hold; this level only
     entry: null, // HP, gear and gold when this level was entered; game over restores them
@@ -732,6 +733,7 @@ export function createGame(container, levels, startIndex = 0) {
         if (isAtRest(world)) {
           state.moves = [];
           state.phase = 'aim';
+          state.returnBoost = CONFIG.camera.returnBoostSeconds; // snap back to you quickly
         }
         break;
       case 'down':
@@ -830,7 +832,10 @@ export function createGame(container, levels, startIndex = 0) {
       const enemyPhase = state.phase === 'enemyWait' || state.phase === 'enemyMove';
       let width = rig.speedWidth(speedOf(hero));
       if (enemyPhase) width = rig.widthAround(hero, state.moves.map((m) => m.from), width, CONFIG.camera.enemyPhaseWidth);
-      rig.frame(framingPoints(), width, dt);
+      // Returning to your turn: faster until the camera has arrived (checked
+      // after framing, so it's measured against the new goal, not the old one).
+      rig.frame(framingPoints(), width, dt, state.returnBoost > 0 ? CONFIG.camera.returnBoost : 1);
+      if (state.returnBoost > 0) state.returnBoost = rig.settled ? 0 : state.returnBoost - dt;
     }
     renderer.render(scene, rig.camera);
     overlay.update();

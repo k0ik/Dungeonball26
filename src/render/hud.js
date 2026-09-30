@@ -100,6 +100,13 @@ export function createHud(container) {
       shownTurn = who;
       turn.textContent = who === 'enemy' ? 'Enemy Turn' : 'Player Turn';
       turn.dataset.who = who;
+      if (who === 'enemy') {
+        // The enemy turn just switches the label: no pulse, no toast (and any
+        // toast still flying is dropped).
+        turn.classList.remove('show', 'landing');
+        toast.classList.remove('show');
+        return;
+      }
       turn.classList.remove('show');
       void turn.offsetWidth;
       turn.classList.add('show');

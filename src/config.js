@@ -195,6 +195,10 @@ export const CONFIG = {
     // enemies about to move (where they stand), up to this width; then it
     // eases back to the resting width for your shot.
     enemyPhaseWidth: 13,
+    // Back to your turn: the camera returns to you this many times faster than
+    // it normally follows, until it has arrived (at most returnBoostSeconds).
+    returnBoost: 3,
+    returnBoostSeconds: 1.2,
     // The enemies wait for the camera to arrive before they move (at most enemyTurnMaxWait).
     settleDistance: 0.6, // tiles from the framing goal that count as arrived
     settleZoom: 0.12, // fraction of the goal width that counts as arrived

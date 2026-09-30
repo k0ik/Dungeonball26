@@ -489,7 +489,9 @@ export function createGame(container, levels, startIndex = 0) {
     }
     const label = collect(item, hero, state);
     sfx.play(PICKUP_SOUND[item.kind], 0.8);
-    overlay.float(label, hero.x, hero.z, hero.radius * 2 + 0.8, PICKUP_STYLE[item.kind], heroFollow());
+    // A key floats up from where it lay and flies into its HUD slot instead of a label.
+    if (item.kind === 'key') hud.flyKey(item.color, overlay.pagePoint(item.x, 0.4, item.z));
+    else overlay.float(label, hero.x, hero.z, hero.radius * 2 + 0.8, PICKUP_STYLE[item.kind], heroFollow());
   }
 
   /**

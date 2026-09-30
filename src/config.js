@@ -243,6 +243,11 @@ export const CONFIG = {
     heroLabelsFollowBall: true,
     bonusReminderAfter: 1.5, // s after "Combo Kill!" before a separate "Bonus turn!" banner is worth showing
     hpBarMinPx: 14,
+    // A key you pick up floats up from where it lay, then flies into its HUD slot.
+    keyFloatPx: 60,
+    keyFloatSeconds: 0.45,
+    keyFlySeconds: 0.55,
+    keyFlyScale: 1.8, // its size while floating, relative to the HUD icon
     itemXrayOpacity: 0.6, // floor pickups hidden behind a wall show through it as a silhouette this opaque
     // While you aim (dragged past the cancel ring), walls and doors between
     // the camera and your ball or aim path fade to this opacity, over these

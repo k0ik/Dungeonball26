@@ -57,6 +57,12 @@ export function createOverlay(container, camera) {
   }
 
   return {
+    /** Where a world point is on the page (viewport pixels), for effects that fly into the HUD. */
+    pagePoint(x, y, z) {
+      const p = toScreen(x, y, z);
+      const r = layer.getBoundingClientRect();
+      return { x: r.left + p.left, y: r.top + p.top };
+    },
     /** HP bar over a ball; `variant` 'hero' draws it green like the mockup. */
     addBar(ball, variant = 'enemy') {
       const el = document.createElement('div');

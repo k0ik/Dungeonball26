@@ -14,6 +14,8 @@ export function createHud(container) {
   container.appendChild(bar);
   const gold = bar.querySelector('.hud-gold');
   const keySlots = bar.querySelector('.hud-right');
+  const keyHex = (c) => `#${CONFIG.colors.keys[c].toString(16).padStart(6, '0')}`;
+  let arriving = 0; // keys still flying into their slots
 
   // Trait cards: the ones you hold, as a row of chips at the bottom; and the
   // end-of-level pick, a full-screen panel that takes the input.
@@ -231,13 +233,56 @@ export function createHud(container) {
       }
       hand.hidden = ids.length === 0;
     },
+    /**
+     * A key you just picked up, at page point `from`: it floats up there,
+     * then flies into its slot in the top-right, and the slot fills as it lands.
+     * Call after the key is added to your keys (it flies to the last slot).
+     */
+    flyKey(color, from) {
+      const K = CONFIG.render;
+      const el = document.createElement('div');
+      el.className = 'key-fly';
+      el.innerHTML = keyIcon(keyHex(color));
+      document.body.appendChild(el);
+      arriving++;
+      shownKeys = null;
+      const start = performance.now();
+      const ease = (u) => (u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2);
+      const frame = (now) => {
+        const t = (now - start) / 1000;
+        const rise = Math.min(1, t / K.keyFloatSeconds);
+        const up = { x: from.x, y: from.y - K.keyFloatPx * (1 - (1 - rise) ** 3) };
+        let x = up.x;
+        let y = up.y;
+        let scale = K.keyFlyScale;
+        if (t > K.keyFloatSeconds) {
+          const u = ease(Math.min(1, (t - K.keyFloatSeconds) / K.keyFlySeconds));
+          const slots = keySlots.querySelectorAll('.key-slot');
+          const slot = slots[slots.length - arriving] ?? slots[slots.length - 1];
+          const r = slot ? slot.getBoundingClientRect() : keySlots.getBoundingClientRect();
+          x = up.x + (r.left + r.width / 2 - up.x) * u;
+          y = up.y + (r.top + r.height / 2 - up.y) * u;
+          scale = K.keyFlyScale + (1 - K.keyFlyScale) * u;
+          if (u >= 1) {
+            el.remove();
+            arriving--;
+            shownKeys = null; // re-render on the next setKeys, showing the slot
+            return;
+          }
+        }
+        el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -50%) scale(${scale.toFixed(3)})`;
+        requestAnimationFrame(frame);
+      };
+      requestAnimationFrame(frame);
+    },
     /** The keys you hold, as a list of colours ('red', 'blue', 'yellow'). */
     setKeys(keys) {
-      const key = keys.join();
+      const key = `${keys.join()}|${arriving}`;
       if (key === shownKeys) return;
       shownKeys = key;
+      // The newest slots stay empty while their keys are still flying in (flyKey).
       keySlots.innerHTML = keys
-        .map((c) => `<span class="key-slot" title="${c} key">${keyIcon(`#${CONFIG.colors.keys[c].toString(16).padStart(6, '0')}`)}</span>`)
+        .map((c, i) => `<span class="key-slot${i >= keys.length - arriving ? ' arriving' : ''}" title="${c} key">${keyIcon(keyHex(c))}</span>`)
         .join('');
       keySlots.setAttribute('aria-label', keys.length ? `Keys: ${keys.join(', ')}` : 'No keys');
     },

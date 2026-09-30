@@ -474,6 +474,20 @@ body {
 }
 
 /* Keys you hold, top right. */
+.key-slot.arriving {
+  visibility: hidden;
+}
+
+/* A picked-up key on its way into the HUD (hud.flyKey). */
+.key-fly {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.key-fly svg,
 .key-slot svg {
   display: block;
   width: 26px;

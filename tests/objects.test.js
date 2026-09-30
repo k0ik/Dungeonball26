@@ -179,22 +179,31 @@ test('a real shot cracks a barrel through the physics', () => {
   assert.ok(out.some((o) => o.type === 'crack' && o.obj === barrel));
 });
 
-test('a sword gives +3 ATK for one round: your next shot, then it breaks', () => {
+test('a sword is spent only by a shot that hits an enemy', () => {
   const hero = { hp: 10, maxHp: 10, atk: 1, shield: false, sword: 0 };
   const run = { gold: 0, lives: 3 };
   assert.equal(endSwordShot(hero), false, 'no sword, nothing breaks');
   collect({ kind: 'sword' }, hero, run);
   assert.equal(hero.atk, 4);
   assert.equal(canCollect({ kind: 'sword' }, hero), false, 'a second sword waits while you hold one');
-  // Picked up mid-shot: that shot ends without breaking it.
+  // Shots that hit no enemy leave it alone, however many there are.
+  assert.equal(endSwordShot(hero), false);
   assert.equal(endSwordShot(hero), false);
   assert.equal(hero.atk, 4);
-  // Your next shot swings it, every hit at +3, and it breaks as the shot ends.
+  // A shot that hits: every hit in it gets +3, and it breaks as the shot ends.
   swingSword(hero);
+  swingSword(hero); // a second hit in the same shot
   assert.equal(hero.atk, 4);
   assert.equal(endSwordShot(hero), true);
   assert.equal(hero.atk, 1);
   assert.equal(canCollect({ kind: 'sword' }, hero), true);
+});
+
+test('coin streaks pay at 5, 10 and 20 coins in one shot', async () => {
+  const { coinStreakBonus } = await import('../src/loot.js');
+  const paid = [];
+  for (let n = 1; n <= 25; n++) if (coinStreakBonus(n)) paid.push(`${n}:+${coinStreakBonus(n).bonus}`);
+  assert.deepEqual(paid, ['5:+5', '10:+10', '20:+25']);
 });
 
 test('enemy drops: sword, shield and potion each on their own rare chance', async () => {

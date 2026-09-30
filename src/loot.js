@@ -2,9 +2,8 @@
 // whether you can use a pickup right now, and what collecting it does.
 //
 // `run` is the player's run state: { gold, lives, keys }. The hero ball carries
-// hp, maxHp, atk, shield (bool) and sword: 0 (none), 'ready' (picked up, waiting
-// for your next shot) or 'swinging' (that shot is under way; it breaks when the
-// shot comes to rest).
+// hp, maxHp, atk, shield (bool) and sword: 0 (none), 'ready' (held, unused) or
+// 'swinging' (it hit an enemy this shot; it breaks when the shot comes to rest).
 
 import { CONFIG } from './config.js';
 
@@ -54,10 +53,9 @@ export function canCollect(item, hero) {
 }
 
 /**
- * A sword lasts one round: it powers every hit of your next shot, then
- * breaks when that shot comes to rest. (Picked up mid-shot, it also counts
- * for the rest of that shot, and still gets your next one.) Call as each of
- * your shots starts.
+ * A sword is spent by the first shot of yours that hits an enemy: every hit
+ * in that shot gets its +3, and it breaks as that shot comes to rest. Shots
+ * that hit no enemy don't touch it. Call on each of your hits on an enemy.
  */
 export function swingSword(hero) {
   if (hero.sword === 'ready') hero.sword = 'swinging';
@@ -72,6 +70,11 @@ export function endSwordShot(hero) {
 }
 
 /** Apply a pickup. Returns the short label that floats above the hero. */
+/** The coin-streak bonus reached at exactly `count` coins in one shot, or null. */
+export function coinStreakBonus(count) {
+  return L.coinStreaks.find((s) => s.count === count) ?? null;
+}
+
 export function collect(item, hero, run) {
   switch (item.kind) {
     case 'gold':

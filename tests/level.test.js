@@ -118,9 +118,9 @@ test('coins that touch side by side form one strip; diagonal or separate ones do
   assert.deepEqual(sizes, [1, 1, 3, 4]);
 });
 
-test('every shipped level has at least one coin strip long enough for a Clean Sweep', () => {
+test('every shipped level has a coin strip of 5 or more, enough for a Clean Sweep on its own', () => {
   for (const file of readdirSync(levelsDir).filter((f) => f.endsWith('.txt'))) {
     const level = parseLevel(readFileSync(new URL(file, levelsDir), 'utf8'), file);
-    assert.ok(coinStrips(level).some((s) => s.length >= 3), file);
+    assert.ok(coinStrips(level).some((s) => s.length >= 5), file);
   }
 });

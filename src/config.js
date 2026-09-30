@@ -114,10 +114,14 @@ export const CONFIG = {
     // gear or a potion (rolled independently, so more than one can drop).
     enemyDrops: { sword: 0.05, shield: 0.08, potion: 0.12, superPotionShare: 0.25 },
     // Coin strips: single coins placed in a level ('*'), 1 gold each.
-    // Collecting a whole strip in one of your shots is a "Clean Sweep".
     stripCoinValue: 1,
-    sweepBonus: 5,
-    sweepMinCoins: 3, // shorter strips pay no sweep bonus
+    // Coin streaks: any coins taken within one of your shots (placed or
+    // dropped) count up, and these counts pay a bonus as you reach them.
+    coinStreaks: [
+      { count: 5, bonus: 5, name: 'Clean Sweep!' },
+      { count: 10, bonus: 10, name: 'Super Sweep!' },
+      { count: 20, bonus: 25, name: 'Mega Sweep!' },
+    ],
     // Kills and barrel gold scatter that many single coins (the same coins as
     // strips) around the spot: each flies out to a random clear spot at a
     // random distance, arc height and speed, bounces once, then can be taken.

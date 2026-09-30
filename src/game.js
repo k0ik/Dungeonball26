@@ -18,7 +18,7 @@
 
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
-import { parseLevel, tileCenter, tileAt, coinStrips } from './level.js';
+import { parseLevel, tileCenter, tileAt } from './level.js';
 import { createWorld, createBall, stepWorld, isAtRest, speedOf, overlapsSolid } from './physics.js';
 import { createCombat, createEnemy } from './combat.js';
 import { canSee } from './sight.js';
@@ -34,7 +34,7 @@ import { createAimView } from './render/aimView.js';
 import { createCameraRig } from './render/cameraRig.js';
 import { createAudio } from './audio.js';
 import { createObjects, resolveObjects } from './objects.js';
-import { rollLoot, rollEnemyDrops, canCollect, collect, swingSword, endSwordShot } from './loot.js';
+import { rollLoot, rollEnemyDrops, canCollect, collect, swingSword, endSwordShot, coinStreakBonus } from './loot.js';
 import { createObjectsView } from './render/objectsView.js';
 import { createItemsView } from './render/itemsView.js';
 import { createDoorsView } from './render/doorsView.js';
@@ -87,8 +87,7 @@ export function createGame(container, levels, startIndex = 0) {
     clears: 0,
     lives: CONFIG.hero.lives,
     gold: 0, // the score
-    strips: [], // this level's coin strips: { size, thisShot }
-    shotCoins: 0, // strip coins taken this shot (the tick's pitch)
+    shotCoins: 0, // coins taken this shot: the streak count (and the tick's pitch)
     keys: [], // colours of the keys you hold; this level only
     entry: null, // HP, gear and gold when this level was entered; game over restores them
     moves: [], // this enemy phase: { enemy, kind: 'lunge' } or { enemy, kind: 'patrol', vx, vz, target }
@@ -117,11 +116,7 @@ export function createGame(container, levels, startIndex = 0) {
     world.statics = createObjects(level);
     // Floor pickups: kill coins, barrel loot, the level's keys and its coin strips.
     world.items = level.keys.map((k) => ({ kind: 'key', color: k.color, ...tileCenter(k) }));
-    state.strips = coinStrips(level).map((coins) => {
-      const strip = { size: coins.length, thisShot: 0 };
-      for (const c of coins) world.items.push({ kind: 'coin', value: CONFIG.loot.stripCoinValue, strip, ...tileCenter(c) });
-      return strip;
-    });
+    for (const c of level.coins) world.items.push({ kind: 'coin', value: CONFIG.loot.stripCoinValue, ...tileCenter(c) });
     state.shotCoins = 0;
     state.keys = []; // unused keys don't carry over (and a game over takes them back)
     objectsView.build(world.statics);
@@ -222,9 +217,7 @@ export function createGame(container, levels, startIndex = 0) {
     state.phase = 'shot';
     state.shots++;
     combat.beginShot();
-    swingSword(hero);
-    // A new shot: strip sweeps and the coin tick's pitch start over.
-    for (const strip of state.strips) strip.thisShot = 0;
+    // A new shot: the coin streak and the coin tick's pitch start over.
     state.shotCoins = 0;
     sfx.play('launch', 0.4 + 0.6 * shot.fill, { pitch: 0.9 + 0.2 * shot.fill });
   }
@@ -439,26 +432,24 @@ export function createGame(container, levels, startIndex = 0) {
 
   /**
    * A single coin: no label (a run of them would spam), just a tick that
-   * rises in pitch with each coin this shot. Taking a whole strip within one
-   * of your shots is a Clean Sweep, which pays a bonus. (Scattered coins
-   * belong to no strip.)
+   * rises in pitch with each coin this shot. Coins taken within one of your
+   * shots, placed or dropped alike, make a streak: 5, 10 and 20 in one shot
+   * each pay a bonus (Clean, Super and Mega Sweep).
    */
   function pickUpStripCoin(item) {
     collect(item, hero, state);
     itemsView.popCoin(item.x, item.z);
-    state.shotCoins++;
-    sfx.play('coin', 0.45, { pitch: Math.min(2, 0.9 + 0.07 * state.shotCoins) });
-    const strip = item.strip;
-    if (!strip) return;
     if (state.phase !== 'shot') {
-      strip.thisShot = -Infinity; // picked up outside your shot: no sweep for this strip
+      sfx.play('coin', 0.45); // outside your shot (knocked about on the enemy turn): no streak
       return;
     }
-    strip.thisShot++;
-    if (strip.thisShot === strip.size && strip.size >= CONFIG.loot.sweepMinCoins) {
-      state.gold += CONFIG.loot.sweepBonus;
+    state.shotCoins++;
+    sfx.play('coin', 0.45, { pitch: Math.min(2, 0.9 + 0.07 * state.shotCoins) });
+    const streak = coinStreakBonus(state.shotCoins);
+    if (streak) {
+      state.gold += streak.bonus;
       sfx.play('sweep', 0.8);
-      overlay.float(`Clean Sweep! +${CONFIG.loot.sweepBonus}`, hero.x, hero.z, hero.radius * 2 + 0.8, 'gold', heroFollow());
+      overlay.float(`${streak.name} +${streak.bonus}`, hero.x, hero.z, hero.radius * 2 + 0.8, 'gold', heroFollow());
     }
   }
 
@@ -526,6 +517,7 @@ export function createGame(container, levels, startIndex = 0) {
       if (o.type === 'hit' || o.type === 'combo') {
         if (o.type === 'hit') {
           sfx.play('hit', 0.9, { pitch: 0.95 + Math.random() * 0.1 });
+          swingSword(hero); // this shot spends the sword (if you hold one)
         }
         else if (!comboSounded) {
           sfx.play('combo', 0.9);
@@ -640,7 +632,7 @@ export function createGame(container, levels, startIndex = 0) {
     switch (state.phase) {
       case 'shot':
         if (isAtRest(world)) {
-          // A sword lasts one round: it breaks as the shot it powered comes to rest.
+          // A sword breaks as the shot in which it hit an enemy comes to rest.
           if (endSwordShot(hero)) {
             overlay.float('Sword broke!', hero.x, hero.z, hero.radius * 2 + 1, 'gear', heroFollow());
             sfx.play('blocked', 0.6, { pitch: 0.8 });

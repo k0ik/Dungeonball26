@@ -100,7 +100,7 @@ D_{\text{enemy}} = \text{ATK} \qquad D_{\text{hero}} = 1 \qquad \text{HP}_{\text
 | Stat | Start value | Notes |
 | --- | --- | --- |
 | Hero max HP | 10 | A health potion heals 1 and a super health potion 5, capped at max |
-| Hero ATK | 1 | A sword adds 3 (ATK 4) for one round: every hit of your next shot |
+| Hero ATK | 1 | A sword adds 3 (ATK 4) to every hit of the first shot in which you hit an enemy |
 | Shield | None held | A held shield cancels the next enemy hit or red-barrel blast on you and is used up by it (replaces DEF, now that every hit costs 1 HP) |
 | Enemy level L | 1 to 3 in the MVP | Read from the enemy's HP bar: one notch per HP, and the bar grows longer for tougher enemies |
 | Kill reward | L gold | Drops as coins where it died |
@@ -218,7 +218,7 @@ Barrels, chests, keys and doors are the level's furniture. Chest gold is granted
 | Key | Floor pickup (a standing key in red, blue or yellow), collected by rolling over it. Color-matched to one door and shown in a HUD slot at the top right until used. |
 | Door | Solid and opaque until the hero is within half a tile while holding the matching key. Then it opens for good (it sinks into the floor with a clunk and "Unlocked!") and the key is consumed; the check runs every physics step, so a ball rolling at a door with its key usually goes straight through. A closed door is a block in its key's colour, a little lower than the walls, with a keyhole on its faces. Enemies can pass through an open door. |
 | Exit | Ends the level when the hero's center enters its tile. |
-| Coin strip | Single coins placed in the level with `*`, 1 gold each, set out in rows or columns like Pac-Man dots. Coins that touch side by side form one strip. They don't block the ball and are collected by rolling over them (enemies don't take them), with a quick tick that rises in pitch with each coin in the same shot instead of a floating label. Collecting a whole strip of 3 or more within one of your shots is a **Clean Sweep**: +5 gold, a sparkle sound and a "Clean Sweep! +5" label. A strip also shows you a line: a trail of coins toward a wall hints at a bank shot, and it can draw you across a room into enemies' sight. Money Magnet (a trait card) sweeps up strips from a near miss. |
+| Coin strip | Single coins placed in the level with `*`, 1 gold each, set out in rows or columns like Pac-Man dots. Coins that touch side by side form one strip. They don't block the ball and are collected by rolling over them (enemies don't take them), with a quick tick that rises in pitch with each coin in the same shot instead of a floating label. **Coin streaks:** any coins you take within one of your shots count up, strip coins and dropped coins alike. 5 in one shot is a **Clean Sweep** (+5 gold), 10 a **Super Sweep** (+10) and 20 a **Mega Sweep** (+25), each with a sparkle and a label ("Clean Sweep! +5"); the bonuses add up, so a 20-coin shot pays all three. Coins taken outside your shot (knocked about on the enemy turn) don't count. A strip also shows you a line: a trail of coins toward a wall hints at a bank shot, and it can draw you across a room into enemies' sight. Money Magnet (a trait card) sweeps up strips from a near miss. |
 | Coins | There is one coin: the single 1-gold coin of the strips. A killed enemy scatters as many as its level (and now and then gear or a potion, see below), and barrel gold scatters its 1 to 5 the same way. Each coin flies out from the spot in an arc to a random clear spot 0.5 to 1.7 tiles away (never into a wall, door or bumper, nor across one), with a random arc height and flight time, so they land one after another, each with a single small bounce and a faint tink. A coin can be taken once it has landed. Collected by rolling over them, so grabbing them can pull you back into an enemy's sight. Scattered coins belong to no strip. Every coin on the floor spins in step with the others (one shared angle). A coin you take hops straight up, flashes white once and vanishes, like the chest's coins. |
 | Enemy drops | Besides its coins, a kill has separate, rare chances of dropping a sword (5%), a shield (8%) and a potion (12%, a quarter of those a super potion). They're rolled independently, so a lucky kill can drop more than one. Extras fly out and bounce just like the coins, and wait on the floor to be rolled over. |
 | Explosive barrel (red) | Solid bumper with the same physics as a barrel. Any contact from the hero or an enemy, at any speed, detonates it: the ball that touched it takes 1 flat damage, ignoring ATK, and the barrel is destroyed with no loot. If it's you and you hold a shield, the shield takes the blast instead ("Blocked!") and is used up. |
@@ -231,7 +231,7 @@ Every barrel drops something, left on the floor where the barrel was. You collec
 | Health potion | 25% | +1 HP, capped at max |
 | Super health potion | 8% | +5 HP, capped at max |
 | Shield | 12% | You now hold a shield: it cancels the next enemy hit or red-barrel blast on you, then is used up. Shields don't stack |
-| Sword | 5% | +3 ATK (ATK 4) for one round: every hit of your next shot, then it breaks as that shot comes to rest ("Sword broke!"). Picked up mid-shot, it also counts for the rest of that shot |
+| Sword | 5% | +3 ATK (ATK 4). It's spent by the first shot of yours that hits an enemy: every hit in that shot gets the +3, and it breaks as that shot comes to rest ("Sword broke!"). Shots that hit no enemy don't touch it |
 | 1-up | 5% | +1 life |
 
 There is no inventory. Each pickup floats above the hero, for example "+1 HP", "+5 HP", "+3", "Shield", "Sword" or "1-up". Like every floating value (damage numbers, "Combo!", labels), it's set large (about twice the HUD text size), rises for about half a second and then holds still for another half second before fading, so it can be read. Anything about you (gold, including a chest's, health, gear, "Blocked!", damage you take) floats above your ball and rides along with it; labels about an enemy stay where they were earned. (A config switch, `render.heroLabelsFollowBall`, leaves your labels in place instead, if that reads better.) Floating values are always kept inside the visible screen. While you hold gear, its icon sits beside your ball: the sword to the right, the shield to the left. Barrels crack from any ball, so knocking an enemy into one breaks it too; only the hero opens chests.
@@ -281,7 +281,7 @@ Barrel loot is random by default. Per-barrel overrides can be added later withou
 
 The five MVP levels ramp one idea at a time. Sizes are suggestions in tiles.
 
-Levels 1 to 3 are built (M6); a run is those three in order until levels 4 and 5 arrive in M8. Each has a few coin strips: one near the start to learn the Clean Sweep on, and others that lead somewhere (Long Hall's right-hand corridor, One Key's trail toward the key nook).
+Levels 1 to 3 are built (M6); a run is those three in order until levels 4 and 5 arrive in M8. Each has a few coin strips: one of 5 near the start to learn the Clean Sweep on, and others that lead somewhere (Long Hall's right-hand corridor, One Key's trail toward the key nook).
 
 | # | Name | Size | Enemies | Keys and doors | Teaches |
 | --- | --- | --- | --- | --- | --- |
@@ -430,7 +430,7 @@ The rules above use these defaults where your answers left a gap. Change any tha
 - Each enemy attacks at most once per round, and only enemies moving that round can damage the hero. Red barrels are the exception: they damage whichever ball touches them, hero included, in any phase.
 - If the hero dies mid-round, the round ends there: anything still rolling stops under the death screen and the hero respawns with the first move.
 - Sight range is 6 tiles, not the screen width, because a portrait screen is only 9 tiles wide. Other enemies also block sight, so they can shield you.
-- Gear is the shield, a one-hit consumable held until an enemy hit or a red-barrel blast uses it up (they don't stack), and the sword, +3 ATK for one round (your next shot; combo and blast damage don't use it).
+- Gear is the shield, a one-hit consumable held until an enemy hit or a red-barrel blast uses it up (they don't stack), and the sword, +3 ATK for every hit of the first shot in which you hit an enemy (combo and blast damage don't use it).
 - Chest gold is granted at once with a floating label. Barrel loot, keys and enemy coins lie on the floor until you roll over them.
 - Respawn restores full HP, and keys you hold are kept.
 - Aiming is a slingshot pull-back rather than dragging toward the target.

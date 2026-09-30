@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { shotFromDrag, canGrab, previewPath } from '../src/aim.js';
 import { parseLevel } from '../src/level.js';
-import { createWorld, createBall, stepWorld, isAtRest } from '../src/physics.js';
+import { createWorld, createBall, stepWorld, isAtRest, applyBumperKick } from '../src/physics.js';
 import { CONFIG } from '../src/config.js';
 
 const A = CONFIG.aim;
@@ -91,7 +91,11 @@ test('the preview matches the real shot, kills and barrels included', async () =
     level.enemies.forEach((e, n) => world.balls.push(Object.assign(createEnemy({ ...tileCenter(e), level: e.level, id: `e${n}` }), n % 2 ? {} : { hp: 1 })));
     const a = (i / 80) * Math.PI * 2;
     const speed = 3 + (i % 7);
-    const prev = previewPath(level, hero, Math.cos(a), Math.sin(a), speed, world.balls.filter((b) => b !== hero), world.statics);
+    // Every third shot with Athletic and Elasticity, which the preview must include too.
+    const cards = i % 3 === 0;
+    if (cards) hero.friction = CONFIG.cards.athleticFriction;
+    const kick = cards ? CONFIG.cards.elasticityKick : 0;
+    const prev = previewPath(level, hero, Math.cos(a), Math.sin(a), speed, world.balls.filter((b) => b !== hero), world.statics, { kick });
     const combat = createCombat();
     combat.beginShot();
     hero.vx = Math.cos(a) * speed;
@@ -102,6 +106,7 @@ test('the preview matches the real shot, kills and barrels included', async () =
       const touched = world.events.some((ev) => ev.ball === hero || ev.a === hero || ev.b === hero);
       combat.resolve(world, hero);
       resolveObjects(world, hero);
+      if (kick) applyBumperKick(world, hero, kick, CONFIG.aim.maxLaunchSpeed);
       world.events.length = 0;
       if (touched) contacts.push({ x: hero.x, z: hero.z });
       if (hero.vx === 0 && hero.vz === 0) contacts.push({ x: hero.x, z: hero.z });

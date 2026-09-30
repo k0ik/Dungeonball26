@@ -132,11 +132,13 @@ Shots taken are tracked and shown on the level-complete screen but do not affect
 
 ## Trait cards
 
-Trait cards are the roguelike layer. Each is an always-on ability that lasts for the rest of the run.
+Trait cards are the roguelike layer. Each is an always-on ability that lasts for the rest of the run. (Built in M7 with the nine starting cards below.)
 
 - **Slots:** you hold up to 3 cards.
 - **The pick:** at the end of each level you're offered 3 cards and choose 1. If your 3 slots are full, you then pick one of your cards to replace. You can skip at any point, from the offer or the replace step, and keep what you have.
-- **Always on:** cards have no activation and no cooldown; their effect simply applies while you hold them. A small row of held cards sits in the HUD.
+- **Always on:** cards have no activation and no cooldown; their effect simply applies while you hold them. The cards you hold sit as a small row of chips (icon and name) along the bottom of the screen.
+- **The pick screen:** reaching an exit (except the last level's) darkens the board and shows the 3 offered cards, each with its icon, name and effect. Tap one to take it. With 3 cards already held, a second step shows your cards ("Take Bullionaire: tap the card to give up for it"), with "Keep my cards" to back out. "Skip" is always there. The next level loads once you've chosen.
+- **Carry-over:** cards carry between levels; a game over restores the cards you entered the level with; a new run starts with none.
 
 Starting cards (numbers are defaults to tune):
 
@@ -442,8 +444,9 @@ The rules above use these defaults where your answers left a gap. Change any tha
 
 Open questions:
 
-- **Trait card pool:** should offers exclude cards you hold (assumed yes), and can a card show up again after you replace it (assumed yes)?
-- **Doppleganger when replaced:** do you lose the extra life you gained from it, or keep it?
-- **Locksmith and keys:** with Locksmith, do keys still appear (and count for anything), or are they skipped?
-- **Athletic:** 25% less friction is the starting guess; should it also raise your launch speed?
+- **Trait card pool:** offers exclude cards you hold, and a replaced card goes back into the pool (built that way in M7; stackable copies are still to explore).
+- **Doppleganger when replaced:** you keep the extra life it gave you (built that way).
+- **Locksmith and keys:** with Locksmith, keys don't appear at all, since doors open without them (built that way).
+- **Athletic:** just 25% less friction for now; should it also raise your launch speed?
+- **Bullionaire:** the 1.5× applies to all gold (coins, chests, streak bonuses), with the fraction carried over, so it's exact over time; the labels show the gold actually added.
 - **Trick shots, "first time":** first time per run, or first time ever? "Ever" needs saved progress, which is out of scope for the MVP, so it's assumed per run for now.

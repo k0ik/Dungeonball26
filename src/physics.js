@@ -42,7 +42,8 @@ export function stepWorld(world, dt = P.step) {
   for (const b of balls) {
     const speed = speedOf(b);
     if (speed === 0) continue;
-    const next = speed - P.friction * dt;
+    // A ball can carry its own friction scale (the Athletic card lowers the hero's).
+    const next = speed - P.friction * (b.friction ?? 1) * dt;
     if (next < P.stopThreshold) {
       b.vx = 0;
       b.vz = 0;
@@ -63,6 +64,23 @@ export function stepWorld(world, dt = P.step) {
     for (const s of world.statics) resolveStatic(world, b, s);
     resolveWalls(world, b);
   }
+}
+
+/**
+ * Pinball kick (the Elasticity card): if `ball` bounced off a barrel, chest or
+ * enemy in this step's events (walls don't count), add `kick` to its speed
+ * along its new direction, up to `maxSpeed`. At most once per step.
+ */
+export function applyBumperKick(world, ball, kick, maxSpeed) {
+  const bumped = world.events.some(
+    (ev) => (ev.type === 'static' && ev.ball === ball) || (ev.type === 'ball' && (ev.a === ball || ev.b === ball) && (ev.a.kind === 'enemy' || ev.b.kind === 'enemy')),
+  );
+  const speed = speedOf(ball);
+  if (!bumped || speed === 0) return false;
+  const k = Math.min(maxSpeed, speed + kick) / speed;
+  ball.vx *= k;
+  ball.vz *= k;
+  return true;
 }
 
 /** Contact normal and depth of a ball against a static, or null. */

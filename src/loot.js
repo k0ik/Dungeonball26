@@ -13,12 +13,16 @@ export function randomInt(min, max, rng = Math.random) {
   return min + Math.floor(rng() * (max - min + 1));
 }
 
-/** Roll a barrel's drop from the weighted loot table. */
-export function rollLoot(rng = Math.random) {
-  const total = L.table.reduce((sum, e) => sum + e.weight, 0);
+/**
+ * Roll a barrel's drop from the weighted loot table. `gearWeight` scales the
+ * sword and shield weights (the Junk Hunter card doubles them).
+ */
+export function rollLoot(rng = Math.random, { gearWeight = 1 } = {}) {
+  const weight = (e) => (e.kind === 'sword' || e.kind === 'shield' ? e.weight * gearWeight : e.weight);
+  const total = L.table.reduce((sum, e) => sum + weight(e), 0);
   let pick = rng() * total;
   for (const entry of L.table) {
-    pick -= entry.weight;
+    pick -= weight(entry);
     if (pick < 0) {
       return entry.kind === 'gold' ? { kind: 'gold', value: randomInt(L.goldMin, L.goldMax, rng) } : { kind: entry.kind };
     }

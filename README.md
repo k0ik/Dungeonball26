@@ -6,7 +6,7 @@ Rendered as a true orthographic 3D isometric view in [Three.js](https://threejs.
 
 ## Status
 
-M0–M6 done: the full core loop and a run of three levels. You shoot, then every enemy takes a turn, nearest first: ones that can see you (marked "!") lunge at you, the rest patrol. You have HP, 3 lives and respawns; enemies take damage from your hits and combos. Barrels break in two hits and leave loot on the floor (gold, potions, a shield, a sword, 1-ups), chests hold gold, red barrels explode on whoever touches them, and gold is the score. Keys open matching doors, and each exit leads to the next level (Long Hall, Breakables, One Key) with HP, gear, lives and gold carried over. Levels render at the mockup's isometric angle with a slingshot aim, power-scaled path preview and a camera that follows the ball. Trait cards (M7) and the last two levels (M8) come next. See **[docs/design.md](docs/design.md)** for the full design doc: core loop, physics parameters, combat formulas, object behavior, level format, camera and audio design, and the milestone build order.
+M0–M7 done: the full core loop, a run of three levels, and trait cards. You shoot, then every enemy takes a turn, nearest first: ones that can see you (marked "!") lunge at you, the rest patrol. You have HP, 3 lives and respawns; enemies take damage from your hits and combos. Barrels break in two hits and leave loot on the floor (gold, potions, a shield, a sword, 1-ups), chests hold gold, red barrels explode on whoever touches them, and gold is the score. Keys open matching doors, and each exit leads to the next level (Long Hall, Breakables, One Key) with HP, gear, lives and gold carried over. Levels render at the mockup's isometric angle with a slingshot aim, power-scaled path preview and a camera that follows the ball. After each level you pick a trait card (hold up to 3): Vampirism, Doppleganger, Junk Hunter, Bullionaire, Barrel of Fun, Locksmith, Athletic, Money Magnet or Elasticity. The last two levels and polish (M8) come next. See **[docs/design.md](docs/design.md)** for the full design doc: core loop, physics parameters, combat formulas, object behavior, level format, camera and audio design, and the milestone build order.
 
 ## Getting started
 
@@ -33,6 +33,7 @@ To test on a phone on the same network, run `npm run host` and open the printed 
 - `src/sight.js`, `src/turns.js` — line of sight, turn order, lunges and patrols
 - `src/objects.js`, `src/loot.js` — barrels, chests, red barrels, coin strips, the loot table and pickup rules
 - `src/doors.js` — keys and doors
+- `src/cards.js` — trait cards: the set, offers and taking a card
 - `src/render/` — Three.js views: level geometry, hero and enemy balls, aim preview, camera rig, HUD bar, and the HTML overlay for HP bars, "!" markers and damage numbers
 - `src/audio.js` — SFX via `THREE.Audio` (synthesized placeholders for now)
 - `src/game.js` — wires input, simulation, rendering and audio together

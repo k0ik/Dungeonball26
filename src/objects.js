@@ -40,7 +40,7 @@ export function createObjects(level) {
  *   { type: 'open', obj, gold }     a chest opened
  *   { type: 'explode', obj, victim } a red barrel went off on `victim`
  */
-export function resolveObjects(world, hero, rng = Math.random) {
+export function resolveObjects(world, hero, rng = Math.random, { barrelHits = O.barrelHits } = {}) {
   const out = [];
   const gone = new Set();
   for (const ev of world.events) {
@@ -54,7 +54,7 @@ export function resolveObjects(world, hero, rng = Math.random) {
       if (world.time - s.lastHit < O.barrelCooldown) continue;
       s.lastHit = world.time;
       s.hits++;
-      if (s.hits >= O.barrelHits) {
+      if (s.hits >= barrelHits) {
         gone.add(s);
         out.push({ type: 'break', obj: s });
       } else {

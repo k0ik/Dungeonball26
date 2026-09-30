@@ -148,6 +148,19 @@ export const CONFIG = {
     collectHopTime: 0.4,
   },
 
+  // Trait cards (M7).
+  cards: {
+    slots: 3, // cards you can hold
+    offer: 3, // cards offered after each level
+    vampirismHeal: 1, // HP per kill
+    bullionaire: 1.5, // gold multiplier (fractions carry over, so it's exact)
+    junkHunter: 2, // barrel weight multiplier for swords and shields
+    athleticFriction: 0.75, // the hero's friction scale
+    magnetRadius: 1.5, // tiles from the ball's centre
+    magnetPull: 10, // how fast pulled coins close in, 1/s
+    elasticityKick: 1.5, // tiles/s added on bouncing off a barrel, chest or enemy
+  },
+
   hero: {
     // Death screen: the screen darkens with "You Died!" and the lives left
     // (or "Game Over") and input is blocked for this long, then it lightens

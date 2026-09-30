@@ -2,7 +2,7 @@
 // the opposite way. Everything is measured on the ground plane, in tiles.
 
 import { CONFIG } from './config.js';
-import { createWorld, createBall, stepWorld } from './physics.js';
+import { createWorld, createBall, stepWorld, applyBumperKick } from './physics.js';
 import { createCombat } from './combat.js';
 import { resolveObjects } from './objects.js';
 
@@ -33,16 +33,18 @@ export function canGrab(hero, pointer) {
  * rules run on the copies, so a killing blow ricochets, a barrel on its
  * second crack breaks and gets out of the way, and a red barrel goes off,
  * exactly as in the real shot. It keeps up to `previewBounces` bounces and
- * ends at the next contact. `hero` supplies position, ATK and HP.
+ * ends at the next contact. `hero` supplies position, ATK, HP and friction;
+ * `kick` and `barrelHits` carry card effects (Elasticity, Barrel of Fun).
  * Returns { points: [start, ...bends, end], bends: count, stopped }.
  */
-export function previewPath(level, hero, dirX, dirZ, speed, others = [], statics = []) {
+export function previewPath(level, hero, dirX, dirZ, speed, others = [], statics = [], { kick = 0, barrelHits } = {}) {
   const world = createWorld(level);
   const ghost = Object.assign(createBall({ x: hero.x, z: hero.z, radius: hero.radius, kind: 'hero', id: 'ghost' }), {
     atk: hero.atk ?? 1,
     hp: hero.hp ?? 1,
     maxHp: hero.maxHp ?? 1,
     shield: hero.shield ?? false,
+    friction: hero.friction, // the Athletic card
   });
   ghost.vx = dirX * speed;
   ghost.vz = dirZ * speed;
@@ -66,7 +68,8 @@ export function previewPath(level, hero, dirX, dirZ, speed, others = [], statics
     stepWorld(world);
     const hit = world.events.some(touchesGhost);
     combat.resolve(world, ghost);
-    resolveObjects(world, ghost, () => 0.5);
+    resolveObjects(world, ghost, () => 0.5, { barrelHits });
+    if (kick) applyBumperKick(world, ghost, kick, CONFIG.aim.maxLaunchSpeed); // the Elasticity card
     world.events.length = 0;
     if (hit) {
       points.push({ x: ghost.x, z: ghost.z });

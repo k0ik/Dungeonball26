@@ -15,7 +15,8 @@ const read = (ext) => files.filter((f) => f.endsWith(ext)).map((f) => readFileSy
 const js = read('.js').replace(/<\/script/gi, '<\\/script');
 const css = read('.css');
 
-const page = `<title>Dungeonball</title>
+const page = `<meta charset="utf-8">
+<title>Dungeonball</title>
 <meta name="theme-color" content="#0c0a10">
 <style>
 :root { color-scheme: dark; }

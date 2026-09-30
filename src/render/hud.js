@@ -5,6 +5,7 @@
 
 import { CONFIG } from '../config.js';
 import { keyIcon } from './icons.js';
+import { cardById } from '../cards.js';
 
 export function createHud(container) {
   const bar = document.createElement('div');
@@ -13,6 +14,20 @@ export function createHud(container) {
   container.appendChild(bar);
   const gold = bar.querySelector('.hud-gold');
   const keySlots = bar.querySelector('.hud-right');
+
+  // Trait cards: the ones you hold, as a row of chips at the bottom; and the
+  // end-of-level pick, a full-screen panel that takes the input.
+  const hand = document.createElement('div');
+  hand.className = 'card-hand';
+  hand.setAttribute('aria-label', 'Your cards');
+  hand.hidden = true;
+  container.appendChild(hand);
+  let shownCards = null;
+  const pick = document.createElement('div');
+  pick.className = 'card-pick';
+  pick.setAttribute('role', 'dialog');
+  pick.setAttribute('aria-label', 'Choose a card');
+  container.appendChild(pick);
   let shownKeys = null;
   let shownGold = -1;
 
@@ -110,6 +125,76 @@ export function createHud(container) {
     },
     hideScreen() {
       death.classList.remove('on');
+    },
+    /**
+     * The end-of-level card pick. Tap a card to take it; if your slots are
+     * full you then pick one of yours to replace. Skip is always there.
+     * Calls done(id, replaceId) once, with id null for a skip.
+     */
+    showCardPick(offer, held, done) {
+      const finish = (id, replace) => {
+        pick.classList.remove('on');
+        done(id, replace);
+      };
+      const cardButton = (id, onTap, extra = '') => {
+        const c = cardById(id);
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = `card ${extra}`;
+        b.innerHTML = `<span class="card-icon" aria-hidden="true"></span><span class="card-name"></span><span class="card-text"></span>`;
+        b.querySelector('.card-icon').textContent = c.icon;
+        b.querySelector('.card-name').textContent = c.name;
+        b.querySelector('.card-text').textContent = c.text;
+        b.addEventListener('click', onTap);
+        return b;
+      };
+      const render = (title, sub, buttons, skipLabel) => {
+        pick.innerHTML = '<h2></h2><p></p><div class="card-row"></div><button type="button" class="card-skip"></button>';
+        pick.querySelector('h2').textContent = title;
+        pick.querySelector('p').textContent = sub;
+        pick.querySelector('.card-row').append(...buttons);
+        const skip = pick.querySelector('.card-skip');
+        skip.textContent = skipLabel;
+        skip.addEventListener('click', () => finish(null));
+        pick.classList.add('on');
+        pick.querySelector('.card')?.focus();
+      };
+      const slots = CONFIG.cards.slots;
+      render(
+        'Choose a card',
+        held.length < slots ? `${held.length} of ${slots} slots used` : `Your ${slots} slots are full: you'll swap one out`,
+        offer.map((id) =>
+          cardButton(id, () => {
+            if (held.length < slots) return finish(id);
+            // Full: which of yours goes?
+            render(
+              `Take ${cardById(id).name}`,
+              'Tap the card to give up for it',
+              held.map((h) => cardButton(h, () => finish(id, h), 'held')),
+              'Keep my cards',
+            );
+          }),
+        ),
+        'Skip',
+      );
+    },
+    /** The row of cards you hold. */
+    setCards(ids) {
+      const key = ids.join();
+      if (key === shownCards) return;
+      shownCards = key;
+      hand.innerHTML = '';
+      for (const id of ids) {
+        const c = cardById(id);
+        const chip = document.createElement('span');
+        chip.className = 'card-chip';
+        chip.title = `${c.name}: ${c.text}`;
+        chip.innerHTML = '<span aria-hidden="true"></span><b></b>';
+        chip.firstChild.textContent = c.icon;
+        chip.lastChild.textContent = c.name;
+        hand.appendChild(chip);
+      }
+      hand.hidden = ids.length === 0;
     },
     /** The keys you hold, as a list of colours ('red', 'blue', 'yellow'). */
     setKeys(keys) {

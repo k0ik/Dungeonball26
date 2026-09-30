@@ -19,7 +19,7 @@
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
 import { parseLevel, tileCenter, tileAt } from './level.js';
-import { createWorld, createBall, stepWorld, isAtRest, speedOf, overlapsSolid } from './physics.js';
+import { createWorld, createBall, stepWorld, isAtRest, speedOf, overlapsSolid, applyBumperKick } from './physics.js';
 import { createCombat, createEnemy } from './combat.js';
 import { canSee } from './sight.js';
 import { lungeVelocity, patrolMove, pickPatrollers } from './turns.js';
@@ -39,6 +39,7 @@ import { createObjectsView } from './render/objectsView.js';
 import { createItemsView } from './render/itemsView.js';
 import { createDoorsView } from './render/doorsView.js';
 import { openDoors } from './doors.js';
+import { has, offerCards, takeCard } from './cards.js';
 
 /** levels: [{ id, name, text }]. */
 export function createGame(container, levels, startIndex = 0) {
@@ -87,6 +88,8 @@ export function createGame(container, levels, startIndex = 0) {
     clears: 0,
     lives: CONFIG.hero.lives,
     gold: 0, // the score
+    goldFraction: 0, // Bullionaire's leftover fraction of a gold, carried to the next pickup
+    cards: [], // trait cards held (ids), at most CONFIG.cards.slots
     shotCoins: 0, // coins taken this shot: the streak count (and the tick's pitch)
     keys: [], // colours of the keys you hold; this level only
     entry: null, // HP, gear and gold when this level was entered; game over restores them
@@ -115,12 +118,14 @@ export function createGame(container, levels, startIndex = 0) {
     world.balls.push(hero);
     world.statics = createObjects(level);
     // Floor pickups: kill coins, barrel loot, the level's keys and its coin strips.
-    world.items = level.keys.map((k) => ({ kind: 'key', color: k.color, ...tileCenter(k) }));
+    // With Locksmith, doors open without keys, so the keys don't appear.
+    world.items = has(state.cards, 'locksmith') ? [] : level.keys.map((k) => ({ kind: 'key', color: k.color, ...tileCenter(k) }));
     for (const c of level.coins) world.items.push({ kind: 'coin', value: CONFIG.loot.stripCoinValue, ...tileCenter(c) });
     state.shotCoins = 0;
     state.keys = []; // unused keys don't carry over (and a game over takes them back)
     objectsView.build(world.statics);
     doorsView.build(level.doors);
+    applyCards(); // hero-side card effects (Athletic)
 
     for (const view of enemyViews.values()) {
       scene.remove(view.object);
@@ -139,7 +144,7 @@ export function createGame(container, levels, startIndex = 0) {
 
     start = tileCenter(level.start);
     rig.setBounds(0, level.width, 0, level.height);
-    state.entry = { hp: hero.hp, atk: hero.atk, shield: hero.shield, sword: hero.sword, gold: state.gold };
+    state.entry = { hp: hero.hp, atk: hero.atk, shield: hero.shield, sword: hero.sword, gold: state.gold, cards: [...state.cards] };
     respawn();
     rig.snapTo(hero.x, hero.z);
   }
@@ -294,8 +299,11 @@ export function createGame(container, levels, startIndex = 0) {
     } else {
       // Game over: the level starts from scratch, with the HP, gear and gold
       // you entered it with.
-      state.lives = CONFIG.hero.lives;
-      const { hp, atk, shield, sword, gold } = state.entry;
+      const { hp, atk, shield, sword, gold, cards } = state.entry;
+      state.cards = [...cards];
+      applyCards();
+      // Doppleganger: +1 to the lives a game over restores.
+      state.lives = CONFIG.hero.lives + (has(state.cards, 'doppleganger') ? 1 : 0);
       Object.assign(hero, { hp, atk, shield, sword });
       state.gold = gold;
       loadLevel(levelIndex);
@@ -315,13 +323,29 @@ export function createGame(container, levels, startIndex = 0) {
   // run is complete: a screen shows your gold, then the run starts over.
   function reachExit() {
     state.clears++;
+    for (const b of world.balls) b.vx = b.vz = 0;
+    state.aiming = false;
+    aimView.hide();
     if (levelIndex + 1 < levels.length) {
       sfx.play('exit', 0.8);
-      loadLevel(levelIndex + 1);
-      levelBanner();
+      // The card pick: offered 3, take 1 (replacing one when full) or skip.
+      state.phase = 'pick';
+      const next = levelIndex + 1;
+      hud.showCardPick(offerCards(state.cards), state.cards, (id, replace) => {
+        if (id) {
+          const hand = takeCard(state.cards, id, replace);
+          if (hand) {
+            state.cards = hand;
+            if (id === 'doppleganger') state.lives += 1; // kept even if the card is later replaced
+            sfx.play('gear', 0.8);
+          }
+        }
+        applyCards();
+        loadLevel(next);
+        levelBanner();
+      });
       return;
     }
-    for (const b of world.balls) b.vx = b.vz = 0;
     state.phase = 'won';
     state.timer = CONFIG.hero.runCompleteSeconds;
     state.aiming = false;
@@ -330,14 +354,50 @@ export function createGame(container, levels, startIndex = 0) {
     hud.showScreen('Run Complete!', `${state.gold} gold`, 'win');
   }
 
-  /** A fresh run from level 1: full HP, no gear, 3 lives, no gold. */
+  /** A fresh run from level 1: full HP, no gear, 3 lives, no gold, no cards. */
   function newRun() {
     Object.assign(hero, { atk: CONFIG.hero.atk, maxHp: CONFIG.hero.maxHp, hp: CONFIG.hero.maxHp, shield: false, sword: 0 });
     state.lives = CONFIG.hero.lives;
     state.gold = 0;
+    state.goldFraction = 0;
+    state.cards = [];
+    applyCards();
     loadLevel(0);
     hud.hideScreen();
     levelBanner();
+  }
+
+  // --- Cards -------------------------------------------------------------------
+  const card = (id) => has(state.cards, id);
+
+  /** Effects that sit on the hero rather than being checked as they happen. */
+  function applyCards() {
+    hero.friction = card('athletic') ? CONFIG.cards.athleticFriction : undefined;
+  }
+
+  /**
+   * Add gold to the score (Bullionaire multiplies it, carrying the fraction
+   * over so 1.5× is exact over time). Returns the whole gold added.
+   */
+  function addGold(n) {
+    const total = n * (card('bullionaire') ? CONFIG.cards.bullionaire : 1) + state.goldFraction;
+    const whole = Math.floor(total);
+    state.goldFraction = total - whole;
+    state.gold += whole;
+    return whole;
+  }
+
+  /** Money Magnet: coins near the ball slide in to it (taken on contact as usual). */
+  function pullCoins(dt) {
+    if (!card('moneyMagnet')) return;
+    const k = 1 - Math.exp(-CONFIG.cards.magnetPull * dt);
+    for (const item of world.items) {
+      if (item.kind !== 'coin' || item.fly) continue;
+      const d = Math.hypot(item.x - hero.x, item.z - hero.z);
+      if (d > CONFIG.cards.magnetRadius) continue;
+      item.x += (hero.x - item.x) * k;
+      item.z += (hero.z - item.z) * k;
+    }
   }
 
   // --- Events ------------------------------------------------------------------
@@ -346,7 +406,7 @@ export function createGame(container, levels, startIndex = 0) {
    * take it. Gold comes out as that many single coins, scattered.
    */
   function dropLoot(x, z) {
-    const loot = rollLoot();
+    const loot = rollLoot(Math.random, { gearWeight: card('junkHunter') ? CONFIG.cards.junkHunter : 1 });
     if (loot.kind === 'gold') scatterCoins(x, z, loot.value);
     else world.items.push({ ...loot, x, z });
   }
@@ -423,7 +483,7 @@ export function createGame(container, levels, startIndex = 0) {
   /** A door opens when you come close holding its key. */
   function checkDoors() {
     // noKeys: the Locksmith card (M7) will turn this on.
-    for (const door of openDoors(level, hero, state.keys, { noKeys: false })) {
+    for (const door of openDoors(level, hero, state.keys, { noKeys: card('locksmith') })) {
       doorsView.open(door);
       sfx.play('door', 1);
       overlay.float('Unlocked!', door.col + 0.5, door.row + 0.5, CONFIG.render.wallHeight + 0.3, 'gear');
@@ -437,7 +497,7 @@ export function createGame(container, levels, startIndex = 0) {
    * each pay a bonus (Clean, Super and Mega Sweep).
    */
   function pickUpStripCoin(item) {
-    collect(item, hero, state);
+    addGold(item.value);
     itemsView.popCoin(item.x, item.z);
     if (state.phase !== 'shot') {
       sfx.play('coin', 0.45); // outside your shot (knocked about on the enemy turn): no streak
@@ -447,9 +507,9 @@ export function createGame(container, levels, startIndex = 0) {
     sfx.play('coin', 0.45, { pitch: Math.min(2, 0.9 + 0.07 * state.shotCoins) });
     const streak = coinStreakBonus(state.shotCoins);
     if (streak) {
-      state.gold += streak.bonus;
+      const bonus = addGold(streak.bonus);
       sfx.play('sweep', 0.8);
-      overlay.float(`${streak.name} +${streak.bonus}`, hero.x, hero.z, hero.radius * 2 + 0.8, 'gold', heroFollow());
+      overlay.float(`${streak.name} +${bonus}`, hero.x, hero.z, hero.radius * 2 + 0.8, 'gold', heroFollow());
     }
   }
 
@@ -478,9 +538,9 @@ export function createGame(container, levels, startIndex = 0) {
         sfx.play('chest', 0.9);
         objectsView.openChest(obj);
         itemsView.chestCoins(obj.x, 0.35, obj.z, o.gold); // one spinning coin per gold, popping out
-        state.gold += o.gold;
+        const gold = addGold(o.gold);
         // Over the ball (always on screen), not the chest, which may not be.
-        overlay.float(`+${o.gold}`, hero.x, hero.z, hero.radius * 2 + 0.8, 'gold', heroFollow());
+        overlay.float(`+${gold}`, hero.x, hero.z, hero.radius * 2 + 0.8, 'gold', heroFollow());
       } else if (o.type === 'explode') {
         sfx.play('explode', 1);
         objectsView.remove(obj);
@@ -536,6 +596,11 @@ export function createGame(container, levels, startIndex = 0) {
         // A kill scatters coins worth the enemy's level around where it died,
         // and now and then a sword, shield or potion too.
         scatterCoins(o.target.x, o.target.z, o.target.level * CONFIG.loot.killGoldPerLevel, rollEnemyDrops());
+        // Vampirism: every kill heals you.
+        if (card('vampirism') && hero.hp > 0 && hero.hp < hero.maxHp) {
+          hero.hp = Math.min(hero.maxHp, hero.hp + CONFIG.cards.vampirismHeal);
+          floatAt(hero, `+${CONFIG.cards.vampirismHeal} HP`, 'heal', 0.4);
+        }
         if (o.shotKills >= 2 && state.phase === 'shot') {
           sfx.play('comboKill', 0.9);
           state.comboKillAt = performance.now();
@@ -579,7 +644,7 @@ export function createGame(container, levels, startIndex = 0) {
   window.addEventListener('keydown', (e) => {
     if (e.key === 'd' || e.key === '`') debug.hidden = !debug.hidden;
     if (e.key === 'r' && state.phase === 'aim') respawn();
-    if (e.key === 'n' && state.phase !== 'won') {
+    if (e.key === 'n' && state.phase !== 'won' && state.phase !== 'pick') {
       loadLevel(levelIndex + 1);
       levelBanner();
     }
@@ -617,10 +682,13 @@ export function createGame(container, levels, startIndex = 0) {
       stepWorld(world, step);
       // Both read this step's events before handleEvents clears them.
       const outcomes = combat.resolve(world, hero);
-      handleEvents(outcomes, resolveObjects(world, hero));
+      const objectOutcomes = resolveObjects(world, hero, Math.random, { barrelHits: card('barrelOfFun') ? 1 : CONFIG.objects.barrelHits });
+      // Elasticity: barrels, chests and enemies kick your ball on like pinball bumpers.
+      if (card('elasticity')) applyBumperKick(world, hero, CONFIG.cards.elasticityKick, CONFIG.aim.maxLaunchSpeed);
+      handleEvents(outcomes, objectOutcomes);
       checkPickups();
       checkDoors();
-      if (state.phase !== 'down' && state.phase !== 'won' && tileAt(level, Math.floor(hero.x), Math.floor(hero.z)) === 'exit') {
+      if (state.phase !== 'down' && state.phase !== 'won' && state.phase !== 'pick' && tileAt(level, Math.floor(hero.x), Math.floor(hero.z)) === 'exit') {
         reachExit();
         break;
       }
@@ -680,7 +748,10 @@ export function createGame(container, levels, startIndex = 0) {
       const shot = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z });
       state.shownShot = shot; // what release will fire
       const others = world.balls.filter((b) => b !== hero);
-      const preview = shot.cancel ? null : previewPath(level, hero, shot.dirX, shot.dirZ, shot.speed, others, world.statics);
+      const preview = shot.cancel ? null : previewPath(level, hero, shot.dirX, shot.dirZ, shot.speed, others, world.statics, {
+            kick: card('elasticity') ? CONFIG.cards.elasticityKick : 0,
+            barrelHits: card('barrelOfFun') ? 1 : CONFIG.objects.barrelHits,
+          });
       aimView.show(hero, shot, preview, rig.viewWidth / rig.aimStartWidth);
     } else if (state.phase === 'aim') {
       aimView.showTurn(hero, dt);
@@ -725,6 +796,7 @@ export function createGame(container, levels, startIndex = 0) {
     objectsView.fadeChests(hero, state.aiming, dt);
     itemsView.sync(world.items);
     updateFlyingCoins(dt);
+    pullCoins(dt);
     itemsView.update(dt);
     for (const [enemy, view] of enemyViews) {
       view.update(dt);
@@ -764,6 +836,7 @@ export function createGame(container, levels, startIndex = 0) {
     overlay.update();
     hud.setGold(state.gold);
     hud.setKeys(state.keys);
+    hud.setCards(state.cards);
     hud.setDanger(hero.hp > 0 && hero.hp <= CONFIG.render.dangerHp && state.phase !== 'down');
     // Whose turn it is, always shown: yours while you aim and your shot rolls,
     // the enemies' from the first enemy move until it's back to you.

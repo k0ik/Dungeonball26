@@ -490,9 +490,13 @@ export function createGame(container, levels, startIndex = 0) {
     overlay.float(label, hero.x, hero.z, hero.radius * 2 + 0.8, PICKUP_STYLE[item.kind], heroFollow());
   }
 
-  /** A door opens when you come close holding its key. */
+  /**
+   * A door opens when you come close holding its key, during your own shot
+   * only: being knocked against it in the enemy move doesn't unlock it (an
+   * enemy would otherwise roll straight through while it sinks).
+   */
   function checkDoors() {
-    // noKeys: the Locksmith card (M7) will turn this on.
+    if (state.phase !== 'shot') return;
     for (const door of openDoors(level, hero, state.keys, { noKeys: card('locksmith') })) {
       doorsView.open(door);
       sfx.play('door', 1);

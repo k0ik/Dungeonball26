@@ -54,7 +54,7 @@ const fadeUniforms = {
   uFadeRad: { value: new Array(MAX_FADE).fill(0) },
   uFadeCount: { value: 0 },
   uFadeViewDir: { value: new THREE.Vector3(0, -1, 0) },
-  uFadeOpacity: { value: CONFIG.render.seeThroughOpacity },
+  uFadeOpacity: { value: 1 }, // eased toward seeThroughOpacity while aiming, back to 1 after
 };
 
 /** Make a wall or door material fade where it hides the hero or the aim path. */
@@ -96,17 +96,24 @@ float seeThroughFade() {
 }
 
 /**
- * Set the see-through zone: around the hero, and along the aim path's
- * points while aiming. `viewDir` is the camera's forward direction.
+ * Set the see-through zone for this frame: around the hero and along the aim
+ * path's points, only while you're aiming a shot (`pathPoints` given); the
+ * fade eases in and out over `seeThroughSeconds`. `viewDir` is the camera's
+ * forward direction.
  */
-export function setSeeThrough(hero, pathPoints, viewDir) {
+export function setSeeThrough(hero, pathPoints, viewDir, dt) {
   const R = CONFIG.render;
   const segs = fadeUniforms.uFadeSeg.value;
   const rads = fadeUniforms.uFadeRad.value;
+  const target = pathPoints ? R.seeThroughOpacity : 1;
+  const op = fadeUniforms.uFadeOpacity;
+  const step = ((1 - R.seeThroughOpacity) * dt) / R.seeThroughSeconds;
+  op.value = target < op.value ? Math.max(target, op.value - step) : Math.min(target, op.value + step);
+  if (!pathPoints) return; // keep the last zone while it fades back out
   segs[0].set(hero.x, hero.z, hero.x, hero.z);
   rads[0] = R.seeThroughBallRadius;
   let n = 1;
-  for (let i = 1; pathPoints && i < pathPoints.length && n < MAX_FADE; i++, n++) {
+  for (let i = 1; i < pathPoints.length && n < MAX_FADE; i++, n++) {
     const a = pathPoints[i - 1];
     const b = pathPoints[i];
     segs[n].set(a.x, a.z, b.x, b.z);

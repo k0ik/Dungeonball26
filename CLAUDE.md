@@ -17,6 +17,7 @@ Full design spec: **[docs/design.md](docs/design.md)** — read it before implem
 - **Units:** all distances in the design doc are in tiles, not pixels or world units — check `docs/design.md`'s parameter tables before hardcoding a magic number.
 - **Levels:** authored as plain text grids (one character per tile), per the legend in `docs/design.md`. Keep the level loader and the legend in sync — if you add a new tile character, update both.
 - **Config:** keep every tunable number (speeds, radii, HP, ATK/DEF, sight range, etc.) in one config module rather than scattered through gameplay code, so the values in `docs/design.md`'s tables stay easy to retune.
+- **New levels:** a newly added level goes first in the run (`LEVELS` in `src/main.js`) so it's the first one playtested; the previous newest moves back to its place in the run.
 - **Build order:** follow the M0–M8 milestones in the design doc in sequence — each is meant to be playable on its own before moving to the next.
 
 ## Keeping the design doc in sync

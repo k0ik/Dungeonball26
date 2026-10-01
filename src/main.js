@@ -8,11 +8,13 @@ import caverns from './levels/caverns.txt?raw';
 import roomies from './levels/roomies.txt?raw';
 import pinball from './levels/pinball.txt?raw';
 import gauntlet from './levels/gauntlet.txt?raw';
+import gauntlet02 from './levels/gauntlet02.txt?raw';
 import bowls from './levels/bowls.txt?raw';
 
 // The run, in order (design doc: "Levels"). Levels 4 and 5 arrive in M8.
 const LEVELS = [
-  // Rounded-walls trial level, first for now so it's quick to reach.
+  // The newest level goes first while it's being playtested (see CLAUDE.md).
+  { id: 'gauntlet02', name: 'Gauntlet 02', text: gauntlet02 },
   { id: 'bowls', name: 'Bowls', text: bowls },
   { id: 'long-hall', name: 'Long Hall', text: longHall },
   { id: 'breakables', name: 'Breakables', text: breakables },

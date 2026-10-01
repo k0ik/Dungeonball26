@@ -109,6 +109,34 @@ body {
   background: #5ad16a;
 }
 
+/* An enemy's HP: one white digit in a black circle, ringed by how much of
+   its starting HP is left (quarters: green, yellow, orange, red). */
+.hp-badge {
+  width: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #111214;
+  border: 3px solid #5ad16a;
+  color: #fff;
+  font: 800 12px/1 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.hp-badge[data-quarter='3'] {
+  border-color: #ffd23f;
+}
+
+.hp-badge[data-quarter='2'] {
+  border-color: #ff8c2e;
+}
+
+.hp-badge[data-quarter='1'] {
+  border-color: #ff3b3b;
+}
+
 /* One notch per HP point, so a bar shows both level and damage taken. */
 .tag .hp::after {
   content: '';

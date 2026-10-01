@@ -84,8 +84,19 @@ export function createOverlay(container, camera) {
       const r = layer.getBoundingClientRect();
       return { x: r.left + p.left, y: r.top + p.top };
     },
-    /** HP bar over a ball; `variant` 'hero' draws it green like the mockup. */
+    /**
+     * HP over a ball. The hero gets a green bar like the mockup; an enemy gets
+     * a badge: its HP as one white digit in a black circle, ringed green,
+     * yellow, orange or red by the quarter of its starting HP it has left.
+     */
     addBar(ball, variant = 'enemy') {
+      if (variant === 'enemy') {
+        const el = document.createElement('div');
+        el.className = 'hp-badge';
+        layer.appendChild(el);
+        bars.set(ball, { el, badge: true, shown: -1 });
+        return;
+      }
       const el = document.createElement('div');
       el.className = `tag ${variant}`;
       el.innerHTML = `<span class="hp"><span class="fill"></span></span>`;
@@ -184,7 +195,13 @@ export function createOverlay(container, camera) {
         place(bar.el, ball.x, ball.radius * 2 + BAR_HEIGHT, ball.z);
         if (bar.shown !== ball.hp) {
           bar.shown = ball.hp;
-          bar.fill.style.width = `${(100 * ball.hp) / ball.maxHp}%`;
+          if (bar.badge) {
+            bar.el.textContent = String(Math.min(9, Math.max(0, ball.hp)));
+            // Quarters of its starting HP: 4 = more than three quarters left ... 1 = a quarter or less.
+            bar.el.dataset.quarter = String(Math.max(1, Math.min(4, Math.ceil((4 * ball.hp) / ball.maxHp))));
+          } else {
+            bar.fill.style.width = `${(100 * ball.hp) / ball.maxHp}%`;
+          }
         }
       }
       const w = layer.clientWidth;

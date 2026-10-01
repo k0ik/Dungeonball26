@@ -318,8 +318,8 @@ export function createGame(container, levels, startIndex = 0) {
         if (target) moves.push({ enemy, from, kind: 'lunge', target });
         continue;
       }
-      // A faded Ghost can't hurt anyone, so it only ever patrols.
-      if (!enemy.phased && canSee(level, enemy, hero, world.balls, world.statics)) {
+      // A faded Ghost doesn't know it's harmless: it lunges like any enemy (and passes straight through).
+      if (canSee(level, enemy, hero, world.balls, world.statics)) {
         moves.push({ enemy, from, kind: 'lunge' });
       } else if (patrollers.has(enemy)) {
         const move = patrolMove(level, enemy, [...world.balls, ...claimed], Math.random, world.statics);
@@ -994,7 +994,7 @@ export function createGame(container, levels, startIndex = 0) {
         continue;
       }
       const lunging = lungers.has(enemy);
-      const aware = lunging || (!enemy.phased && canSee(level, enemy, hero, world.balls, world.statics));
+      const aware = lunging || canSee(level, enemy, hero, world.balls, world.statics);
       overlay.setAlert(enemy, aware, lunging);
       enemyViews.get(enemy)?.setAngry(aware);
     }

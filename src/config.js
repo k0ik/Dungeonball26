@@ -138,8 +138,9 @@ export const CONFIG = {
       },
       ghost: {
         // Every other round it fades: while faded, balls pass through it and
-        // it can't hurt or be hurt (and doesn't lunge). It starts solid and
-        // switches each time your turn comes round.
+        // it can't hurt or be hurt, though it doesn't know it and acts as
+        // usual (watching, lunging). It starts solid and switches each time
+        // your turn comes round.
         color: 0xdcdcf0, // pale lavender white
         fadedOpacity: 0.3, // how see-through it is while faded (its ring and bar still show)
       },

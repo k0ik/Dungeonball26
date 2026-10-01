@@ -174,22 +174,25 @@ function resolveBallPair(world, a, b) {
   const nx = d2 > 0 ? dx / d : 1;
   const nz = d2 > 0 ? dz / d : 0;
 
-  // Equal masses: split the positional correction.
-  const push = (minDist - d) / 2;
-  a.x -= nx * push;
-  a.z -= nz * push;
-  b.x += nx * push;
-  b.z += nz * push;
+  // Split the positional correction by mass: a heavy ball (a Brute) gives
+  // way less. Balls are mass 1 unless they carry their own.
+  const ia = 1 / (a.mass ?? 1);
+  const ib = 1 / (b.mass ?? 1);
+  const push = (minDist - d) / (ia + ib);
+  a.x -= nx * push * ia;
+  a.z -= nz * push * ia;
+  b.x += nx * push * ib;
+  b.z += nz * push * ib;
 
   const approach = (a.vx - b.vx) * nx + (a.vz - b.vz) * nz;
   if (approach <= 0) return;
   // Velocities just before the impact, kept on the event (see bounceOffFixed).
   const before = { avx: a.vx, avz: a.vz, bvx: b.vx, bvz: b.vz };
-  const j = ((1 + P.ballRestitution) * approach) / 2;
-  a.vx -= j * nx;
-  a.vz -= j * nz;
-  b.vx += j * nx;
-  b.vz += j * nz;
+  const j = ((1 + P.ballRestitution) * approach) / (ia + ib);
+  a.vx -= j * ia * nx;
+  a.vz -= j * ia * nz;
+  b.vx += j * ib * nx;
+  b.vz += j * ib * nz;
   world.events.push({ type: 'ball', a, b, speed: approach, nx, nz, before });
 }
 

@@ -175,3 +175,27 @@ test('Rubber: your ball comes off a Rubber enemy at double the rebound speed (ca
   applyRubberRebound(world, hero, R.rebound, R.maxRebound);
   assert.equal(speedOf(hero), R.maxRebound);
 });
+
+test('Brute: heavy, so it barely moves when you hit it and knocks you further than you knock it', async () => {
+  const { createEnemy } = await import('../src/combat.js');
+  const { heroDamage, lungeVelocity } = await import('../src/turns.js');
+  const B = CONFIG.enemy.types.brute;
+  const brute = createEnemy({ x: 5, z: 5.5, level: 2, id: 'b', type: 'brute' });
+  assert.equal(brute.radius, B.radius);
+  assert.equal(brute.mass, B.mass);
+  assert.equal(brute.maxHp, CONFIG.enemy.hpPerLevel * 2 * B.hpScale);
+  assert.equal(heroDamage(brute), B.damageToHero);
+  assert.ok(Math.abs(Math.hypot(...Object.values(lungeVelocity(brute, { x: 1, z: 5.5 }))) - B.lungeSpeed) < 1e-9);
+  // Head-on: the hero at 4 tiles/s into a resting brute.
+  const world = createWorld(room);
+  const hero = createBall({ x: 3, z: 5.5, kind: 'hero', id: 'h' });
+  hero.vx = 4;
+  world.balls.push(hero, brute);
+  let ev;
+  while (!(ev = world.events.find((e) => e.type === 'ball'))) stepWorld(world);
+  const v = ev.before.avx; // the hero's speed at impact
+  // Momentum is conserved, and the brute takes far less speed than an equal ball would (v · 0.95).
+  assert.ok(Math.abs(hero.vx + B.mass * brute.vx - v) < 1e-6);
+  assert.ok(brute.vx < v * 0.95 * 0.6);
+  assert.ok(hero.vx < 0, 'you bounce back off it');
+});

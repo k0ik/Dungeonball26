@@ -41,7 +41,8 @@ export function lungeVelocity(enemy, hero) {
   const dx = hero.x - enemy.x;
   const dz = hero.z - enemy.z;
   const d = Math.hypot(dx, dz) || 1;
-  return { vx: (dx / d) * E.lungeSpeed, vz: (dz / d) * E.lungeSpeed };
+  const speed = (enemy.type && E.types[enemy.type].lungeSpeed) ?? E.lungeSpeed;
+  return { vx: (dx / d) * speed, vz: (dz / d) * speed };
 }
 
 function pathClear(level, statics, x0, z0, x1, z1, r) {
@@ -97,6 +98,6 @@ export function patrolMove(level, enemy, balls, rng = Math.random, statics = [])
  * Damage the hero takes from an attacker's hit: a flat amount, whatever the
  * enemy's level (changed after playtesting from the doc's max(1, L − DEF)).
  */
-export function heroDamage() {
-  return E.damageToHero;
+export function heroDamage(attacker) {
+  return (attacker?.type && E.types[attacker.type].damageToHero) ?? E.damageToHero;
 }

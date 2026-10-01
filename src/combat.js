@@ -27,13 +27,14 @@ export function enemyMaxHp(level) {
 }
 
 export function createEnemy({ x, z, level, id, type = null }) {
-  const ball = createBall({ x, z, kind: 'enemy', id });
-  ball.level = level;
   // An enemy type (CONFIG.enemy.types) changes one thing about it.
-  ball.type = type;
   const T = type ? CONFIG.enemy.types[type] : null;
+  const ball = createBall({ x, z, kind: 'enemy', id, radius: T?.radius });
+  ball.level = level;
+  ball.type = type;
   if (T?.friction != null) ball.friction = T.friction;
-  ball.maxHp = enemyMaxHp(level);
+  if (T?.mass != null) ball.mass = T.mass;
+  ball.maxHp = enemyMaxHp(level) * (T?.hpScale ?? 1);
   ball.hp = ball.maxHp;
   ball.lastHit = -Infinity;
   return ball;
@@ -134,7 +135,7 @@ export function createCombat() {
             out.push({ type: 'blocked', target: hero, source: actor, event: ev });
             continue;
           }
-          const amount = heroDamage();
+          const amount = heroDamage(actor);
           hero.hp = Math.max(0, hero.hp - amount);
           out.push({ type: 'hurt', target: hero, amount, source: actor, event: ev });
         }

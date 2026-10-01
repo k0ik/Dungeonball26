@@ -52,7 +52,7 @@ export function previewPath(level, hero, dirX, dirZ, speed, others = [], statics
   world.balls.push(ghost);
   for (const o of others) {
     const copy = createBall({ x: o.x, z: o.z, radius: o.radius, kind: o.kind, id: o.id });
-    if (o.kind === 'enemy') Object.assign(copy, { hp: o.hp, maxHp: o.maxHp, level: o.level, type: o.type, friction: o.friction, lastHit: -Infinity });
+    if (o.kind === 'enemy') Object.assign(copy, { hp: o.hp, maxHp: o.maxHp, level: o.level, type: o.type, friction: o.friction, mass: o.mass, lastHit: -Infinity });
     world.balls.push(copy);
   }
   // Copies, so cracking or breaking one here never touches the real board.

@@ -98,10 +98,18 @@ export const CONFIG = {
         maxRebound: 13.5, // ...up to this (tiles/s; 1.5× the max launch speed)
         color: 0xff8fc8, // pink
       },
+      brute: {
+        radius: 0.45, // tiles (a basic ball is 0.325): still fits a one-tile gap
+        mass: 3, // a basic ball is 1: it knocks you further than you knock it
+        hpScale: 2, // twice a basic enemy's HP at its level
+        lungeSpeed: 8, // tiles/s (basic 6)
+        damageToHero: 2, // HP its hit costs you (basic 1)
+        color: 0x8b5a2b, // brown
+      },
     },
     // Testing aid: every enemy on these levels (ids from src/main.js) is this
     // type, so one type at a time can be tried out. null leaves them all basic.
-    testType: 'rubber',
+    testType: 'brute',
     testLevels: ['enemytester01'],
   },
 

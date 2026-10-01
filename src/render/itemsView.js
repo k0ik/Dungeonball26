@@ -77,11 +77,17 @@ function itemMesh(item) {
       break;
     }
     case 'sword': {
-      const blade = outlined(new THREE.BoxGeometry(0.05, 0.34, 0.02), C.sword, 1.2);
-      blade.position.y = 0.26;
+      // Standing on its pommel: pommel, grip, guard, then the blade, so the
+      // whole hilt shows above the floor.
+      const pommel = outlined(new THREE.SphereGeometry(0.035, 10, 8), C.coin, 1.2);
+      pommel.position.y = 0.04;
+      const grip = outlined(new THREE.BoxGeometry(0.035, 0.12, 0.035), 0x6b4423, 1.2);
+      grip.position.y = 0.13;
       const guard = outlined(new THREE.BoxGeometry(0.16, 0.035, 0.04), C.coin, 1.2);
-      guard.position.y = 0.09;
-      g.add(blade, guard);
+      guard.position.y = 0.205;
+      const blade = outlined(new THREE.BoxGeometry(0.05, 0.34, 0.02), C.sword, 1.2);
+      blade.position.y = 0.39;
+      g.add(pommel, grip, guard, blade);
       break;
     }
     case 'key': {

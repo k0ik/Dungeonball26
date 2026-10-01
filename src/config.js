@@ -128,10 +128,18 @@ export const CONFIG = {
         color: 0x5a5d68, // slate grey (light enough for its face to read), with a fuse on top
         litColor: 0xd8342c, // its colour once lit
       },
+      jekyll: {
+        // Passive until hurt; then enraged: on the next enemy move it lunges
+        // at the nearest ball it can see (you or another enemy) and its hit
+        // costs that ball 1 HP. Then it calms down until hurt again.
+        color: 0x8fc49a, // calm: sage green
+        enragedColor: 0x6b1f4f, // enraged: dark plum...
+        enragedScale: 1.12, // ...and visibly swollen (a shape cue as well as colour)
+      },
     },
     // Testing aid: every enemy on these levels (ids from src/main.js) is this
     // type, so one type at a time can be tried out. null leaves them all basic.
-    testType: 'bomb',
+    testType: 'jekyll',
     testLevels: ['enemytester01'],
   },
 

@@ -119,6 +119,7 @@ export function createCombat() {
       return;
     }
     enemy.hp = Math.max(0, enemy.hp - amount);
+    if (enemy.type === 'jekyll' && enemy.hp > 0) enemy.enraged = true; // provoked: it attacks on the next enemy move
     // The cooldown guards against the hero grinding; combos have their own
     // once-per-pair rule and don't start it.
     if (kind === 'hit') enemy.lastHit = time;
@@ -244,6 +245,14 @@ export function createCombat() {
       if (actors) {
         for (const ev of world.events) {
           if (ev.type !== 'ball' || ev.speed < E.hitMinSpeed) continue;
+          // An enraged Jekyll can attack another enemy: its hit costs it 1 HP.
+          const jekyll = [ev.a, ev.b].find((b) => b.type === 'jekyll' && actors.has(b) && !haveHit.has(b));
+          const prey = jekyll && (jekyll === ev.a ? ev.b : ev.a);
+          if (prey?.kind === 'enemy' && prey.hp > 0) {
+            haveHit.add(jekyll);
+            damage(prey, E.damageToHero, time, out, ev, 'combo');
+            continue;
+          }
           const actor = ev.a === hero ? ev.b : ev.b === hero ? ev.a : null;
           if (!actors.has(actor) || haveHit.has(actor) || hero.hp <= 0) continue;
           haveHit.add(actor);
@@ -256,6 +265,7 @@ export function createCombat() {
           hero.hp = Math.max(0, hero.hp - amount);
           out.push({ type: 'hurt', target: hero, amount, source: actor, event: ev });
         }
+        if (out.some((o) => o.type === 'kill')) world.balls = world.balls.filter((ball) => ball.kind !== 'enemy' || ball.hp > 0);
         return out;
       }
       for (const ev of world.events) {

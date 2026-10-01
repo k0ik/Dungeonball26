@@ -304,12 +304,20 @@ export function createGame(container, levels, startIndex = 0) {
   // After a short telegraph (red rings, "!"), they all launch together, and
   // it's your turn again once everything is at rest.
   function startEnemyPhase() {
-    const patrollers = pickPatrollers(enemies().filter((e) => e.type !== 'bomb'));
+    const patrollers = pickPatrollers(enemies().filter((e) => e.type !== 'bomb' && e.type !== 'jekyll'));
     const moves = [];
     const claimed = []; // patrol destinations already taken this round
     for (const enemy of enemies()) {
       if (enemy.type === 'bomb') continue; // passive: it only moves when something knocks it
       const from = { x: enemy.x, z: enemy.z }; // where it stands as the phase starts (camera framing)
+      if (enemy.type === 'jekyll') {
+        // Passive unless provoked; then it goes for the nearest ball it can see, friend or foe.
+        if (!enemy.enraged) continue;
+        const target = jekyllTarget(enemy);
+        enemy.enraged = false; // its one attack (or chance to) is now; it calms down after
+        if (target) moves.push({ enemy, from, kind: 'lunge', target });
+        continue;
+      }
       if (canSee(level, enemy, hero, world.balls, world.statics)) {
         moves.push({ enemy, from, kind: 'lunge' });
       } else if (patrollers.has(enemy)) {
@@ -332,12 +340,24 @@ export function createGame(container, levels, startIndex = 0) {
     state.waited = 0;
   }
 
+  /** The nearest ball an enraged Jekyll can see (you or another enemy), or null. */
+  function jekyllTarget(jekyll) {
+    let best = null;
+    for (const b of world.balls) {
+      if (b === jekyll || b.hp <= 0) continue;
+      if (!canSee(level, jekyll, b, world.balls, world.statics)) continue;
+      const d = Math.hypot(b.x - jekyll.x, b.z - jekyll.z);
+      if (!best || d < best.d) best = { ball: b, d };
+    }
+    return best?.ball ?? null;
+  }
+
   function launchEnemies() {
     let lunged = false;
     for (const m of state.moves) {
       if (m.enemy.hp <= 0) continue;
       if (m.kind === 'lunge') {
-        Object.assign(m.enemy, lungeVelocity(m.enemy, hero));
+        Object.assign(m.enemy, lungeVelocity(m.enemy, m.target ?? hero));
         lunged = true;
       } else {
         m.enemy.vx = m.vx;
@@ -947,6 +967,14 @@ export function createGame(container, levels, startIndex = 0) {
     const lungers = new Set(enemyMove ? state.moves.filter((m) => m.kind === 'lunge').map((m) => m.enemy) : []);
     for (const enemy of enemies()) {
       if (enemy.type === 'bomb') continue; // passive: never watches or attacks, so no "!"
+      if (enemy.type === 'jekyll') {
+        // Calm and blind to you until provoked; enraged, it shows it (whoever it'll go for).
+        const lunging = lungers.has(enemy);
+        const on = enemy.enraged || lunging;
+        overlay.setAlert(enemy, on, lunging);
+        enemyViews.get(enemy)?.setAngry(on);
+        continue;
+      }
       if (enemyMove && combat.hasHitHero(enemy)) {
         overlay.setAlert(enemy, false, false);
         enemyViews.get(enemy)?.setAngry(false);

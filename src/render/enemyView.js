@@ -60,6 +60,14 @@ export function createEnemyView(ball, toCamera) {
     object: group,
     update(dt) {
       group.position.set(ball.x, 0, ball.z);
+      if (ball.type === 'jekyll' && dying < 0) {
+        // Enraged (or mid-attack): dark plum and swollen; calm: sage green.
+        const J = CONFIG.enemy.types.jekyll;
+        const hyde = angry;
+        body.material.color.setHex(hyde ? J.enragedColor : color);
+        const s = group.scale.x + ((hyde ? J.enragedScale : 1) - group.scale.x) * Math.min(1, dt * 10);
+        group.scale.setScalar(s);
+      }
       if (spark) {
         const lit = ball.fuse != null;
         spark.visible = lit;

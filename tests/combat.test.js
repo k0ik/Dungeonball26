@@ -288,3 +288,27 @@ test('Bomb: a bomb knocked into another lights both, even during the enemy move'
   assert.equal(b.fuse, CONFIG.enemy.types.bomb.fuse);
   assert.equal(out.filter((o) => o.type === 'lit').length, 2);
 });
+
+test('Jekyll: a hit enrages it; on the enemy move its hit costs another enemy 1 HP, once', () => {
+  const ctx = setup([]);
+  const { world, hero, combat } = ctx;
+  const j = createEnemy({ x: 6, z: 4.5, level: 2, id: 'j', type: 'jekyll' });
+  const other = createEnemy({ x: 7, z: 4.5, level: 2, id: 'o' });
+  world.balls.push(j, other);
+  assert.ok(!j.enraged);
+  world.time = 1;
+  world.events.push({ type: 'ball', a: hero, b: j, speed: 5, nx: 1, nz: 0 });
+  combat.resolve(world, hero);
+  world.events.length = 0;
+  assert.ok(j.enraged, 'provoked');
+  assert.equal(j.hp, j.maxHp - 1);
+  // Its attack, in the enemy move.
+  combat.beginEnemyTurn([j]);
+  world.events.push({ type: 'ball', a: j, b: other, speed: 6, nx: 1, nz: 0 });
+  combat.resolve(world, hero);
+  world.events.length = 0;
+  assert.equal(other.hp, other.maxHp - 1);
+  world.events.push({ type: 'ball', a: j, b: other, speed: 6, nx: 1, nz: 0 });
+  combat.resolve(world, hero);
+  assert.equal(other.hp, other.maxHp - 1, 'one attack per move');
+});

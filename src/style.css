@@ -109,15 +109,21 @@ body {
   background: #5ad16a;
 }
 
-/* An enemy's HP as pips: one dot per HP (grouped in threes), lost ones
+/* An enemy's HP as pips: one dot per HP (two rows past three), lost ones
    hollow, the last one red when one more hit finishes it. */
 .hp-pips {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 3px;
   padding: 3px 4px;
-  border-radius: 999px;
+  border-radius: 8px;
   background: rgba(17, 18, 20, 0.75);
+}
+
+.hp-pips .pip-row {
+  display: flex;
+  gap: 3px;
 }
 
 .hp-pips .pip {
@@ -134,10 +140,6 @@ body {
 
 .hp-pips .pip.last {
   background: #ff3b3b;
-}
-
-.hp-pips .gap {
-  width: 2px;
 }
 
 /* One notch per HP point, so a bar shows both level and damage taken. */

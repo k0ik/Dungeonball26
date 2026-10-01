@@ -117,10 +117,21 @@ export const CONFIG = {
         spread: 0.45, // radians each piece veers off the struck golem's path
         color: 0x7a5a9c, // dark lilac
       },
+      bomb: {
+        // Hits don't hurt it: the first one lights its fuse. The fuse burns
+        // one step at the start of each move (your shot, or the enemy move):
+        // to half (the bomb turns red), then it explodes where it lies.
+        fuse: 2,
+        blastRadius: 1.6, // tiles, centre to centre; walls shield
+        blastDamage: 1, // to every ball caught (a held shield takes it instead)
+        blastPush: 5, // tiles/s outward at the centre, falling off to 0 at the edge
+        color: 0x5a5d68, // slate grey (light enough for its face to read), with a fuse on top
+        litColor: 0xd8342c, // its colour once the fuse has burned to half
+      },
     },
     // Testing aid: every enemy on these levels (ids from src/main.js) is this
     // type, so one type at a time can be tried out. null leaves them all basic.
-    testType: 'golem',
+    testType: 'bomb',
     testLevels: ['enemytester01'],
   },
 

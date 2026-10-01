@@ -117,7 +117,26 @@ export function createGame(container, levels, startIndex = 0) {
     const view = createEnemyView(enemy, rig.toCamera);
     scene.add(view.object);
     enemyViews.set(enemy, view);
-    overlay.addBar(enemy);
+    if (enemy.type !== 'bomb') overlay.addBar(enemy); // a bomb can't be hurt: its fuse is its state
+  }
+
+  /**
+   * The start of a move (your shot, or the enemy move): every lit bomb's
+   * fuse burns a step, and any that run out explode. Returns true if one did.
+   */
+  function burnFuses() {
+    let boom = false;
+    for (const bomb of enemies().filter((e) => e.type === 'bomb' && e.fuse != null)) {
+      if (!world.balls.includes(bomb)) continue; // already gone in another's blast
+      bomb.fuse -= 1;
+      if (bomb.fuse > 0) {
+        sfx.play('crack', 0.6, { pitch: 1.4 });
+        continue;
+      }
+      boom = true;
+      handleOutcomes(combat.bombBlast(world, bomb, hero));
+    }
+    return boom;
   }
 
   function loadLevel(i) {
@@ -266,6 +285,7 @@ export function createGame(container, levels, startIndex = 0) {
     state.phase = 'shot';
     state.shots++;
     combat.beginShot();
+    burnFuses(); // a move starts: lit bombs burn down (their blast counts toward this shot)
     state.kicked = new Set(); // Elasticity: each bumper kicks once per shot
     // A new shot: the coin streak and the coin tick's pitch start over.
     state.shotCoins = 0;
@@ -281,6 +301,8 @@ export function createGame(container, levels, startIndex = 0) {
   // After a short telegraph (red rings, "!"), they all launch together, and
   // it's your turn again once everything is at rest.
   function startEnemyPhase() {
+    combat.beginEnemyTurn([]); // nobody's attacking yet: a blast now hurts as a blast, not a hit
+    const boomed = burnFuses(); // a move starts: lit bombs burn down
     const patrollers = pickPatrollers(enemies());
     const moves = [];
     const claimed = []; // patrol destinations already taken this round
@@ -297,7 +319,8 @@ export function createGame(container, levels, startIndex = 0) {
     }
     state.moves = moves;
     if (!moves.length) {
-      state.phase = 'aim';
+      // Nobody moves, but a blast may have set balls rolling: let them settle first.
+      state.phase = boomed ? 'enemyMove' : 'aim';
       return;
     }
     combat.beginEnemyTurn(moves.map((m) => m.enemy));
@@ -671,6 +694,11 @@ export function createGame(container, levels, startIndex = 0) {
         enemyViews.get(o.target)?.die();
         overlay.removeBar(o.target);
         for (const piece of o.pieces) addEnemyView(piece);
+      } else if (o.type === 'lit') {
+        sfx.play('crack', 0.8, { pitch: 1.6 }); // the fuse catches
+      } else if (o.type === 'boom') {
+        sfx.play('explode', 1);
+        objectsView.blast(o.target.x, o.target.z, CONFIG.enemy.types.bomb.blastRadius / 1.4);
       } else if (o.type === 'blast') {
         if (o.amount) floatAt(o.target, `-${o.amount}`, 'hurt');
       } else if (o.type === 'kill') {

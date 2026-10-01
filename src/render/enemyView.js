@@ -35,12 +35,33 @@ export function createEnemyView(ball, toCamera) {
 
   group.add(shadow, outline, body, face);
 
+  // A bomb has a fuse on top (its shape cue, not just its colour) with a
+  // spark that shows once it's lit; at half fuse the body turns red.
+  let spark = null;
+  if (ball.type === 'bomb') {
+    const fuse = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 0.22, 8), toonMaterial(0xc9b48a));
+    fuse.position.set(0.05, r * 2 + 0.06, 0);
+    fuse.rotation.z = -0.35;
+    spark = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffd23f }));
+    spark.position.set(0.1, r * 2 + 0.18, 0);
+    spark.visible = false;
+    group.add(fuse, spark);
+  }
+  let sparkT = 0;
+
   let dying = -1;
 
   return {
     object: group,
     update(dt) {
       group.position.set(ball.x, 0, ball.z);
+      if (spark) {
+        spark.visible = ball.fuse != null;
+        sparkT += dt;
+        spark.scale.setScalar(1 + 0.35 * Math.sin(sparkT * 18)); // a steady flicker, not a flash
+        const red = ball.fuse != null && ball.fuse <= CONFIG.enemy.types.bomb.fuse / 2;
+        body.material.color.setHex(red ? CONFIG.enemy.types.bomb.litColor : color);
+      }
       if (dying >= 0) {
         // Pop: a quick swell, then shrink away.
         dying += dt;

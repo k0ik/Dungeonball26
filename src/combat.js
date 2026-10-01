@@ -17,7 +17,7 @@
 // Speed never changes the damage, only whether a contact counts.
 
 import { CONFIG } from './config.js';
-import { createBall, bounceOffFixed } from './physics.js';
+import { createBall, bounceOffFixed, overlapsSolid } from './physics.js';
 import { heroDamage } from './turns.js';
 
 const E = CONFIG.enemy;
@@ -41,6 +41,17 @@ export function createEnemy({ x, z, level, id, type = null, stage = 0 }) {
   ball.hp = ball.maxHp;
   ball.lastHit = -Infinity;
   return ball;
+}
+
+/** No wall between two points (a thin sweep, like sight's). */
+function clearLine(level, a, b) {
+  const d = Math.hypot(b.x - a.x, b.z - a.z);
+  const steps = Math.ceil(d / 0.1);
+  for (let i = 1; i < steps; i++) {
+    const t = i / steps;
+    if (overlapsSolid(level, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, 0.05)) return false;
+  }
+  return true;
 }
 
 export function createCombat() {
@@ -100,6 +111,16 @@ export function createCombat() {
   }
 
   function damage(enemy, amount, time, out, ev, kind) {
+    // A bomb isn't hurt: the first hit (or blast) lights its fuse.
+    if (enemy.type === 'bomb') {
+      if (kind === 'hit') enemy.lastHit = time;
+      out.push({ type: kind, target: enemy, amount: 0, event: ev, chain: 0 });
+      if (enemy.fuse == null) {
+        enemy.fuse = E.types.bomb.fuse;
+        out.push({ type: 'lit', target: enemy });
+      }
+      return;
+    }
     // A whole golem splits as soon as it's hit; a smaller one when it would die.
     if (enemy.type === 'golem' && enemy.stage < E.types.golem.stageHp.length - 1 && (enemy.stage === 0 || enemy.hp - amount <= 0)) {
       if (kind === 'hit') enemy.lastHit = time;
@@ -160,6 +181,45 @@ export function createCombat() {
         damage(victim, amount, world.time, out, null, 'blast');
         if (victim.hp === 0) world.balls = world.balls.filter((b) => b !== victim);
       }
+      return out;
+    },
+    /**
+     * A lit bomb's fuse ran out: it explodes where it lies. Every ball within
+     * the blast radius with no wall in between takes the blast damage (a
+     * held shield takes it for the hero) and is pushed away; bombs caught in
+     * it are lit. The bomb is gone, as a kill. Returns outcomes like resolve().
+     */
+    bombBlast(w, bomb, hero) {
+      world = w;
+      const out = [];
+      const B = E.types.bomb;
+      bomb.hp = 0;
+      world.balls = world.balls.filter((b) => b !== bomb);
+      out.push({ type: 'boom', target: bomb });
+      out.push({ type: 'kill', target: bomb, shotKills: ++killsThisShot });
+      for (const ball of [...world.balls]) {
+        const dx = ball.x - bomb.x;
+        const dz = ball.z - bomb.z;
+        const d = Math.hypot(dx, dz);
+        if (d > B.blastRadius || !clearLine(world.level, bomb, ball)) continue;
+        const push = B.blastPush * (1 - d / B.blastRadius);
+        if (d > 1e-6) {
+          ball.vx += (dx / d) * push;
+          ball.vz += (dz / d) * push;
+        }
+        if (ball === hero) {
+          if (hero.shield) {
+            hero.shield = false;
+            out.push({ type: 'blocked', target: hero, source: 'explosion' });
+          } else if (hero.hp > 0) {
+            hero.hp = Math.max(0, hero.hp - B.blastDamage);
+            out.push({ type: 'hurt', target: hero, amount: B.blastDamage, source: 'explosion' });
+          }
+        } else if (ball.kind === 'enemy' && ball.hp > 0) {
+          damage(ball, B.blastDamage, world.time, out, null, 'blast');
+        }
+      }
+      world.balls = world.balls.filter((ball) => ball.kind !== 'enemy' || ball.hp > 0);
       return out;
     },
     /**

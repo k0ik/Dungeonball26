@@ -229,3 +229,47 @@ test('Golem: 1 of 4 HP splits into 2 of 2 HP when first hit; each of those into 
   assert.ok(out.some((o) => o.type === 'kill' && o.target === small));
   assert.deepEqual(golems().map((g) => g.hp).sort(), [1, 2]);
 });
+
+test('Bomb: a hit lights it without hurting it; its blast hurts and pushes what it reaches, walls shield, other bombs light', () => {
+  const level = parseLevel(`
+1##########
+#.........#
+#.....#...#
+#S........#
+###########`);
+  const world = createWorld(level);
+  const B = CONFIG.enemy.types.bomb;
+  const hero = Object.assign(createBall({ x: 3.6, z: 3.5, kind: 'hero', id: 'hero' }), { atk: 1, hp: 10, maxHp: 10, shield: false });
+  const bomb = createEnemy({ x: 4.5, z: 2.5, level: 1, id: 'bomb', type: 'bomb' });
+  const near = createEnemy({ x: 4.5, z: 1.5, level: 1, id: 'near' }); // 1 tile away, open floor
+  const behind = createEnemy({ x: 7.5, z: 2.5, level: 1, id: 'behind' }); // 3 tiles: out of reach anyway
+  const other = createEnemy({ x: 5.5, z: 3.5, level: 1, id: 'other', type: 'bomb' });
+  world.balls.push(hero, bomb, near, behind, other);
+  const combat = createCombat();
+  combat.beginShot();
+  // Hit it: lit, not hurt.
+  world.time = 1;
+  world.events.push({ type: 'ball', a: hero, b: bomb, speed: 5, nx: 1, nz: 0 });
+  let out = combat.resolve(world, hero);
+  world.events.length = 0;
+  assert.equal(bomb.hp, bomb.maxHp);
+  assert.equal(bomb.fuse, B.fuse);
+  assert.ok(out.some((o) => o.type === 'lit' && o.target === bomb));
+  // Blow it up.
+  out = combat.bombBlast(world, bomb, hero);
+  assert.ok(!world.balls.includes(bomb));
+  assert.ok(out.some((o) => o.type === 'kill' && o.target === bomb));
+  assert.equal(near.hp, near.maxHp - B.blastDamage, 'caught in the open');
+  assert.ok(near.vz < 0, 'pushed away from the blast');
+  assert.equal(behind.hp, behind.maxHp, 'out of reach');
+  assert.equal(hero.hp, 10 - B.blastDamage, 'the hero is caught too');
+  assert.equal(other.fuse, B.fuse, 'another bomb in reach is lit, not set off');
+  // A wall in between shields: diagonally across the corner of the wall tile at (6,2), well within reach.
+  const w2 = createWorld(level);
+  const b2 = createEnemy({ x: 5.6, z: 2.6, level: 1, id: 'b2', type: 'bomb' });
+  const hid = createEnemy({ x: 6.4, z: 1.6, level: 1, id: 'hid' });
+  assert.ok(Math.hypot(hid.x - b2.x, hid.z - b2.z) < B.blastRadius);
+  w2.balls.push(hero, b2, hid);
+  combat.bombBlast(w2, b2, hero);
+  assert.equal(hid.hp, hid.maxHp, 'the wall took it');
+});

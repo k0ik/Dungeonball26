@@ -147,15 +147,16 @@ export function createObjectsView(scene) {
       if (v) v.opening = true;
     },
     /** An expanding, fading fireball where a red barrel went off. */
-    blast(x, z) {
+    /** A fireball; `size` scales it (a bomb's blast is bigger than a red barrel's). */
+    blast(x, z, size = 1) {
       const mesh = new THREE.Mesh(
         blastGeo,
         new THREE.MeshBasicMaterial({ color: C.explosion, transparent: true, opacity: 0.85, depthWrite: false }),
       );
       mesh.position.set(x, 0.35, z);
-      mesh.scale.setScalar(0.3);
+      mesh.scale.setScalar(0.3 * size);
       root.add(mesh);
-      blasts.push({ mesh, t: 0 });
+      blasts.push({ mesh, t: 0, size });
     },
     /**
      * While aiming, fade chests near the ball to see-through (and back once
@@ -202,7 +203,7 @@ export function createObjectsView(scene) {
         const b = blasts[i];
         b.t += dt;
         const t = b.t / 0.4;
-        b.mesh.scale.setScalar(0.3 + 1.1 * Math.min(1, t) ** 0.5);
+        b.mesh.scale.setScalar((0.3 + 1.1 * Math.min(1, t) ** 0.5) * b.size);
         b.mesh.material.opacity = 0.85 * Math.max(0, 1 - t);
         if (t >= 1) {
           root.remove(b.mesh);

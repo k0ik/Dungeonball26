@@ -100,6 +100,7 @@ export function createCombat() {
   }
 
   function damage(enemy, amount, time, out, ev, kind) {
+    if (enemy.phased) return; // a faded Ghost can't be hurt
     // A bomb isn't hurt: the first hit (or blast) lights its fuse.
     if (enemy.type === 'bomb') {
       if (kind === 'hit') enemy.lastHit = time;
@@ -191,7 +192,7 @@ export function createCombat() {
         const dx = ball.x - bomb.x;
         const dz = ball.z - bomb.z;
         const d = Math.hypot(dx, dz);
-        if (d > B.blastRadius || !lineClear(world.level, bomb, ball)) continue;
+        if (ball.phased || d > B.blastRadius || !lineClear(world.level, bomb, ball)) continue;
         const push = B.blastPush * (1 - d / B.blastRadius);
         if (d > 1e-6) {
           ball.vx += (dx / d) * push;

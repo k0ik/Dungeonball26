@@ -53,6 +53,7 @@ export function createEnemyView(ball, toCamera) {
     group.add(fuse);
   }
   let sparkT = 0;
+  let ghostOpacity = 1;
 
   let dying = -1;
 
@@ -60,6 +61,24 @@ export function createEnemyView(ball, toCamera) {
     object: group,
     update(dt) {
       group.position.set(ball.x, 0, ball.z);
+      if (ball.type === 'ghost') {
+        // Faded: see-through (its face too); solid otherwise. Eases between.
+        const target = ball.phased ? CONFIG.enemy.types.ghost.fadedOpacity : 1;
+        ghostOpacity += (target - ghostOpacity) * Math.min(1, dt * 8);
+        const see = ghostOpacity < 0.99;
+        for (const m of [body.material, face?.material]) {
+          if (!m) continue;
+          if (m.transparent !== see) {
+            m.transparent = see;
+            m.depthWrite = !see;
+            m.needsUpdate = true; // switching to see-through needs a recompile
+          }
+          m.opacity = ghostOpacity;
+        }
+        // The black outline is a shell behind the ball: through a see-through
+        // body it would read as a dark blob, so it goes while faded.
+        outline.visible = !see;
+      }
       if (ball.type === 'jekyll' && dying < 0) {
         // Enraged (or mid-attack): dark plum and swollen; calm: sage green.
         const J = CONFIG.enemy.types.jekyll;

@@ -199,3 +199,28 @@ test('Brute: heavy, so it barely moves when you hit it and knocks you further th
   assert.ok(brute.vx < v * 0.95 * 0.6);
   assert.ok(hero.vx < 0, 'you bounce back off it');
 });
+
+test('Ghost: while faded, balls pass straight through it', async () => {
+  const { createEnemy } = await import('../src/combat.js');
+  const run = (phased) => {
+    const world = createWorld(room);
+    const hero = createBall({ x: 2, z: 5.5, kind: 'hero', id: 'h' });
+    hero.vx = 4;
+    const g = createEnemy({ x: 4.5, z: 5.5, level: 1, id: 'g', type: 'ghost' });
+    g.phased = phased;
+    world.balls.push(hero, g);
+    let hits = 0;
+    for (let i = 0; i < 240; i++) {
+      stepWorld(world);
+      hits += world.events.filter((e) => e.type === 'ball').length;
+      world.events.length = 0;
+    }
+    return { hits, heroX: hero.x, ghostX: g.x };
+  };
+  const solid = run(false);
+  const faded = run(true);
+  assert.ok(solid.hits > 0);
+  assert.equal(faded.hits, 0);
+  assert.ok(faded.heroX > 4.5 + 0.5, 'rolled right through');
+  assert.equal(faded.ghostX, 4.5, 'and the ghost never moved');
+});

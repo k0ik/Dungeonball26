@@ -136,10 +136,17 @@ export const CONFIG = {
         enragedColor: 0x6b1f4f, // enraged: dark plum...
         enragedScale: 1.12, // ...and visibly swollen (a shape cue as well as colour)
       },
+      ghost: {
+        // Every other round it fades: while faded, balls pass through it and
+        // it can't hurt or be hurt (and doesn't lunge). It starts solid and
+        // switches each time your turn comes round.
+        color: 0xdcdcf0, // pale lavender white
+        fadedOpacity: 0.3, // how see-through it is while faded (its ring and bar still show)
+      },
     },
     // Testing aid: every enemy on these levels (ids from src/main.js) is this
     // type, so one type at a time can be tried out. null leaves them all basic.
-    testType: 'jekyll',
+    testType: 'ghost',
     testLevels: ['enemytester01'],
   },
 

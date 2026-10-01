@@ -164,6 +164,7 @@ export function bounceOffFixed(ev, ball) {
 }
 
 function resolveBallPair(world, a, b) {
+  if (a.phased || b.phased) return; // a faded Ghost: balls pass straight through
   const dx = b.x - a.x;
   const dz = b.z - a.z;
   const minDist = a.radius + b.radius;

@@ -43,7 +43,7 @@ export function canSee(level, enemy, hero, balls, statics = []) {
 
   // ...and against other balls: blocked if the sweep's circle would touch one.
   for (const b of balls) {
-    if (b === enemy || b === hero) continue;
+    if (b === enemy || b === hero || b.phased) continue; // a faded Ghost doesn't block the view
     if (distToSegment(b.x, b.z, enemy.x, enemy.z, hero.x, hero.z) < b.radius + hero.radius) return false;
   }
   for (const s of statics) {

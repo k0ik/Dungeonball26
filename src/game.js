@@ -318,7 +318,8 @@ export function createGame(container, levels, startIndex = 0) {
         if (target) moves.push({ enemy, from, kind: 'lunge', target });
         continue;
       }
-      if (canSee(level, enemy, hero, world.balls, world.statics)) {
+      // A faded Ghost can't hurt anyone, so it only ever patrols.
+      if (!enemy.phased && canSee(level, enemy, hero, world.balls, world.statics)) {
         moves.push({ enemy, from, kind: 'lunge' });
       } else if (patrollers.has(enemy)) {
         const move = patrolMove(level, enemy, [...world.balls, ...claimed], Math.random, world.statics);
@@ -329,8 +330,8 @@ export function createGame(container, levels, startIndex = 0) {
     }
     state.moves = moves;
     if (!moves.length) {
-      // Nobody moves, but a blast may have set balls rolling: let them settle first.
       state.phase = 'aim';
+      newRound();
       return;
     }
     combat.beginEnemyTurn(moves.map((m) => m.enemy));
@@ -338,6 +339,11 @@ export function createGame(container, levels, startIndex = 0) {
     state.phase = 'enemyWait';
     state.timer = Math.max(lunge ? CONFIG.enemy.lungeTelegraph : CONFIG.enemy.patrolDelay, CONFIG.enemy.turnRingBeat);
     state.waited = 0;
+  }
+
+  /** Your turn comes round again: every Ghost switches between solid and faded. */
+  function newRound() {
+    for (const e of enemies()) if (e.type === 'ghost') e.phased = !e.phased;
   }
 
   /** The nearest ball an enraged Jekyll can see (you or another enemy), or null. */
@@ -859,6 +865,7 @@ export function createGame(container, levels, startIndex = 0) {
           // enemy phase is skipped and you shoot again.
           if (combat.shotKills >= 2) {
             state.phase = 'aim';
+            newRound();
             // The "Combo Kill!" banner already announced the bonus turn; only
             // remind you if the shot rolled on long after it.
             if (performance.now() - state.comboKillAt > CONFIG.render.bonusReminderAfter * 1000) {
@@ -882,6 +889,7 @@ export function createGame(container, levels, startIndex = 0) {
         if (isAtRest(world)) {
           state.moves = [];
           state.phase = 'aim';
+          newRound();
           state.returnBoost = CONFIG.camera.returnBoostSeconds; // snap back to you quickly
         }
         break;
@@ -986,7 +994,7 @@ export function createGame(container, levels, startIndex = 0) {
         continue;
       }
       const lunging = lungers.has(enemy);
-      const aware = lunging || canSee(level, enemy, hero, world.balls, world.statics);
+      const aware = lunging || (!enemy.phased && canSee(level, enemy, hero, world.balls, world.statics));
       overlay.setAlert(enemy, aware, lunging);
       enemyViews.get(enemy)?.setAngry(aware);
     }

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { parseLevel } from '../src/level.js';
 import { createBall, createWorld, stepWorld, isAtRest } from '../src/physics.js';
 import { canSee } from '../src/sight.js';
-import { nextActor, lungeVelocity, patrolMove, heroDamage, pickPatrollers } from '../src/turns.js';
+import { nextActor, lungeVelocity, patrolMove, heroDamage, pickPatrollers, walkDistances, seekerMove } from '../src/turns.js';
 import { createCombat, createEnemy } from '../src/combat.js';
 import { CONFIG } from '../src/config.js';
 
@@ -220,4 +220,27 @@ test('Slider: glides on a quarter of the friction, patrols further, and still st
     assert.ok(Math.hypot(e.x - move.target.x, e.z - move.target.z) < 0.8, `ended ${Math.hypot(e.x - move.target.x, e.z - move.target.z).toFixed(2)} from its target`);
   }
   assert.ok(far > 0, 'some patrols go beyond a basic enemy\'s range');
+});
+
+test('Seeker: without sight, its patrols close the walking distance to you, round walls', () => {
+  // A U-bend: the hero is just across a wall, but the walk is the long way round.
+  const level = parseLevel(`
+1##########
+#S........#
+#########.#
+#.........#
+###########`);
+  const toHero = walkDistances(level, 1.5, 1.5);
+  assert.equal(toHero(1, 3), 18, 'the long way round');
+  const s = createEnemy({ x: 1.5, z: 3.5, level: 1, id: 's', type: 'seeker' });
+  let seed = 0.3;
+  const rng = () => (seed = (seed * 9301 + 0.49297) % 1);
+  const start = toHero(1, 3);
+  for (let i = 0; i < 4; i++) {
+    const move = seekerMove(level, s, [s], toHero, rng);
+    assert.ok(move);
+    s.x = move.target.x;
+    s.z = move.target.z;
+  }
+  assert.ok(toHero(Math.floor(s.x), Math.floor(s.z)) <= start - 8, `closed in: ${toHero(Math.floor(s.x), Math.floor(s.z))} of ${start}`);
 });

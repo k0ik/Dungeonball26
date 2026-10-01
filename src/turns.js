@@ -95,6 +95,49 @@ export function patrolMove(level, enemy, balls, rng = Math.random, statics = [])
 }
 
 /**
+ * Walking distance in tiles from (x, z) to every tile, through open floor
+ * (walls and closed doors block), 4-way. Returns a function (col, row) ->
+ * distance, Infinity where unreachable.
+ */
+export function walkDistances(level, x, z) {
+  const W = level.width;
+  const dist = new Float64Array(W * level.height).fill(Infinity);
+  const open = (c, r) => c >= 0 && r >= 0 && c < W && r < level.height && !['wall', 'door'].includes(level.tiles[r][c]);
+  const c0 = Math.floor(x);
+  const r0 = Math.floor(z);
+  if (open(c0, r0)) {
+    dist[r0 * W + c0] = 0;
+    const queue = [[c0, r0]];
+    for (let i = 0; i < queue.length; i++) {
+      const [c, r] = queue[i];
+      for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nc = c + dc;
+        const nr = r + dr;
+        if (!open(nc, nr) || dist[nr * W + nc] !== Infinity) continue;
+        dist[nr * W + nc] = dist[r * W + c] + 1;
+        queue.push([nc, nr]);
+      }
+    }
+  }
+  return (c, r) => (c >= 0 && r >= 0 && c < W && r < level.height ? dist[r * W + c] : Infinity);
+}
+
+/**
+ * A Seeker's patrol: of `tries` ordinary patrol moves, the one that ends
+ * closest to the hero by walking distance (`toHero` from walkDistances).
+ */
+export function seekerMove(level, enemy, balls, toHero, rng = Math.random, statics = [], tries = E.types.seeker.tries) {
+  let best = null;
+  for (let i = 0; i < tries; i++) {
+    const move = patrolMove(level, enemy, balls, rng, statics);
+    if (!move) return null;
+    const d = toHero(Math.floor(move.target.x), Math.floor(move.target.z));
+    if (!best || d < best.d) best = { move, d };
+  }
+  return best.move;
+}
+
+/**
  * Damage the hero takes from an attacker's hit: a flat amount, whatever the
  * enemy's level (changed after playtesting from the doc's max(1, L − DEF)).
  */

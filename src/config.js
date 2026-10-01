@@ -145,6 +145,14 @@ export const CONFIG = {
         radiusByShotsLeft: [0.24, 0.32, 0.42], // tiles: small, medium, large (1, 2, 3 shots left)
         color: 0xf2c230, // gold
       },
+      seeker: {
+        // Knows roughly where you are even without sight: every enemy move it
+        // patrols (never sits out), trying `tries` patrol moves and taking the
+        // one that ends closest to you by walking distance on the tile grid.
+        // When it can see you, it lunges like any enemy.
+        tries: 8,
+        color: 0x1e8fff, // bright blue, with an antenna on top
+      },
       ghost: {
         // Every other round it fades: while faded, balls pass through it and
         // it can't hurt or be hurt, though it doesn't know it and acts as
@@ -156,7 +164,7 @@ export const CONFIG = {
     },
     // Testing aid: every enemy on these levels (ids from src/main.js) is this
     // type, so one type at a time can be tried out. null leaves them all basic.
-    testType: 'ghost',
+    testType: 'seeker',
     testLevels: ['enemytester01'],
     // Testing aid for tool balls: on the test levels, every other enemy
     // becomes this tool ball instead (so there are still enemies to roll it).

@@ -22,7 +22,7 @@ import { parseLevel, tileCenter, tileAt } from './level.js';
 import { createWorld, createBall, stepWorld, isAtRest, speedOf, overlapsSolid, applyBumperKick, applyRubberRebound } from './physics.js';
 import { createCombat, createEnemy } from './combat.js';
 import { canSee } from './sight.js';
-import { lungeVelocity, patrolMove, pickPatrollers } from './turns.js';
+import { lungeVelocity, patrolMove, pickPatrollers, walkDistances, seekerMove } from './turns.js';
 import { shotFromDrag, canGrab, previewPath } from './aim.js';
 import { buildLevelView } from './render/levelView.js';
 import { setSeeThrough } from './render/materials.js';
@@ -375,7 +375,8 @@ export function createGame(container, levels, startIndex = 0) {
   // After a short telegraph (red rings, "!"), they all launch together, and
   // it's your turn again once everything is at rest.
   function startEnemyPhase() {
-    const patrollers = pickPatrollers(enemies().filter((e) => !isTool(e) && e.type !== 'jekyll'));
+    const patrollers = pickPatrollers(enemies().filter((e) => !isTool(e) && e.type !== 'jekyll' && e.type !== 'seeker'));
+    let toHero = null; // walking distances to you, for Seekers (worked out once, if any need it)
     const moves = [];
     const claimed = []; // patrol destinations already taken this round
     for (const enemy of enemies()) {
@@ -392,6 +393,13 @@ export function createGame(container, levels, startIndex = 0) {
       // A faded Ghost doesn't know it's harmless: it lunges like any enemy (and passes straight through).
       if (canSee(level, enemy, hero, world.balls, world.statics)) {
         moves.push({ enemy, from, kind: 'lunge' });
+      } else if (enemy.type === 'seeker') {
+        // It can't see you but knows roughly where you are: it always moves, drifting your way.
+        toHero ??= walkDistances(level, hero.x, hero.z);
+        const move = seekerMove(level, enemy, [...world.balls, ...claimed], toHero, Math.random, world.statics);
+        if (!move) continue;
+        moves.push({ enemy, from, kind: 'patrol', ...move });
+        claimed.push({ x: move.target.x, z: move.target.z, radius: enemy.radius });
       } else if (patrollers.has(enemy)) {
         const move = patrolMove(level, enemy, [...world.balls, ...claimed], Math.random, world.statics);
         if (!move) continue; // boxed in: it stays put

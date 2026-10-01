@@ -53,6 +53,15 @@ export function createEnemyView(ball, toCamera) {
     group.add(fuse);
   }
   let sparkT = 0;
+
+  // A Seeker has an antenna on top (its shape cue, not just its colour).
+  if (ball.type === 'seeker') {
+    const stalk = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.2, 6), toonMaterial(0x0b3a6e));
+    stalk.position.set(0, r * 2 + 0.08, 0);
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), toonMaterial(0x9fd4ff));
+    tip.position.set(0, r * 2 + 0.2, 0);
+    group.add(stalk, tip);
+  }
   let ghostOpacity = ball.phased ? CONFIG.enemy.types.ghost.fadedOpacity : 1;
 
   let dying = -1;

@@ -230,6 +230,17 @@ export function createCombat() {
       world = w;
       const out = [];
       const time = world.time;
+      // Any real knock lights a bomb, in any phase and from any ball: you,
+      // an enemy, or another bomb (so one knocked into another lights both).
+      for (const ev of world.events) {
+        if (ev.type !== 'ball' || ev.speed < E.hitMinSpeed) continue;
+        for (const ball of [ev.a, ev.b]) {
+          if (ball.type === 'bomb' && ball.fuse == null && ball.hp > 0) {
+            ball.fuse = E.types.bomb.fuse;
+            out.push({ type: 'lit', target: ball });
+          }
+        }
+      }
       if (actors) {
         for (const ev of world.events) {
           if (ev.type !== 'ball' || ev.speed < E.hitMinSpeed) continue;

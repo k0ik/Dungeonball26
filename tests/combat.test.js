@@ -274,3 +274,17 @@ test('Bomb: a hit lights it without hurting it; its blast hurts and pushes what 
   combat.bombBlast(w2, b2, hero);
   assert.equal(hid.hp, hid.maxHp, 'the wall took it');
 });
+
+test('Bomb: a bomb knocked into another lights both, even during the enemy move', () => {
+  const ctx = setup([]);
+  const { world, hero, combat } = ctx;
+  const a = createEnemy({ x: 6, z: 4.5, level: 1, id: 'a', type: 'bomb' });
+  const b = createEnemy({ x: 6.7, z: 4.5, level: 1, id: 'b', type: 'bomb' });
+  world.balls.push(a, b);
+  combat.beginEnemyTurn([]); // the enemy move: not your shot
+  world.events.push({ type: 'ball', a, b, speed: 2, nx: 1, nz: 0 });
+  const out = combat.resolve(world, hero);
+  assert.equal(a.fuse, CONFIG.enemy.types.bomb.fuse);
+  assert.equal(b.fuse, CONFIG.enemy.types.bomb.fuse);
+  assert.equal(out.filter((o) => o.type === 'lit').length, 2);
+});

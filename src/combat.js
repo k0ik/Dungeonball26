@@ -139,7 +139,7 @@ export function createCombat() {
     get shotKills() {
       return killsThisShot;
     },
-    /** True if `enemy` already hit the hero (or its shield) in the current enemy phase. */
+    /** True if `enemy` already landed its attack this enemy phase (on the hero, its shield, or, for a Jekyll, another enemy). */
     hasHitHero(enemy) {
       return !!actors && haveHit.has(enemy);
     },

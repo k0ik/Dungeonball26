@@ -969,7 +969,8 @@ export function createGame(container, levels, startIndex = 0) {
       if (enemy.type === 'bomb') continue; // passive: never watches or attacks, so no "!"
       if (enemy.type === 'jekyll') {
         // Calm and blind to you until provoked; enraged, it shows it (whoever it'll go for).
-        const lunging = lungers.has(enemy);
+        // Once its attack connects (you or an enemy), it's spent and calm again.
+        const lunging = lungers.has(enemy) && !combat.hasHitHero(enemy);
         const on = enemy.enraged || lunging;
         overlay.setAlert(enemy, on, lunging);
         enemyViews.get(enemy)?.setAngry(on);

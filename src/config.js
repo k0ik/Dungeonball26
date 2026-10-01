@@ -142,6 +142,7 @@ export const CONFIG = {
         // end of the 3rd move (your shot or the enemy move) in which it rolled.
         coinEvery: 1, // tiles rolled per coin dropped
         shots: 3,
+        radiusByShotsLeft: [0.24, 0.32, 0.42], // tiles: small, medium, large (1, 2, 3 shots left)
         color: 0xf2c230, // gold
       },
       ghost: {
@@ -203,6 +204,10 @@ export const CONFIG = {
     superPotionHeal: 5,
     swordAtk: 3, // added to ATK while you hold a sword (it lasts one round: your next shot)
     killGoldPerLevel: 1, // a kill drops coins worth the enemy's level
+    // When an enemy hits you, you drop gold: one coin per this much impact
+    // speed (tiles/s), rounded up, from 1 up to hurtCoinsMax, scattered around you.
+    hurtCoinsPerSpeed: 2,
+    hurtCoinsMax: 4,
     // Besides its coins, a kill has these separate, rare chances of dropping
     // gear or a potion (rolled independently, so more than one can drop).
     enemyDrops: { sword: 0.05, shield: 0.08, potion: 0.12, superPotionShare: 0.25 },

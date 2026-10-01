@@ -61,6 +61,11 @@ export function createEnemyView(ball, toCamera) {
     object: group,
     update(dt) {
       group.position.set(ball.x, 0, ball.z);
+      if (ball.type === 'gold' && dying < 0) {
+        // It shrinks as it wears down (its physics radius shrinks with it).
+        const s = group.scale.x + (ball.radius / r - group.scale.x) * Math.min(1, dt * 6);
+        group.scale.setScalar(s);
+      }
       if (ball.type === 'ghost') {
         // Faded: see-through (its face too); solid otherwise. Eases between.
         const target = ball.phased ? CONFIG.enemy.types.ghost.fadedOpacity : 1;

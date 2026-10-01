@@ -147,7 +147,10 @@ export function createGame(container, levels, startIndex = 0) {
       if (g.type !== 'gold' || !g.rolled) continue;
       g.rolled = false;
       g.hp -= 1;
-      if (g.hp > 0) continue;
+      if (g.hp > 0) {
+        g.radius = CONFIG.enemy.types.gold.radiusByShotsLeft[g.hp - 1]; // it wears down: large, medium, small
+        continue;
+      }
       world.balls = world.balls.filter((b) => b !== g);
       enemyViews.get(g)?.die();
       overlay.removeBar(g);
@@ -803,6 +806,15 @@ export function createGame(container, levels, startIndex = 0) {
         heroView.flash();
         state.ouch = CONFIG.render.heroOuchSeconds;
         floatAt(hero, `-${o.amount}`, 'hurt');
+        // Hit by an enemy, you drop gold: 1 to 4 coins by how hard it hit,
+        // scattered around you to win back (not from a blast).
+        if (o.event && state.gold > 0) {
+          const L = CONFIG.loot;
+          const n = Math.min(state.gold, Math.max(1, Math.min(L.hurtCoinsMax, Math.ceil(o.event.speed / L.hurtCoinsPerSpeed))));
+          state.gold -= n;
+          scatterCoins(hero.x, hero.z, n);
+          floatAt(hero, `-${n} gold`, 'gold', 0.5);
+        }
         if (hero.hp <= 0 && state.phase !== 'down') knockedOut();
       } else if (o.type === 'blocked') {
         sfx.play('blocked', 1);

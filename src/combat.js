@@ -30,7 +30,7 @@ export function createEnemy({ x, z, level, id, type = null, stage = 0 }) {
   // An enemy type (CONFIG.enemy.types) changes one thing about it.
   const T = type ? CONFIG.enemy.types[type] : null;
   // Golems: a whole one unless a later `stage` is given (the pieces it splits into).
-  const radius = type === 'golem' ? T.stageRadius[stage] : T?.radius;
+  const radius = type === 'golem' ? T.stageRadius[stage] : type === 'gold' ? T.radiusByShotsLeft[T.shots - 1] : T?.radius;
   const ball = createBall({ x, z, kind: 'enemy', id, radius });
   if (type === 'golem') ball.stage = stage;
   ball.level = level;

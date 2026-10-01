@@ -53,7 +53,7 @@ export function createEnemyView(ball, toCamera) {
     group.add(fuse);
   }
   let sparkT = 0;
-  let ghostOpacity = 1;
+  let ghostOpacity = ball.phased ? CONFIG.enemy.types.ghost.fadedOpacity : 1;
 
   let dying = -1;
 

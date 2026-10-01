@@ -172,6 +172,7 @@ export function createGame(container, levels, startIndex = 0) {
       const E = CONFIG.enemy;
       const type = E.testType && E.testLevels.includes(def.id) ? E.testType : null;
       const enemy = createEnemy({ ...tileCenter(e), level: e.level, id: `enemy${n}`, type });
+      if (type === 'ghost') enemy.phased = Math.random() < 0.5; // ghosts don't blink in step: each starts solid or faded at random
       world.balls.push(enemy);
       addEnemyView(enemy);
     });

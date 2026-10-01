@@ -74,7 +74,7 @@ export const CONFIG = {
     patrolShare: 0.5, // fraction of enemies (picked at random each round) that patrol; the rest stay put unless they can see you
     sightRange: 6,
     hpPerLevel: 2, // HP = 2 × level
-    maxHp: 8, // no enemy has more (its HP shows as two dots of up to 4 each)
+    maxHp: 8, // no enemy has more
     // Impacts below this don't count. Just above the stop threshold, so any
     // visible contact lands (the doc's 1.5 missed slow roll-ins once friction
     // was halved); the per-enemy cooldown still stops grinding.

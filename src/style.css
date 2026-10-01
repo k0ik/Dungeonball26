@@ -109,39 +109,6 @@ body {
   background: #5ad16a;
 }
 
-/* An enemy's HP as one or two dots, each worth up to 4 HP by its colour:
-   green 4, yellow 3, orange 2, red 1, black empty. */
-.hp-pips {
-  display: flex;
-  gap: 3px;
-}
-
-.hp-pips .dot {
-  width: 14px;
-  height: 14px;
-  box-sizing: border-box;
-  border-radius: 50%;
-  border: 2px solid #f4f5f7;
-  background: #111214;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
-}
-
-.hp-pips .dot[data-v='4'] {
-  background: #4fd15f;
-}
-
-.hp-pips .dot[data-v='3'] {
-  background: #ffd23f;
-}
-
-.hp-pips .dot[data-v='2'] {
-  background: #ff8c2e;
-}
-
-.hp-pips .dot[data-v='1'] {
-  background: #ff3b3b;
-}
-
 /* One notch per HP point, so a bar shows both level and damage taken. */
 .tag .hp::after {
   content: '';

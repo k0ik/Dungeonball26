@@ -121,18 +121,21 @@ export function createGame(container, levels, startIndex = 0) {
   }
 
   /**
-   * The start of a move (your shot, or the enemy move): every lit bomb's
-   * fuse burns a step, and any that run out explode. Returns true if one did.
+   * Bomb fuses run on your shots: a bomb lit at any point is armed when your
+   * next shot starts (its fuse burns shorter), and goes off when that shot
+   * comes to rest. Bombs lit during that shot wait for the one after.
    */
-  function burnFuses() {
+  function armBombs() {
+    for (const bomb of enemies()) {
+      if (bomb.type === 'bomb' && bomb.fuse === 1) bomb.fuse = 0;
+    }
+  }
+
+  /** Your shot came to rest: armed bombs go off. Returns true if any did. */
+  function detonateArmed() {
     let boom = false;
-    for (const bomb of enemies().filter((e) => e.type === 'bomb' && e.fuse != null)) {
+    for (const bomb of enemies().filter((e) => e.type === 'bomb' && e.fuse === 0)) {
       if (!world.balls.includes(bomb)) continue; // already gone in another's blast
-      bomb.fuse -= 1;
-      if (bomb.fuse > 0) {
-        sfx.play('crack', 0.6, { pitch: 1.4 });
-        continue;
-      }
       boom = true;
       handleOutcomes(combat.bombBlast(world, bomb, hero));
     }
@@ -285,7 +288,7 @@ export function createGame(container, levels, startIndex = 0) {
     state.phase = 'shot';
     state.shots++;
     combat.beginShot();
-    burnFuses(); // a move starts: lit bombs burn down (their blast counts toward this shot)
+    armBombs(); // bombs lit before this shot go off when it comes to rest
     state.kicked = new Set(); // Elasticity: each bumper kicks once per shot
     // A new shot: the coin streak and the coin tick's pitch start over.
     state.shotCoins = 0;
@@ -301,8 +304,6 @@ export function createGame(container, levels, startIndex = 0) {
   // After a short telegraph (red rings, "!"), they all launch together, and
   // it's your turn again once everything is at rest.
   function startEnemyPhase() {
-    combat.beginEnemyTurn([]); // nobody's attacking yet: a blast now hurts as a blast, not a hit
-    const boomed = burnFuses(); // a move starts: lit bombs burn down
     const patrollers = pickPatrollers(enemies().filter((e) => e.type !== 'bomb'));
     const moves = [];
     const claimed = []; // patrol destinations already taken this round
@@ -321,7 +322,7 @@ export function createGame(container, levels, startIndex = 0) {
     state.moves = moves;
     if (!moves.length) {
       // Nobody moves, but a blast may have set balls rolling: let them settle first.
-      state.phase = boomed ? 'enemyMove' : 'aim';
+      state.phase = 'aim';
       return;
     }
     combat.beginEnemyTurn(moves.map((m) => m.enemy));
@@ -821,6 +822,9 @@ export function createGame(container, levels, startIndex = 0) {
 
     switch (state.phase) {
       case 'shot':
+        // Your shot came to rest: armed bombs go off first, and the shot
+        // carries on (their blast counts toward it) until everything settles.
+        if (isAtRest(world) && detonateArmed()) break;
         if (isAtRest(world)) {
           // A sword breaks as the shot in which it hit an enemy comes to rest.
           if (endSwordShot(hero)) {

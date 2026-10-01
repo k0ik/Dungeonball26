@@ -37,17 +37,20 @@ export function createEnemyView(ball, toCamera) {
   group.add(shadow, outline, body);
   if (face) group.add(face);
 
-  // A bomb has a fuse on top (its shape cue, not just its colour) with a
-  // spark that shows once it's lit; at half fuse the body turns red.
+  // A bomb has a fuse on top (its shape cue, not just its colour). Once lit
+  // the body turns red and a spark flickers at the fuse's tip; the fuse
+  // burns shorter with each step, so the countdown reads without colour.
   let spark = null;
+  let fuse = null;
+  const FUSE_LEN = 0.22;
   if (ball.type === 'bomb') {
-    const fuse = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 0.22, 8), toonMaterial(0xc9b48a));
-    fuse.position.set(0.05, r * 2 + 0.06, 0);
+    fuse = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, FUSE_LEN, 8).translate(0, FUSE_LEN / 2, 0), toonMaterial(0xc9b48a));
+    fuse.position.set(0, r * 2 - 0.05, 0);
     fuse.rotation.z = -0.35;
     spark = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffd23f }));
-    spark.position.set(0.1, r * 2 + 0.18, 0);
     spark.visible = false;
-    group.add(fuse, spark);
+    fuse.add(spark);
+    group.add(fuse);
   }
   let sparkT = 0;
 
@@ -58,11 +61,15 @@ export function createEnemyView(ball, toCamera) {
     update(dt) {
       group.position.set(ball.x, 0, ball.z);
       if (spark) {
-        spark.visible = ball.fuse != null;
+        const lit = ball.fuse != null;
+        spark.visible = lit;
         sparkT += dt;
         spark.scale.setScalar(1 + 0.35 * Math.sin(sparkT * 18)); // a steady flicker, not a flash
-        const red = ball.fuse != null && ball.fuse <= CONFIG.enemy.types.bomb.fuse / 2;
-        body.material.color.setHex(red ? CONFIG.enemy.types.bomb.litColor : color);
+        // Full length until lit, shorter once lit, a stub once armed (it goes off as your shot stops).
+        fuse.scale.y = !lit ? 1 : ball.fuse > 0 ? 0.6 : 0.3;
+        spark.position.set(0, FUSE_LEN, 0);
+        spark.scale.y /= fuse.scale.y; // keep the spark round on the squashed fuse
+        body.material.color.setHex(lit ? CONFIG.enemy.types.bomb.litColor : color);
       }
       if (dying >= 0) {
         // Pop: a quick swell, then shrink away.

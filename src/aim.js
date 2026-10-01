@@ -2,11 +2,12 @@
 // the opposite way. Everything is measured on the ground plane, in tiles.
 
 import { CONFIG } from './config.js';
-import { createWorld, createBall, stepWorld, applyBumperKick } from './physics.js';
+import { createWorld, createBall, stepWorld, applyBumperKick, applyRubberRebound } from './physics.js';
 import { createCombat } from './combat.js';
 import { resolveObjects } from './objects.js';
 
 const A = CONFIG.aim;
+const RUBBER = CONFIG.enemy.types.rubber;
 
 /**
  * Turn a drag point into a shot. `fill` is 0..1 of full power;
@@ -70,6 +71,7 @@ export function previewPath(level, hero, dirX, dirZ, speed, others = [], statics
     const hit = world.events.some(touchesGhost);
     combat.resolve(world, ghost);
     resolveObjects(world, ghost, () => 0.5, { barrelHits });
+    applyRubberRebound(world, ghost, RUBBER.rebound, RUBBER.maxRebound); // Rubber enemies
     if (kick) applyBumperKick(world, ghost, kick, CONFIG.aim.maxLaunchSpeed, kicked); // the Elasticity card
     world.events.length = 0;
     if (hit) {

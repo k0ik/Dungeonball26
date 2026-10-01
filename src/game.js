@@ -19,7 +19,7 @@
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
 import { parseLevel, tileCenter, tileAt } from './level.js';
-import { createWorld, createBall, stepWorld, isAtRest, speedOf, overlapsSolid, applyBumperKick } from './physics.js';
+import { createWorld, createBall, stepWorld, isAtRest, speedOf, overlapsSolid, applyBumperKick, applyRubberRebound } from './physics.js';
 import { createCombat, createEnemy } from './combat.js';
 import { canSee } from './sight.js';
 import { lungeVelocity, patrolMove, pickPatrollers } from './turns.js';
@@ -759,6 +759,9 @@ export function createGame(container, levels, startIndex = 0) {
       // Both read this step's events before handleEvents clears them.
       const outcomes = combat.resolve(world, hero);
       const objectOutcomes = resolveObjects(world, hero, Math.random, { barrelHits: card('barrelOfFun') ? 1 : CONFIG.objects.barrelHits });
+      // Rubber enemies: your ball comes off them at double speed.
+      const R = CONFIG.enemy.types.rubber;
+      applyRubberRebound(world, hero, R.rebound, R.maxRebound);
       // Elasticity: barrels, chests and enemies kick your ball on like pinball bumpers.
       if (card('elasticity')) applyBumperKick(world, hero, CONFIG.cards.elasticityKick, CONFIG.aim.maxLaunchSpeed, state.kicked);
       handleEvents(outcomes, objectOutcomes);

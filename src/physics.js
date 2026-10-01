@@ -95,6 +95,22 @@ export function applyBumperKick(world, ball, kick, maxSpeed, kicked = new Set())
   return true;
 }
 
+/**
+ * Rubber enemies: if `ball` bounced off a Rubber enemy in this step's events,
+ * multiply its speed by `factor` (along its new direction), up to `maxSpeed`.
+ * At most once per step.
+ */
+export function applyRubberRebound(world, ball, factor, maxSpeed) {
+  const hit = world.events.some((ev) => ev.type === 'ball' && (ev.a === ball || ev.b === ball) && (ev.a === ball ? ev.b : ev.a).type === 'rubber');
+  const speed = speedOf(ball);
+  if (!hit || speed === 0) return false;
+  const k = Math.min(maxSpeed, speed * factor) / speed;
+  if (k <= 1) return false;
+  ball.vx *= k;
+  ball.vz *= k;
+  return true;
+}
+
 /** Contact normal and depth of a ball against a static, or null. */
 export function staticContact(b, s, r = b.radius) {
   let cx = s.x;

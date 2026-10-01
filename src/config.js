@@ -93,10 +93,15 @@ export const CONFIG = {
         patrolRadius: 6, // tiles; its patrols range further too
         color: 0xa9dcf5, // pale blue
       },
+      rubber: {
+        rebound: 2, // your ball comes off it at this times its rebound speed...
+        maxRebound: 13.5, // ...up to this (tiles/s; 1.5× the max launch speed)
+        color: 0xff8fc8, // pink
+      },
     },
     // Testing aid: every enemy on these levels (ids from src/main.js) is this
     // type, so one type at a time can be tried out. null leaves them all basic.
-    testType: 'slider',
+    testType: 'rubber',
     testLevels: ['enemytester01'],
   },
 

@@ -144,3 +144,34 @@ test('Elasticity: a ball pinned between a bumper and a wall is kicked once, not 
   assert.equal(kicks, 1);
   assert.ok(isAtRest(world), `still bouncing after ${t.toFixed(1)} s`);
 });
+
+test('Rubber: your ball comes off a Rubber enemy at double the rebound speed (capped)', async () => {
+  const { applyRubberRebound } = await import('../src/physics.js');
+  const { createEnemy } = await import('../src/combat.js');
+  const R = CONFIG.enemy.types.rubber;
+  const rebound = (type) => {
+    const world = createWorld(room);
+    const hero = createBall({ x: 3, z: 5.5, kind: 'hero', id: 'h' });
+    hero.vx = 3;
+    const e = createEnemy({ x: 4.5, z: 5.3, level: 1, id: 'e', type });
+    world.balls.push(hero, e);
+    for (let i = 0; i < 120; i++) {
+      stepWorld(world);
+      if (world.events.some((ev) => ev.type === 'ball')) {
+        applyRubberRebound(world, hero, R.rebound, R.maxRebound);
+        return speedOf(hero);
+      }
+      world.events.length = 0;
+    }
+    throw new Error('no hit');
+  };
+  const plain = rebound(null);
+  assert.ok(Math.abs(rebound('rubber') - Math.min(R.maxRebound, plain * R.rebound)) < 1e-9);
+  // A full-power hit is capped.
+  const world = createWorld(room);
+  const hero = createBall({ x: 3, z: 5.5, kind: 'hero', id: 'h' });
+  hero.vx = 12;
+  world.events.push({ type: 'ball', a: hero, b: createEnemy({ x: 4, z: 5.5, level: 1, id: 'e', type: 'rubber' }) });
+  applyRubberRebound(world, hero, R.rebound, R.maxRebound);
+  assert.equal(speedOf(hero), R.maxRebound);
+});

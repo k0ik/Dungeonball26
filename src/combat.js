@@ -37,7 +37,8 @@ export function createEnemy({ x, z, level, id, type = null, stage = 0 }) {
   ball.type = type;
   if (T?.friction != null) ball.friction = T.friction;
   if (T?.mass != null) ball.mass = T.mass;
-  ball.maxHp = type === 'golem' ? T.stageHp[stage] : Math.min(E.maxHp, enemyMaxHp(level) * (T?.hpScale ?? 1));
+  // A Gold ball's "HP" is its shots left (its bar counts them down).
+  ball.maxHp = type === 'golem' ? T.stageHp[stage] : type === 'gold' ? T.shots : Math.min(E.maxHp, enemyMaxHp(level) * (T?.hpScale ?? 1));
   ball.hp = ball.maxHp;
   ball.lastHit = -Infinity;
   return ball;
@@ -101,6 +102,7 @@ export function createCombat() {
 
   function damage(enemy, amount, time, out, ev, kind) {
     if (enemy.phased) return; // a faded Ghost can't be hurt
+    if (enemy.type === 'gold') return; // a Gold ball is a tool: knocks move it, nothing hurts it
     // A bomb isn't hurt: the first hit (or blast) lights its fuse.
     if (enemy.type === 'bomb') {
       if (kind === 'hit') enemy.lastHit = time;

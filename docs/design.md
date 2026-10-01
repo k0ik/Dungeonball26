@@ -265,6 +265,7 @@ Each level is a plain text file with one character per tile. The screen shows ab
 | `R` `B` `Y` | Door matching that key |
 | `E` | Explosive barrel (red) |
 | `*` | Coin (touching coins form a strip) |
+| `$` | Gold ball (a tool ball: see Enemy ideas) |
 | `1` to `5` in the top-left corner only | Curviness of the walls (1 square to 5 roundest); that corner is still a wall, not an enemy |
 
 An illustrative level in this format, with one enemy, two barrels, a chest, a red key and a red door in front of the exit, which sits in its alcove at the top:
@@ -438,7 +439,7 @@ They're being built and tested one at a time: each type's numbers and colour liv
 
 | Tool | Behaviour | Notes |
 | --- | --- | --- |
-| Gold ball | While it rolls it drops coins at a steady rate, so the farther it travels, the more coins it leaves behind. It shatters and vanishes at the end of its 3rd shot. Enemies can roll it too, which works the same and counts against its 3 shots | A gold, glinting ball. To settle: the rate (say a coin per tile rolled), what counts as one of its "shots" (any move in which it rolls: a knock from you or an enemy during your shot or the enemy move), whether a shot's count shows on it (three notches or cracks that grow), and that its coins are the ordinary coins, so they count toward coin streaks when you take them. Dropped coins land behind it on the floor |
+| Gold ball (**built**) | While it rolls it drops coins at a steady rate, so the farther it travels, the more coins it leaves behind. It shatters and vanishes at the end of its 3rd shot. Enemies can roll it too, which works the same and counts against its 3 shots | Placed with `$` in a level. A gold ball with no face; nothing hurts it, it never moves on its own, and it shows no "!". It drops an ordinary 1-gold coin on the floor for every tile it rolls (`enemy.types.gold.coinEvery`), left behind on its path, so they count toward coin streaks and Money Magnet pulls them. Its "shots" are moves in which it rolled, whoever knocked it (your shot or the enemy move); a gold bar with three notches above it counts them down, and when the move that used its last one comes to rest it shatters. Shattering isn't a kill. For testing, every other enemy on the test levels becomes a gold ball (`enemy.testTool`) |
 
 ## Out of scope for the MVP
 

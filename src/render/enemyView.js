@@ -27,7 +27,7 @@ export function createEnemyView(ball, toCamera) {
   outline.position.y = r;
 
   // A bomb has no face: it's a thing, not a creature (it never attacks).
-  const face = ball.type === 'bomb' ? null : faceSprite(calmFace(), r, toCamera);
+  const face = ball.type === 'bomb' || ball.type === 'gold' ? null : faceSprite(calmFace(), r, toCamera);
   let angry = false;
 
   const shadow = new THREE.Mesh(new THREE.CircleGeometry(r * 0.95, 24), shadowMaterial);

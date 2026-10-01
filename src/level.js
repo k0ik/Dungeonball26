@@ -19,6 +19,7 @@ export const LEGEND = {
   C: 'chest',
   E: 'explosive',
   '*': 'coin',
+  $: 'gold', // a Gold ball (a tool ball)
   1: 'enemy',
   2: 'enemy',
   3: 'enemy',
@@ -69,6 +70,7 @@ export function parseLevel(text, name = 'level') {
     barrels: [],
     explosives: [],
     chests: [],
+    golds: [], // Gold balls
     keys: [],
     doors: [],
     coins: [], // single coins; touching ones form strips (coinStrips)
@@ -118,6 +120,9 @@ export function parseLevel(text, name = 'level') {
           break;
         case 'coin':
           level.coins.push(at);
+          break;
+        case 'gold':
+          level.golds.push(at);
           break;
       }
       tileRow.push(base);

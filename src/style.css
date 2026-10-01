@@ -109,6 +109,11 @@ body {
   background: #5ad16a;
 }
 
+/* A Gold ball's bar counts its shots left. */
+.tag.gold .fill {
+  background: #f2c230;
+}
+
 /* One notch per HP point, so a bar shows both level and damage taken. */
 .tag .hp::after {
   content: '';

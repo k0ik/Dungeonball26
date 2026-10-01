@@ -111,13 +111,48 @@ export function createGame(container, levels, startIndex = 0) {
   const viewDir = new THREE.Vector3(); // scratch for the see-through walls
 
   const enemies = () => world.balls.filter((b) => b.kind === 'enemy');
+  /** Tool balls (Bomb, Gold ball) share the enemies' list but have no will. */
+  const isTool = (b) => b.type === 'bomb' || b.type === 'gold';
 
   /** Draw an enemy (and its HP bar); it must already be in world.balls. */
   function addEnemyView(enemy) {
     const view = createEnemyView(enemy, rig.toCamera);
     scene.add(view.object);
     enemyViews.set(enemy, view);
-    if (enemy.type !== 'bomb') overlay.addBar(enemy); // a bomb can't be hurt: its fuse is its state
+    // A bomb can't be hurt (its fuse is its state); a Gold ball's bar counts its shots left.
+    if (enemy.type === 'gold') overlay.addBar(enemy, 'gold');
+    else if (enemy.type !== 'bomb') overlay.addBar(enemy);
+  }
+
+  /** Gold balls: drop a coin for every `coinEvery` tiles each one rolls. */
+  function rollGold(dt) {
+    const G = CONFIG.enemy.types.gold;
+    for (const g of enemies()) {
+      if (g.type !== 'gold') continue;
+      const d = Math.hypot(g.vx, g.vz) * dt;
+      if (d === 0) continue;
+      g.rolled = true; // it moved this move: counts against its shots
+      g.trip = (g.trip ?? 0) + d;
+      while (g.trip >= G.coinEvery) {
+        g.trip -= G.coinEvery;
+        world.items.push({ kind: 'coin', value: CONFIG.loot.stripCoinValue, x: g.x, z: g.z });
+        sfx.play('coin', 0.15, { pitch: 1.5 + Math.random() * 0.3, minInterval: 0.05 });
+      }
+    }
+  }
+
+  /** A move (your shot or the enemy move) came to rest: each Gold ball that rolled used a shot; after its last it shatters. */
+  function endMoveForGold() {
+    for (const g of enemies()) {
+      if (g.type !== 'gold' || !g.rolled) continue;
+      g.rolled = false;
+      g.hp -= 1;
+      if (g.hp > 0) continue;
+      world.balls = world.balls.filter((b) => b !== g);
+      enemyViews.get(g)?.die();
+      overlay.removeBar(g);
+      sfx.play('break', 0.9, { pitch: 1.3 });
+    }
   }
 
   /**
@@ -170,11 +205,19 @@ export function createGame(container, levels, startIndex = 0) {
     overlay.clearEnemies(hero);
     level.enemies.forEach((e, n) => {
       const E = CONFIG.enemy;
-      const type = E.testType && E.testLevels.includes(def.id) ? E.testType : null;
+      const testing = E.testLevels.includes(def.id);
+      // On the test levels: the type under test, with every other one a test tool ball.
+      const type = testing && E.testTool && n % 2 ? E.testTool : testing ? E.testType : null;
       const enemy = createEnemy({ ...tileCenter(e), level: e.level, id: `enemy${n}`, type });
       if (type === 'ghost') enemy.phased = Math.random() < 0.5; // ghosts don't blink in step: each starts solid or faded at random
       world.balls.push(enemy);
       addEnemyView(enemy);
+    });
+
+    level.golds.forEach((g, n) => {
+      const gold = createEnemy({ ...tileCenter(g), level: 1, id: `gold${n}`, type: 'gold' });
+      world.balls.push(gold);
+      addEnemyView(gold);
     });
 
     start = tileCenter(level.start);
@@ -305,11 +348,11 @@ export function createGame(container, levels, startIndex = 0) {
   // After a short telegraph (red rings, "!"), they all launch together, and
   // it's your turn again once everything is at rest.
   function startEnemyPhase() {
-    const patrollers = pickPatrollers(enemies().filter((e) => e.type !== 'bomb' && e.type !== 'jekyll'));
+    const patrollers = pickPatrollers(enemies().filter((e) => !isTool(e) && e.type !== 'jekyll'));
     const moves = [];
     const claimed = []; // patrol destinations already taken this round
     for (const enemy of enemies()) {
-      if (enemy.type === 'bomb') continue; // passive: it only moves when something knocks it
+      if (isTool(enemy)) continue; // a tool ball only moves when something knocks it
       const from = { x: enemy.x, z: enemy.z }; // where it stands as the phase starts (camera framing)
       if (enemy.type === 'jekyll') {
         // Passive unless provoked; then it goes for the nearest ball it can see, friend or foe.
@@ -830,6 +873,7 @@ export function createGame(container, levels, startIndex = 0) {
     let steps = 0;
     while (acc >= step && steps < CONFIG.physics.maxStepsPerFrame) {
       stepWorld(world, step);
+      rollGold(step);
       dampStalls(step);
       // Both read this step's events before handleEvents clears them.
       const outcomes = combat.resolve(world, hero);
@@ -857,6 +901,7 @@ export function createGame(container, levels, startIndex = 0) {
         // carries on (their blast counts toward it) until everything settles.
         if (isAtRest(world) && detonateArmed()) break;
         if (isAtRest(world)) {
+          endMoveForGold();
           // A sword breaks as the shot in which it hit an enemy comes to rest.
           if (endSwordShot(hero)) {
             overlay.float('Sword broke!', hero.x, hero.z, hero.radius * 2 + 1, 'gear', heroFollow());
@@ -889,6 +934,7 @@ export function createGame(container, levels, startIndex = 0) {
       case 'enemyMove':
         if (isAtRest(world)) {
           state.moves = [];
+          endMoveForGold();
           state.phase = 'aim';
           newRound();
           state.returnBoost = CONFIG.camera.returnBoostSeconds; // snap back to you quickly
@@ -979,7 +1025,7 @@ export function createGame(container, levels, startIndex = 0) {
     const enemyMove = state.phase === 'enemyWait' || state.phase === 'enemyMove';
     const lungers = new Set(enemyMove ? state.moves.filter((m) => m.kind === 'lunge').map((m) => m.enemy) : []);
     for (const enemy of enemies()) {
-      if (enemy.type === 'bomb') continue; // passive: never watches or attacks, so no "!"
+      if (isTool(enemy)) continue; // tool balls never watch or attack, so no "!"
       if (enemy.type === 'jekyll') {
         // Calm and blind to you until provoked; enraged, it shows it (whoever it'll go for).
         // Once its attack connects (you or an enemy), it's spent and calm again.

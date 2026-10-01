@@ -56,7 +56,7 @@ test('parses the illustrative level from the design doc', () => {
 });
 
 test('legend covers every character in the design doc table', () => {
-  for (const ch of '#.SXOCE12345rbyRBY') assert.ok(LEGEND[ch], `legend has '${ch}'`);
+  for (const ch of '#.SXOCE12345rbyRBY*$') assert.ok(LEGEND[ch], `legend has '${ch}'`);
 });
 
 test('rejects bad levels with a useful message', () => {

@@ -136,6 +136,14 @@ export const CONFIG = {
         enragedColor: 0x6b1f4f, // enraged: dark plum...
         enragedScale: 1.12, // ...and visibly swollen (a shape cue as well as colour)
       },
+      gold: {
+        // A tool ball, not an enemy: no face, no will, never hurt. While it
+        // rolls it drops a coin every `coinEvery` tiles; it shatters at the
+        // end of the 3rd move (your shot or the enemy move) in which it rolled.
+        coinEvery: 1, // tiles rolled per coin dropped
+        shots: 3,
+        color: 0xf2c230, // gold
+      },
       ghost: {
         // Every other round it fades: while faded, balls pass through it and
         // it can't hurt or be hurt, though it doesn't know it and acts as
@@ -149,6 +157,9 @@ export const CONFIG = {
     // type, so one type at a time can be tried out. null leaves them all basic.
     testType: 'ghost',
     testLevels: ['enemytester01'],
+    // Testing aid for tool balls: on the test levels, every other enemy
+    // becomes this tool ball instead (so there are still enemies to roll it).
+    testTool: 'gold',
   },
 
   // Barrels, chests and red barrels (design doc: "Objects").

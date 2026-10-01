@@ -250,7 +250,7 @@ export function createCombat() {
           const prey = jekyll && (jekyll === ev.a ? ev.b : ev.a);
           if (prey?.kind === 'enemy' && prey.hp > 0) {
             haveHit.add(jekyll);
-            damage(prey, E.damageToHero, time, out, ev, 'combo');
+            damage(prey, E.damageToHero, time, out, ev, 'attack'); // its attack, not one of your combos
             continue;
           }
           const actor = ev.a === hero ? ev.b : ev.b === hero ? ev.a : null;

@@ -724,6 +724,10 @@ export function createGame(container, levels, startIndex = 0) {
         enemyViews.get(o.target)?.die();
         // It also sets off red barrels and cracks or breaks barrels in reach.
         handleObjects(blastObjects(world, o.target.x, o.target.z, CONFIG.enemy.types.bomb.blastRadius, { barrelHits: card('barrelOfFun') ? 1 : CONFIG.objects.barrelHits }));
+      } else if (o.type === 'attack') {
+        // A Jekyll's attack on another enemy: no "Combo!", it isn't yours.
+        sfx.play('hit', 0.9, { pitch: 0.8 });
+        floatAt(o.target, `-${o.amount}`, 'hurt');
       } else if (o.type === 'blast') {
         if (o.amount) floatAt(o.target, `-${o.amount}`, 'hurt');
       } else if (o.type === 'kill') {
@@ -1002,10 +1006,24 @@ export function createGame(container, levels, startIndex = 0) {
       // enemyPhaseWidth; whatever else lands in view is a bonus.
       const enemyPhase = state.phase === 'enemyWait' || state.phase === 'enemyMove';
       let width = rig.speedWidth(speedOf(hero));
-      if (enemyPhase) width = rig.widthAround(hero, state.moves.map((m) => m.from), width, CONFIG.camera.enemyPhaseWidth);
+      let points = framingPoints();
+      if (enemyPhase) {
+        // Stay centred on you, pulled out to show where the movers started
+        // (up to enemyPhaseWidth)...
+        const cap = CONFIG.camera.enemyPhaseWidth;
+        width = rig.widthAround(hero, state.moves.map((m) => m.from), width, cap);
+        // ...but never miss an attack: every lunging enemy (where it started
+        // and where it is) and whatever it's going for (a Jekyll may go for
+        // another enemy). If those don't fit with you in the middle, frame
+        // you and them together, off-centre, as wide as it takes.
+        const attacks = state.moves
+          .filter((m) => m.kind === 'lunge')
+          .flatMap((m) => [m.from, ...(m.enemy.hp > 0 ? [m.enemy] : []), ...(m.target && m.target !== hero ? [m.target] : [])]);
+        if (attacks.length && rig.widthAround(hero, attacks, width, Infinity) > cap) points = [hero, ...attacks];
+      }
       // Returning to your turn: faster until the camera has arrived (checked
       // after framing, so it's measured against the new goal, not the old one).
-      rig.frame(framingPoints(), width, dt, state.returnBoost > 0 ? CONFIG.camera.returnBoost : 1);
+      rig.frame(points, width, dt, state.returnBoost > 0 ? CONFIG.camera.returnBoost : 1);
       if (state.returnBoost > 0) state.returnBoost = rig.settled ? 0 : state.returnBoost - dt;
     }
     renderer.render(scene, rig.camera);

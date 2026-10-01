@@ -124,6 +124,28 @@ export function createGame(container, levels, startIndex = 0) {
     else if (enemy.type !== 'bomb') overlay.addBar(enemy);
   }
 
+  /** Coins knocked loose by an impact at `speed`: 1 to 4 (you hit by an enemy, or a Gold ball struck). */
+  function impactCoins(speed) {
+    const L = CONFIG.loot;
+    return Math.max(1, Math.min(L.hurtCoinsMax, Math.ceil(speed / L.hurtCoinsPerSpeed)));
+  }
+
+  /**
+   * Gold balls struck: the first knock in each move (by anything) bursts
+   * coins out of it by how hard it was hit; after that it just leaves its trail.
+   */
+  function strikeGold() {
+    for (const ev of world.events) {
+      if (ev.type !== 'ball' || ev.speed < CONFIG.enemy.hitMinSpeed) continue;
+      for (const g of [ev.a, ev.b]) {
+        if (g.type !== 'gold' || g.struck || g.hp <= 0) continue;
+        g.struck = true;
+        scatterCoins(g.x, g.z, impactCoins(ev.speed));
+        sfx.play('coin', 0.5, { pitch: 1.2 });
+      }
+    }
+  }
+
   /** Gold balls: drop a coin for every `coinEvery` tiles each one rolls. */
   function rollGold(dt) {
     const G = CONFIG.enemy.types.gold;
@@ -144,7 +166,9 @@ export function createGame(container, levels, startIndex = 0) {
   /** A move (your shot or the enemy move) came to rest: each Gold ball that rolled used a shot; after its last it shatters. */
   function endMoveForGold() {
     for (const g of enemies()) {
-      if (g.type !== 'gold' || !g.rolled) continue;
+      if (g.type !== 'gold') continue;
+      g.struck = false; // its next first knock bursts coins again
+      if (!g.rolled) continue;
       g.rolled = false;
       g.hp -= 1;
       if (g.hp > 0) {
@@ -390,7 +414,26 @@ export function createGame(container, levels, startIndex = 0) {
 
   /** Your turn comes round again: every Ghost switches between solid and faded. */
   function newRound() {
-    for (const e of enemies()) if (e.type === 'ghost') e.phased = !e.phased;
+    for (const e of enemies()) {
+      if (e.type !== 'ghost') continue;
+      if (e.phased) e.solidifying = true; // turns solid once nothing overlaps it (settleGhosts)
+      else e.phased = true;
+    }
+    settleGhosts();
+  }
+
+  /**
+   * A Ghost due to turn solid while a ball (you included) is inside it stays
+   * faded until it's clear, so nothing is ever shoved out of a ghost.
+   */
+  function settleGhosts() {
+    for (const g of enemies()) {
+      if (!g.solidifying) continue;
+      const blocked = world.balls.some((b) => b !== g && Math.hypot(b.x - g.x, b.z - g.z) < b.radius + g.radius);
+      if (blocked) continue;
+      g.solidifying = false;
+      g.phased = false;
+    }
   }
 
   /** The nearest ball an enraged Jekyll can see (you or another enemy), or null. */
@@ -809,8 +852,7 @@ export function createGame(container, levels, startIndex = 0) {
         // Hit by an enemy, you drop gold: 1 to 4 coins by how hard it hit,
         // scattered around you to win back (not from a blast).
         if (o.event && state.gold > 0) {
-          const L = CONFIG.loot;
-          const n = Math.min(state.gold, Math.max(1, Math.min(L.hurtCoinsMax, Math.ceil(o.event.speed / L.hurtCoinsPerSpeed))));
+          const n = Math.min(state.gold, impactCoins(o.event.speed));
           state.gold -= n;
           scatterCoins(hero.x, hero.z, n);
           floatAt(hero, `-${n} gold`, 'gold', 0.5);
@@ -886,9 +928,11 @@ export function createGame(container, levels, startIndex = 0) {
     while (acc >= step && steps < CONFIG.physics.maxStepsPerFrame) {
       stepWorld(world, step);
       rollGold(step);
+      settleGhosts();
       dampStalls(step);
       // Both read this step's events before handleEvents clears them.
       const outcomes = combat.resolve(world, hero);
+      strikeGold();
       const objectOutcomes = resolveObjects(world, hero, Math.random, { barrelHits: card('barrelOfFun') ? 1 : CONFIG.objects.barrelHits });
       // Rubber enemies: your ball comes off them at double speed.
       const R = CONFIG.enemy.types.rubber;

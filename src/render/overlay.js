@@ -10,8 +10,8 @@ import { CONFIG } from '../config.js';
 import { SWORD_ICON, SHIELD_ICON } from './icons.js';
 
 const BAR_HEIGHT = 0.3; // tiles above the top of the ball
-const MAX_PIPS = 6; // enemy HP is capped at this (CONFIG.enemy.maxHp)
-const ALERT_HEIGHT = 0.95; // tiles above the top of the ball (clear of a two-row pip pill)
+const MAX_HP_DOTS = 2; // 4 HP a dot: enemy HP is capped at 8 (CONFIG.enemy.maxHp)
+const ALERT_HEIGHT = 0.8; // tiles above the top of the ball (clear of the health dots)
 const EDGE_MARGIN = 18; // px kept clear at the screen edges for pinned markers
 // px kept clear at the top: the gold, and the turn label under it (which ends
 // at about 77px), so a "!" pinned to the top edge is never hidden behind them.
@@ -87,8 +87,8 @@ export function createOverlay(container, camera) {
     },
     /**
      * HP over a ball. The hero gets a green bar like the mockup; an enemy gets
-     * pips: one dot per HP of its starting HP (up to 6, in two rows past 3), lost
-     * ones hollow, and the last one red when a single hit would finish it.
+     * health dots: one or two dots, each holding up to 4 HP shown by its
+     * colour (green 4, yellow 3, orange 2, red 1, black empty).
      */
     addBar(ball, variant = 'enemy') {
       if (variant === 'enemy') {
@@ -197,14 +197,14 @@ export function createOverlay(container, camera) {
         if (bar.shown !== ball.hp) {
           bar.shown = ball.hp;
           if (bar.badge) {
-            const max = Math.min(MAX_PIPS, ball.maxHp);
-            const left = Math.min(max, Math.max(0, ball.hp));
-            // Up to 3 in a row; 4 to 6 in two rows like dice (2+2, 3+2, 3+3),
-            // so there's no gap that could pass for a lost pip.
-            const pip = (i) => `<i class="${i < left ? (left === 1 ? 'pip last' : 'pip') : 'pip lost'}"></i>`;
-            const top = max <= 3 ? max : Math.ceil(max / 2);
-            const row = (from, to) => `<span class="pip-row">${Array.from({ length: to - from }, (_, k) => pip(from + k)).join('')}</span>`;
-            bar.el.innerHTML = row(0, top) + (max > top ? row(top, max) : '');
+            // Each dot holds up to 4 HP, shown by its colour: green 4, yellow 3,
+            // orange 2, red 1, black 0. One dot for an enemy that starts with
+            // 4 HP or less, two above that (the first fills before the second).
+            const hp = Math.max(0, Math.min(MAX_HP_DOTS * 4, ball.hp));
+            const dots = ball.maxHp > 4 ? 2 : 1;
+            let html = '';
+            for (let d = 0; d < dots; d++) html += `<i class="dot" data-v="${Math.max(0, Math.min(4, hp - d * 4))}"></i>`;
+            bar.el.innerHTML = html;
           } else {
             bar.fill.style.width = `${(100 * ball.hp) / ball.maxHp}%`;
           }

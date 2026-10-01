@@ -187,7 +187,7 @@ export function createCombat() {
      * A lit bomb's fuse ran out: it explodes where it lies. Every ball within
      * the blast radius with no wall in between takes the blast damage (a
      * held shield takes it for the hero) and is pushed away; bombs caught in
-     * it are lit. The bomb is gone, as a kill. Returns outcomes like resolve().
+     * it are lit. The bomb is gone (not a kill). Returns outcomes like resolve().
      */
     bombBlast(w, bomb, hero) {
       world = w;
@@ -195,8 +195,8 @@ export function createCombat() {
       const B = E.types.bomb;
       bomb.hp = 0;
       world.balls = world.balls.filter((b) => b !== bomb);
+      // A bomb is a tool, not a creature: going off isn't a kill and drops nothing.
       out.push({ type: 'boom', target: bomb });
-      out.push({ type: 'kill', target: bomb, shotKills: ++killsThisShot });
       for (const ball of [...world.balls]) {
         const dx = ball.x - bomb.x;
         const dz = ball.z - bomb.z;

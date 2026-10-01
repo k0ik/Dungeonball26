@@ -303,10 +303,11 @@ export function createGame(container, levels, startIndex = 0) {
   function startEnemyPhase() {
     combat.beginEnemyTurn([]); // nobody's attacking yet: a blast now hurts as a blast, not a hit
     const boomed = burnFuses(); // a move starts: lit bombs burn down
-    const patrollers = pickPatrollers(enemies());
+    const patrollers = pickPatrollers(enemies().filter((e) => e.type !== 'bomb'));
     const moves = [];
     const claimed = []; // patrol destinations already taken this round
     for (const enemy of enemies()) {
+      if (enemy.type === 'bomb') continue; // passive: it only moves when something knocks it
       const from = { x: enemy.x, z: enemy.z }; // where it stands as the phase starts (camera framing)
       if (canSee(level, enemy, hero, world.balls, world.statics)) {
         moves.push({ enemy, from, kind: 'lunge' });
@@ -699,6 +700,7 @@ export function createGame(container, levels, startIndex = 0) {
       } else if (o.type === 'boom') {
         sfx.play('explode', 1);
         objectsView.blast(o.target.x, o.target.z, CONFIG.enemy.types.bomb.blastRadius / 1.4);
+        enemyViews.get(o.target)?.die();
       } else if (o.type === 'blast') {
         if (o.amount) floatAt(o.target, `-${o.amount}`, 'hurt');
       } else if (o.type === 'kill') {
@@ -938,6 +940,7 @@ export function createGame(container, levels, startIndex = 0) {
     const enemyMove = state.phase === 'enemyWait' || state.phase === 'enemyMove';
     const lungers = new Set(enemyMove ? state.moves.filter((m) => m.kind === 'lunge').map((m) => m.enemy) : []);
     for (const enemy of enemies()) {
+      if (enemy.type === 'bomb') continue; // passive: never watches or attacks, so no "!"
       if (enemyMove && combat.hasHitHero(enemy)) {
         overlay.setAlert(enemy, false, false);
         enemyViews.get(enemy)?.setAngry(false);

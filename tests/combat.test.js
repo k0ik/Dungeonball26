@@ -258,7 +258,8 @@ test('Bomb: a hit lights it without hurting it; its blast hurts and pushes what 
   // Blow it up.
   out = combat.bombBlast(world, bomb, hero);
   assert.ok(!world.balls.includes(bomb));
-  assert.ok(out.some((o) => o.type === 'kill' && o.target === bomb));
+  assert.ok(out.some((o) => o.type === 'boom' && o.target === bomb));
+  assert.ok(!out.some((o) => o.type === 'kill' && o.target === bomb), 'a bomb going off is not a kill');
   assert.equal(near.hp, near.maxHp - B.blastDamage, 'caught in the open');
   assert.ok(near.vz < 0, 'pushed away from the blast');
   assert.equal(behind.hp, behind.maxHp, 'out of reach');

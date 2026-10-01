@@ -26,14 +26,16 @@ export function createEnemyView(ball, toCamera) {
   outline.scale.setScalar(CONFIG.render.outlineScale);
   outline.position.y = r;
 
-  const face = faceSprite(calmFace(), r, toCamera);
+  // A bomb has no face: it's a thing, not a creature (it never attacks).
+  const face = ball.type === 'bomb' ? null : faceSprite(calmFace(), r, toCamera);
   let angry = false;
 
   const shadow = new THREE.Mesh(new THREE.CircleGeometry(r * 0.95, 24), shadowMaterial);
   shadow.rotation.x = -Math.PI / 2;
   shadow.position.y = 0.005;
 
-  group.add(shadow, outline, body, face);
+  group.add(shadow, outline, body);
+  if (face) group.add(face);
 
   // A bomb has a fuse on top (its shape cue, not just its colour) with a
   // spark that shows once it's lit; at half fuse the body turns red.
@@ -73,7 +75,7 @@ export function createEnemyView(ball, toCamera) {
     },
     /** Angry while it can see the hero, calm (and a bit dumb) otherwise. */
     setAngry(on) {
-      if (on === angry) return;
+      if (on === angry || !face) return;
       angry = on;
       face.material.map = on ? angryFace() : calmFace();
       face.material.needsUpdate = true;
@@ -88,7 +90,7 @@ export function createEnemyView(ball, toCamera) {
       body.geometry.dispose();
       body.material.dispose();
       outline.geometry.dispose();
-      face.material.dispose();
+      face?.material.dispose();
     },
   };
 }

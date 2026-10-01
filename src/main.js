@@ -7,6 +7,7 @@ import crawlspace from './levels/crawlspace.txt?raw';
 import caverns from './levels/caverns.txt?raw';
 import roomies from './levels/roomies.txt?raw';
 import pinball from './levels/pinball.txt?raw';
+import gauntlet from './levels/gauntlet.txt?raw';
 import bowls from './levels/bowls.txt?raw';
 
 // The run, in order (design doc: "Levels"). Levels 4 and 5 arrive in M8.
@@ -21,6 +22,7 @@ const LEVELS = [
   { id: 'caverns', name: 'Caverns', text: caverns },
   { id: 'roomies', name: 'Roomies', text: roomies },
   { id: 'pinball', name: 'Pinball', text: pinball },
+  { id: 'gauntlet', name: 'Gauntlet', text: gauntlet },
 ];
 
 // Start on a level with the URL hash, e.g. #one-key.

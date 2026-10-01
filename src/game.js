@@ -179,6 +179,7 @@ export function createGame(container, levels, startIndex = 0) {
       enemyViews.get(g)?.die();
       overlay.removeBar(g);
       sfx.play('break', 0.9, { pitch: 1.3 });
+      world.items.push({ kind: 'coin', value: CONFIG.loot.stripCoinValue, x: g.x, z: g.z }); // one last coin where it popped
     }
   }
 

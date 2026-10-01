@@ -11,7 +11,8 @@ const K = CONFIG.cards;
 
 export const CARDS = [
   { id: 'vampirism', name: 'Vampirism', icon: '🦇', text: `Every kill heals you ${K.vampirismHeal} HP.` },
-  { id: 'doppleganger', name: 'Doppleganger', icon: '👥', text: '+1 life, and +1 to the lives a game over restores.' },
+  // Shelved for now. Its effect is still wired up in game.js.
+  // { id: 'doppleganger', name: 'Doppleganger', icon: '👥', text: '+1 life, and +1 to the lives a game over restores.' },
   { id: 'junkHunter', name: 'Junk Hunter', icon: '🛡️', text: 'Swords and shields turn up twice as often in barrels.' },
   { id: 'bullionaire', name: 'Bullionaire', icon: '💰', text: `All gold you collect is worth ${K.bullionaire}×.` },
   { id: 'barrelOfFun', name: 'Barrel of Fun', icon: '🛢️', text: 'Barrels break in one hit.' },

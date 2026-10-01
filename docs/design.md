@@ -150,7 +150,7 @@ Starting cards (numbers are defaults to tune):
 | Card | Effect |
 | --- | --- |
 | Vampirism | Each kill heals you 1 HP, capped at max |
-| Doppleganger | +1 life, and +1 to the lives you're restored to on a game over |
+| ~~Doppleganger~~ | *Shelved for now (not offered or dealt).* +1 life, and +1 to the lives you're restored to on a game over |
 | Junk Hunter | Swords and shields turn up twice as often in barrels |
 | Bullionaire | All gold you collect is worth 1.5× (rounded up) |
 | Barrel of Fun | Barrels break in one hit |

@@ -6,10 +6,10 @@ import { createWorld, createBall, createStaticCircle, stepWorld, applyBumperKick
 import { parseLevel } from '../src/level.js';
 import { CONFIG } from '../src/config.js';
 
-test('the eight starting cards (Locksmith is shelved)', () => {
+test('the seven starting cards (Locksmith and Doppleganger are shelved)', () => {
   assert.deepEqual(
     CARDS.map((c) => c.name),
-    ['Vampirism', 'Doppleganger', 'Junk Hunter', 'Bullionaire', 'Barrel of Fun', 'Athletic', 'Money Magnet', 'Elasticity'],
+    ['Vampirism', 'Junk Hunter', 'Bullionaire', 'Barrel of Fun', 'Athletic', 'Money Magnet', 'Elasticity'],
   );
 });
 

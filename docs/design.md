@@ -431,13 +431,14 @@ They're being built and tested one at a time: each type's numbers and colour liv
 | Ice | An extension of the Slider (very low friction). Whenever it moves, it leaves a trail of icy puddles on the tiles it crosses; any ball rolling through a puddle is sped up. The puddles melt after 1 turn | Pale ice blue, with a frosty sheen or crystal cue. To settle: how much a puddle speeds a ball (a kick like Elasticity's, or less friction while on it), one puddle per tile crossed, and what "1 turn" means (gone at the start of your next shot is the natural reading). Puddles are drawn on the floor; the aim preview must include them, so it bends and stretches over ice |
 | Stink | Leaves a trail of poison clouds as it moves. Only you are affected: entering a cloud costs you 1 HP and that cloud vanishes. All its clouds vanish after 1 turn | Sickly yellow-green, with a wavy stink-lines cue. Enemies pass through clouds unharmed. To settle: one cloud per tile crossed; whether a held shield blocks a cloud; and when clouds expire (at the start of your next shot, like the ice puddles, seems right). Clouds are drawn low on the floor, and the aim preview should show (but not avoid) them |
 
-## Out of scope for the MVP
 
 **Tool balls** are like the Bomb: objects that roll like balls but have no will, are never enemies (no face, no "!", not kills, no gold for destroying them) and may be knocked by anything.
 
 | Tool | Behaviour | Notes |
 | --- | --- | --- |
 | Gold ball | While it rolls it drops coins at a steady rate, so the farther it travels, the more coins it leaves behind. It shatters and vanishes at the end of its 3rd shot. Enemies can roll it too, which works the same and counts against its 3 shots | A gold, glinting ball. To settle: the rate (say a coin per tile rolled), what counts as one of its "shots" (any move in which it rolls: a knock from you or an enemy during your shot or the enemy move), whether a shot's count shows on it (three notches or cracks that grow), and that its coins are the ordinary coins, so they count toward coin streaks when you take them. Dropped coins land behind it on the floor |
+
+## Out of scope for the MVP
 
 
 These are good ideas that wait until the five-level loop is fun.

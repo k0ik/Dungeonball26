@@ -10,6 +10,7 @@ import { CONFIG } from '../config.js';
 import { SWORD_ICON, SHIELD_ICON } from './icons.js';
 
 const BAR_HEIGHT = 0.3; // tiles above the top of the ball
+const MAX_PIPS = 6; // enemy HP is capped at this (CONFIG.enemy.maxHp)
 const ALERT_HEIGHT = 0.75; // tiles above the top of the ball
 const EDGE_MARGIN = 18; // px kept clear at the screen edges for pinned markers
 // px kept clear at the top: the gold, and the turn label under it (which ends
@@ -86,13 +87,13 @@ export function createOverlay(container, camera) {
     },
     /**
      * HP over a ball. The hero gets a green bar like the mockup; an enemy gets
-     * a badge: its HP as one white digit in a black circle, ringed green,
-     * yellow, orange or red by the quarter of its starting HP it has left.
+     * pips: one dot per HP of its starting HP (up to 6, in groups of 3), lost
+     * ones hollow, and the last one red when a single hit would finish it.
      */
     addBar(ball, variant = 'enemy') {
       if (variant === 'enemy') {
         const el = document.createElement('div');
-        el.className = 'hp-badge';
+        el.className = 'hp-pips';
         layer.appendChild(el);
         bars.set(ball, { el, badge: true, shown: -1 });
         return;
@@ -196,9 +197,14 @@ export function createOverlay(container, camera) {
         if (bar.shown !== ball.hp) {
           bar.shown = ball.hp;
           if (bar.badge) {
-            bar.el.textContent = String(Math.min(9, Math.max(0, ball.hp)));
-            // Quarters of its starting HP: 4 = more than three quarters left ... 1 = a quarter or less.
-            bar.el.dataset.quarter = String(Math.max(1, Math.min(4, Math.ceil((4 * ball.hp) / ball.maxHp))));
+            const max = Math.min(MAX_PIPS, ball.maxHp);
+            const left = Math.min(max, Math.max(0, ball.hp));
+            let html = '';
+            for (let i = 0; i < max; i++) {
+              if (i && i % 3 === 0) html += '<i class="gap"></i>';
+              html += `<i class="${i < left ? (left === 1 ? 'pip last' : 'pip') : 'pip lost'}"></i>`;
+            }
+            bar.el.innerHTML = html;
           } else {
             bar.fill.style.width = `${(100 * ball.hp) / ball.maxHp}%`;
           }

@@ -183,7 +183,7 @@ test('Brute: heavy, so it barely moves when you hit it and knocks you further th
   const brute = createEnemy({ x: 5, z: 5.5, level: 2, id: 'b', type: 'brute' });
   assert.equal(brute.radius, B.radius);
   assert.equal(brute.mass, B.mass);
-  assert.equal(brute.maxHp, CONFIG.enemy.hpPerLevel * 2 * B.hpScale);
+  assert.equal(brute.maxHp, Math.min(CONFIG.enemy.maxHp, CONFIG.enemy.hpPerLevel * 2 * B.hpScale));
   assert.equal(heroDamage(brute), B.damageToHero);
   assert.ok(Math.abs(Math.hypot(...Object.values(lungeVelocity(brute, { x: 1, z: 5.5 }))) - B.lungeSpeed) < 1e-9);
   // Head-on: the hero at 4 tiles/s into a resting brute.

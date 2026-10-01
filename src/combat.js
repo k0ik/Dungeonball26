@@ -37,7 +37,7 @@ export function createEnemy({ x, z, level, id, type = null, stage = 0 }) {
   ball.type = type;
   if (T?.friction != null) ball.friction = T.friction;
   if (T?.mass != null) ball.mass = T.mass;
-  ball.maxHp = type === 'golem' ? T.stageHp[stage] : enemyMaxHp(level) * (T?.hpScale ?? 1);
+  ball.maxHp = type === 'golem' ? T.stageHp[stage] : Math.min(E.maxHp, enemyMaxHp(level) * (T?.hpScale ?? 1));
   ball.hp = ball.maxHp;
   ball.lastHit = -Infinity;
   return ball;

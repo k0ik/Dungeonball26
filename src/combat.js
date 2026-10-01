@@ -26,9 +26,13 @@ export function enemyMaxHp(level) {
   return E.hpPerLevel * level;
 }
 
-export function createEnemy({ x, z, level, id }) {
+export function createEnemy({ x, z, level, id, type = null }) {
   const ball = createBall({ x, z, kind: 'enemy', id });
   ball.level = level;
+  // An enemy type (CONFIG.enemy.types) changes one thing about it.
+  ball.type = type;
+  const T = type ? CONFIG.enemy.types[type] : null;
+  if (T?.friction != null) ball.friction = T.friction;
   ball.maxHp = enemyMaxHp(level);
   ball.hp = ball.maxHp;
   ball.lastHit = -Infinity;

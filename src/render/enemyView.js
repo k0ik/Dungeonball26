@@ -19,7 +19,8 @@ export function createEnemyView(ball, toCamera) {
   const r = ball.radius;
   const group = new THREE.Group();
 
-  const body = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 20), clearOccluder(toonMaterial(CONFIG.colors.enemy)));
+  const color = (ball.type && CONFIG.enemy.types[ball.type].color) ?? CONFIG.colors.enemy;
+  const body = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 20), clearOccluder(toonMaterial(color)));
   body.position.y = r;
   const outline = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 16), outlineHullMaterial);
   outline.scale.setScalar(CONFIG.render.outlineScale);

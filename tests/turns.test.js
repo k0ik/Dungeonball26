@@ -179,3 +179,45 @@ test('patrol never heads through or onto a barrel', () => {
     for (const b of barrels) assert.ok(Math.hypot(m.target.x - b.x, m.target.z - b.z) > 0.6, 'target clear of barrels');
   }
 });
+
+test('Slider: glides on a quarter of the friction, patrols further, and still stops where it aims', () => {
+  const hall = parseLevel(`
+1##############
+#.............#
+#.............#
+#.............#
+#......S......#
+#.............#
+#.............#
+#.............#
+###############`);
+  const s = createEnemy({ x: 7.5, z: 4.5, level: 1, id: 's', type: 'slider' });
+  assert.equal(s.type, 'slider');
+  assert.equal(s.friction, CONFIG.enemy.types.slider.friction);
+  // Same launch, much further roll than a basic enemy.
+  const roll = (b) => {
+    const world = createWorld(hall);
+    Object.assign(b, { x: 1.5, z: 4.5, vx: 2, vz: 0 });
+    world.balls.push(b);
+    while (!isAtRest(world)) stepWorld(world);
+    return b.x - 1.5;
+  };
+  assert.ok(roll(createEnemy({ x: 0, z: 0, level: 1, id: 'b' })) * 3 < roll(createEnemy({ x: 0, z: 0, level: 1, id: 's2', type: 'slider' })));
+  let seed = 0.21;
+  const rng = () => (seed = (seed * 9301 + 0.49297) % 1);
+  let far = 0;
+  for (let i = 0; i < 30; i++) {
+    const e = createEnemy({ x: 7.5, z: 4.5, level: 1, id: 's', type: 'slider' });
+    const move = patrolMove(hall, e, [e], rng);
+    assert.ok(move.target.d <= CONFIG.enemy.types.slider.patrolRadius);
+    if (move.target.d > CONFIG.enemy.patrolRadius) far++;
+    if (move.target.d < 2) continue; // the minimum patrol speed overshoots the nearest tiles a little
+    const world = createWorld(hall);
+    e.vx = move.vx;
+    e.vz = move.vz;
+    world.balls.push(e);
+    while (!isAtRest(world)) stepWorld(world);
+    assert.ok(Math.hypot(e.x - move.target.x, e.z - move.target.z) < 0.8, `ended ${Math.hypot(e.x - move.target.x, e.z - move.target.z).toFixed(2)} from its target`);
+  }
+  assert.ok(far > 0, 'some patrols go beyond a basic enemy\'s range');
+});

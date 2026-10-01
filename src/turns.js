@@ -63,7 +63,8 @@ function pathClear(level, statics, x0, z0, x1, z1, r) {
  * Returns { vx, vz, target } or null to stay put.
  */
 export function patrolMove(level, enemy, balls, rng = Math.random, statics = []) {
-  const R = E.patrolRadius;
+  const T = enemy.type ? E.types[enemy.type] : null;
+  const R = T?.patrolRadius ?? E.patrolRadius;
   const col0 = Math.floor(enemy.x);
   const row0 = Math.floor(enemy.z);
   const options = [];
@@ -83,7 +84,8 @@ export function patrolMove(level, enemy, balls, rng = Math.random, statics = [])
   if (!options.length) return null;
   const target = options[Math.floor(rng() * options.length)];
   // v² = 2·a·d brings a ball to rest exactly d away under constant friction.
-  const speed = Math.min(E.patrolSpeedMax, Math.max(E.patrolSpeedMin, Math.sqrt(2 * CONFIG.physics.friction * target.d)));
+  // (Its own friction: a Slider needs far less speed to glide as far.)
+  const speed = Math.min(E.patrolSpeedMax, Math.max(E.patrolSpeedMin, Math.sqrt(2 * CONFIG.physics.friction * (enemy.friction ?? 1) * target.d)));
   return {
     vx: ((target.x - enemy.x) / target.d) * speed,
     vz: ((target.z - enemy.z) / target.d) * speed,

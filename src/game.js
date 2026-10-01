@@ -139,7 +139,9 @@ export function createGame(container, levels, startIndex = 0) {
     enemyViews.clear();
     overlay.clearEnemies(hero);
     level.enemies.forEach((e, n) => {
-      const enemy = createEnemy({ ...tileCenter(e), level: e.level, id: `enemy${n}` });
+      const E = CONFIG.enemy;
+      const type = E.testType && E.testLevels.includes(def.id) ? E.testType : null;
+      const enemy = createEnemy({ ...tileCenter(e), level: e.level, id: `enemy${n}`, type });
       world.balls.push(enemy);
       const view = createEnemyView(enemy, rig.toCamera);
       scene.add(view.object);

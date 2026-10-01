@@ -85,6 +85,19 @@ export const CONFIG = {
     // once the camera has framed them all, before they move together.
     turnRingBeat: 0.6,
     enemyTurnMaxWait: 1.5, // seconds the enemies wait at most for the camera to frame them
+    // Enemy types (design doc: "Enemy ideas"). Each changes one thing about
+    // the basic enemy; anything a type doesn't set uses the values above.
+    types: {
+      slider: {
+        friction: 0.25, // of normal friction: it glides far on every move, lunges included
+        patrolRadius: 6, // tiles; its patrols range further too
+        color: 0xa9dcf5, // pale blue
+      },
+    },
+    // Testing aid: every enemy on these levels (ids from src/main.js) is this
+    // type, so one type at a time can be tried out. null leaves them all basic.
+    testType: 'slider',
+    testLevels: ['enemytester01'],
   },
 
   // Barrels, chests and red barrels (design doc: "Objects").

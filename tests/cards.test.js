@@ -6,15 +6,15 @@ import { createWorld, createBall, createStaticCircle, stepWorld, applyBumperKick
 import { parseLevel } from '../src/level.js';
 import { CONFIG } from '../src/config.js';
 
-test('the nine starting cards', () => {
+test('the eight starting cards (Locksmith is shelved)', () => {
   assert.deepEqual(
     CARDS.map((c) => c.name),
-    ['Vampirism', 'Doppleganger', 'Junk Hunter', 'Bullionaire', 'Barrel of Fun', 'Locksmith', 'Athletic', 'Money Magnet', 'Elasticity'],
+    ['Vampirism', 'Doppleganger', 'Junk Hunter', 'Bullionaire', 'Barrel of Fun', 'Athletic', 'Money Magnet', 'Elasticity'],
   );
 });
 
 test('an offer is 3 different cards, never one you hold', () => {
-  const held = ['athletic', 'locksmith', 'vampirism'];
+  const held = ['athletic', 'elasticity', 'vampirism'];
   for (let i = 0; i < 200; i++) {
     const offer = offerCards(held);
     assert.equal(offer.length, 3);
@@ -25,11 +25,11 @@ test('an offer is 3 different cards, never one you hold', () => {
 
 test('taking a card fills a free slot, or replaces the one you choose when full', () => {
   let hand = takeCard([], 'athletic');
-  hand = takeCard(hand, 'locksmith');
+  hand = takeCard(hand, 'elasticity');
   hand = takeCard(hand, 'vampirism');
-  assert.deepEqual(hand, ['athletic', 'locksmith', 'vampirism']);
+  assert.deepEqual(hand, ['athletic', 'elasticity', 'vampirism']);
   assert.equal(takeCard(hand, 'bullionaire'), null, 'full: must choose one to replace');
-  assert.deepEqual(takeCard(hand, 'bullionaire', 'locksmith'), ['athletic', 'bullionaire', 'vampirism']);
+  assert.deepEqual(takeCard(hand, 'bullionaire', 'elasticity'), ['athletic', 'bullionaire', 'vampirism']);
   assert.ok(has(hand, 'vampirism') && !has(hand, 'bullionaire'));
 });
 

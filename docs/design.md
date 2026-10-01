@@ -152,7 +152,7 @@ Starting cards (numbers are defaults to tune):
 | Junk Hunter | Swords and shields turn up twice as often in barrels |
 | Bullionaire | All gold you collect is worth 1.5× (rounded up) |
 | Barrel of Fun | Barrels break in one hit |
-| Locksmith | Doors open without keys |
+| ~~Locksmith~~ | *Shelved for now (not offered or dealt): it's unclear that skipping doors pays off.* Doors open without keys, and keys don't appear |
 | Athletic | Your ball rolls faster and farther: 25% less friction on it (enemies unaffected; the aim preview includes it) |
 | Money Magnet | Gold on the floor (enemy coins, barrel gold and strip coins) is collected from farther away: within 1.5 tiles of your ball's centre instead of just on contact (about 0.6 tiles), drawn in to you as you roll past. Other loot still needs contact |
 | Elasticity | Barrels, chests and enemies act like pinball bumpers for you: when your ball bounces off one, it's kicked away with +1.5 tiles/s of extra speed along the bounce (never above the 9 tiles/s max launch speed). Each bumper kicks once per shot, so a ball caught rattling between a chest and a wall (worst with Athletic) runs down instead of bouncing forever. Walls bounce as normal. The aim preview includes the kick |
@@ -466,7 +466,7 @@ Open questions:
 
 - **Trait card pool:** offers exclude cards you hold, and a replaced card goes back into the pool (built that way in M7; stackable copies are still to explore).
 - **Doppleganger when replaced:** you keep the extra life it gave you (built that way).
-- **Locksmith and keys:** with Locksmith, keys don't appear at all, since doors open without them (built that way).
+- **Locksmith and keys:** with Locksmith, keys don't appear at all, since doors open without them (built that way). The card is shelved for now; its effect stays in the code, so restoring it is one line in `cards.js`.
 - **Athletic:** just 25% less friction for now; should it also raise your launch speed?
 - **Bullionaire:** the 1.5× applies to all gold (coins, chests, streak bonuses), with the fraction carried over, so it's exact over time; the labels show the gold actually added.
 - **Trick shots, "first time":** first time per run, or first time ever? "Ever" needs saved progress, which is out of scope for the MVP, so it's assumed per run for now.

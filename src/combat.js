@@ -26,15 +26,19 @@ export function enemyMaxHp(level) {
   return E.hpPerLevel * level;
 }
 
-export function createEnemy({ x, z, level, id, type = null }) {
+export function createEnemy({ x, z, level, id, type = null, tier }) {
   // An enemy type (CONFIG.enemy.types) changes one thing about it.
   const T = type ? CONFIG.enemy.types[type] : null;
-  const ball = createBall({ x, z, kind: 'enemy', id, radius: T?.radius });
+  // Golems: a whole one unless a tier is given (the pieces it splits into).
+  if (type === 'golem') tier ??= T.tiers;
+  const radius = type === 'golem' ? T.radii[tier - 1] : T?.radius;
+  const ball = createBall({ x, z, kind: 'enemy', id, radius });
+  if (type === 'golem') ball.tier = tier;
   ball.level = level;
   ball.type = type;
   if (T?.friction != null) ball.friction = T.friction;
   if (T?.mass != null) ball.mass = T.mass;
-  ball.maxHp = enemyMaxHp(level) * (T?.hpScale ?? 1);
+  ball.maxHp = type === 'golem' ? tier : enemyMaxHp(level) * (T?.hpScale ?? 1);
   ball.hp = ball.maxHp;
   ball.lastHit = -Infinity;
   return ball;
@@ -52,7 +56,59 @@ export function createCombat() {
     return enemy.hp > 0 && time - enemy.lastHit >= E.hitCooldown;
   }
 
+  let world = null; // the world being resolved (golems add their pieces to it)
+
+  /**
+   * Golem split: `enemy` leaves the board and two golems a tier smaller take
+   * its place, side by side across its path, each veering off along it at
+   * its speed (as if they'd just been struck). The split itself doesn't hurt them.
+   */
+  function split(enemy, time, out, ev) {
+    const G = E.types.golem;
+    const tier = enemy.tier - 1;
+    let speed = Math.hypot(enemy.vx, enemy.vz);
+    // Direction: its new motion, else away from whatever hit it.
+    let dx = enemy.vx;
+    let dz = enemy.vz;
+    if (speed < 1e-6) {
+      const sign = ev && ev.b === enemy ? 1 : -1;
+      dx = ev ? ev.nx * sign : 1;
+      dz = ev ? ev.nz * sign : 0;
+      speed = 0;
+    }
+    const len = Math.hypot(dx, dz) || 1;
+    dx /= len;
+    dz /= len;
+    const r = G.radii[tier - 1];
+    const pieces = [-1, 1].map((side, i) => {
+      const piece = createEnemy({
+        x: enemy.x - dz * side * (r + 0.01),
+        z: enemy.z + dx * side * (r + 0.01),
+        level: enemy.level,
+        id: `${enemy.id}${'ab'[i]}`,
+        type: 'golem',
+        tier,
+      });
+      const a = side * G.spread;
+      piece.vx = (dx * Math.cos(a) - dz * Math.sin(a)) * speed;
+      piece.vz = (dx * Math.sin(a) + dz * Math.cos(a)) * speed;
+      piece.lastHit = time; // the blow that split it doesn't land again on the pieces
+      return piece;
+    });
+    enemy.hp = 0;
+    world.balls = world.balls.filter((b) => b !== enemy).concat(pieces);
+    out.push({ type: 'split', target: enemy, pieces });
+  }
+
   function damage(enemy, amount, time, out, ev, kind) {
+    // A whole golem splits as soon as it's hit; a smaller one when it would die.
+    if (enemy.type === 'golem' && enemy.tier > 1 && (enemy.tier === E.types.golem.tiers || enemy.hp - amount <= 0)) {
+      if (kind === 'hit') enemy.lastHit = time;
+      if (!damagedThisShot.has(enemy)) damagedThisShot.add(enemy);
+      out.push({ type: kind, target: enemy, amount: 0, event: ev, chain: 0 });
+      split(enemy, time, out, ev);
+      return;
+    }
     enemy.hp = Math.max(0, enemy.hp - amount);
     // The cooldown guards against the hero grinding; combos have their own
     // once-per-pair rule and don't start it.
@@ -89,7 +145,8 @@ export function createCombat() {
      * hero holds a shield, it takes the blast instead and is used up.
      * Returns outcomes like resolve(); a killed enemy leaves the board.
      */
-    explosion(world, victim, hero) {
+    explosion(w, victim, hero) {
+      world = w;
       const out = [];
       const amount = CONFIG.objects.explosiveDamage;
       if (victim === hero) {
@@ -121,7 +178,8 @@ export function createCombat() {
      * { type: 'hit' | 'combo', target, amount, event }, { type: 'kill', target }
      * and, in the enemy phase, { type: 'hurt', target: hero, amount, source, event }.
      */
-    resolve(world, hero) {
+    resolve(w, hero) {
+      world = w;
       const out = [];
       const time = world.time;
       if (actors) {

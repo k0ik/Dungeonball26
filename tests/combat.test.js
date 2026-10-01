@@ -189,3 +189,42 @@ test('a killing blow ricochets off the enemy instead of stopping dead', () => {
   assert.ok(killed, 'the enemy died');
   assert.ok(hero.vx < -3, `the hero bounced back (vx ${hero.vx.toFixed(2)})`);
 });
+
+test('Golem: splits into two 2-HP golems when first hit, each of those into two 1-HP ones when destroyed', () => {
+  const ctx = setup([]);
+  const { world, hero, combat } = ctx;
+  const golem = createEnemy({ x: 6, z: 4.5, level: 1, id: 'g', type: 'golem' });
+  assert.equal(golem.hp, 3);
+  assert.equal(golem.radius, CONFIG.enemy.types.golem.radii[2]);
+  world.balls.push(golem);
+  const hit = (target) => {
+    world.time += 1; // past every hit cooldown
+    target.vx = 3; // moving off along the blow, as after a real impact
+    target.vz = 0;
+    world.events.push({ type: 'ball', a: hero, b: target, speed: 5, nx: 1, nz: 0 });
+    const out = combat.resolve(world, hero);
+    world.events.length = 0;
+    return out;
+  };
+  const golems = () => world.balls.filter((b) => b.type === 'golem');
+  let out = hit(golem);
+  assert.ok(out.some((o) => o.type === 'split' && o.target === golem));
+  assert.ok(!world.balls.includes(golem), 'the whole golem is gone');
+  assert.deepEqual(golems().map((g) => [g.tier, g.hp]), [[2, 2], [2, 2]]);
+  // The pieces roll off along the hit, veering apart, at its speed.
+  const [p, q] = golems();
+  assert.ok(p.vx > 0 && q.vx > 0 && Math.sign(p.vz) === -Math.sign(q.vz));
+  assert.ok(Math.abs(Math.hypot(p.vx, p.vz) - 3) < 1e-9);
+  // A 2-HP golem takes damage first, then splits when it would die.
+  out = hit(p);
+  assert.equal(p.hp, 1);
+  assert.equal(golems().length, 2);
+  out = hit(p);
+  assert.ok(out.some((o) => o.type === 'split' && o.target === p));
+  assert.deepEqual(golems().map((g) => g.tier).sort(), [1, 1, 2]);
+  // A 1-HP golem just dies, and no kill was counted for the splits.
+  const small = golems().find((g) => g.tier === 1);
+  out = hit(small);
+  assert.ok(out.some((o) => o.type === 'kill' && o.target === small));
+  assert.deepEqual(golems().map((g) => g.tier).sort(), [1, 2]);
+});

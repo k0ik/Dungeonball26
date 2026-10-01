@@ -112,6 +112,14 @@ export function createGame(container, levels, startIndex = 0) {
 
   const enemies = () => world.balls.filter((b) => b.kind === 'enemy');
 
+  /** Draw an enemy (and its HP bar); it must already be in world.balls. */
+  function addEnemyView(enemy) {
+    const view = createEnemyView(enemy, rig.toCamera);
+    scene.add(view.object);
+    enemyViews.set(enemy, view);
+    overlay.addBar(enemy);
+  }
+
   function loadLevel(i) {
     levelIndex = (i + levels.length) % levels.length;
     const def = levels[levelIndex];
@@ -143,10 +151,7 @@ export function createGame(container, levels, startIndex = 0) {
       const type = E.testType && E.testLevels.includes(def.id) ? E.testType : null;
       const enemy = createEnemy({ ...tileCenter(e), level: e.level, id: `enemy${n}`, type });
       world.balls.push(enemy);
-      const view = createEnemyView(enemy, rig.toCamera);
-      scene.add(view.object);
-      enemyViews.set(enemy, view);
-      overlay.addBar(enemy);
+      addEnemyView(enemy);
     });
 
     start = tileCenter(level.start);
@@ -657,11 +662,18 @@ export function createGame(container, levels, startIndex = 0) {
           sfx.play('combo', 0.9);
           comboSounded = true;
         }
-        floatAt(o.target, `-${o.amount}`, o.type === 'combo' ? 'combo' : '');
+        if (o.amount) floatAt(o.target, `-${o.amount}`, o.type === 'combo' ? 'combo' : ''); // a golem's split shows "Split!" instead
         // Every enemy after the first one damaged this shot is a combo.
         if (o.chain >= 2) floatAt(o.target, 'Combo!', 'combo-label', 0.8);
+      } else if (o.type === 'split') {
+        // A golem breaks into two smaller ones (they're already on the board).
+        sfx.play('crack', 1, { pitch: 0.7 });
+        enemyViews.get(o.target)?.die();
+        overlay.removeBar(o.target);
+        for (const piece of o.pieces) addEnemyView(piece);
+        floatAt(o.target, 'Split!', 'combo-label');
       } else if (o.type === 'blast') {
-        floatAt(o.target, `-${o.amount}`, 'hurt');
+        if (o.amount) floatAt(o.target, `-${o.amount}`, 'hurt');
       } else if (o.type === 'kill') {
         sfx.play('kill', 0.9);
         enemyViews.get(o.target)?.die();

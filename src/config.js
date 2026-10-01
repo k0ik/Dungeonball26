@@ -106,10 +106,19 @@ export const CONFIG = {
         damageToHero: 2, // HP its hit costs you (basic 1)
         color: 0x8b5a2b, // brown
       },
+      golem: {
+        // A golem's tier is its HP: 3 (whole), 2, 1. The whole golem splits
+        // into two tier-2 golems the moment it's hit; a tier-2 golem splits
+        // into two tier-1s when it's destroyed; a tier-1 just dies.
+        tiers: 3,
+        radii: [0.25, 0.32, 0.42], // tiles, by tier 1..3
+        spread: 0.45, // radians each piece veers off the struck golem's path
+        color: 0xc8a27a, // light brown
+      },
     },
     // Testing aid: every enemy on these levels (ids from src/main.js) is this
     // type, so one type at a time can be tried out. null leaves them all basic.
-    testType: 'brute',
+    testType: 'golem',
     testLevels: ['enemytester01'],
   },
 

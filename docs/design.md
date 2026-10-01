@@ -408,6 +408,8 @@ Changes agreed during development that aren't built yet. (Trait cards are schedu
   - **Everything else:** patrols never pick a route over a pit, and a lunge can still end in one. The aim preview shows a path ending in a pit, which marks the end with a warning. Sight passes over pits, since they're holes, not walls.
   - **Look:** a black hole in the floor with a darker rim.
   - **Level format:** a proposed character, `_`, joins the legend and the loader when it's built.
+- **Lava pit:** a tile type like the bottomless pit, but it reads differently: it's sunken below the floor with a visible floor of glowing lava. Any ball that rolls into it, you or an enemy, dies instantly (the same falling-in rule, deaths and kill credit as the bottomless pit). To settle: whether it replaces the bottomless pit or both exist (lava could leave nothing behind, a pit could later lead to a lower story), and its character (proposed `~`).
+- **Portals:** tiles that come in pairs, a red pair and a blue pair: a ball that rolls onto one is instantly moved to the other of the same colour, keeping its speed and direction (motion and physics carry on as if nothing happened). Every ball uses them, you and enemies alike. To settle: what triggers a jump (the ball's centre entering the tile, as with pits); a short cooldown so a ball arriving on a portal doesn't bounce straight back; what happens if the exit is blocked by a ball (it's knocked aside, or the jump waits); whether sight and the aim preview pass through portals (the preview should, since it runs the real physics); a look (a swirling disc in its colour, plus a shape so the pairs don't rely on red vs blue); and level characters (proposed `@` for red, `&` for blue, exactly two of each).
 
 ## Enemy ideas
 

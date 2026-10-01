@@ -20,7 +20,7 @@ export const CARDS = [
   // { id: 'locksmith', name: 'Locksmith', icon: '🗝️', text: 'Doors open without keys.' },
   { id: 'athletic', name: 'Athletic', icon: '👟', text: `Your ball rolls faster and farther: ${Math.round((1 - K.athleticFriction) * 100)}% less friction.` },
   { id: 'moneyMagnet', name: 'Money Magnet', icon: '🧲', text: `Coins within ${K.magnetRadius} tiles are pulled in to you.` },
-  { id: 'elasticity', name: 'Elasticity', icon: '🏀', text: `Barrels, chests and enemies kick you away like pinball bumpers (+${K.elasticityKick} speed).` },
+  { id: 'elasticity', name: 'Elasticity', icon: '🏀', text: `Barrels, chests and enemies kick you away like pinball bumpers (+${K.elasticityKick} speed, up to ${K.elasticityKicksPerBumper}× each per shot).` },
 ];
 
 export const cardById = (id) => CARDS.find((c) => c.id === id);

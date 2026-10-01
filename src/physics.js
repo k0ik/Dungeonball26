@@ -73,22 +73,22 @@ export function stepWorld(world, dt = P.step) {
  * Pinball kick (the Elasticity card): if `ball` bounced off a barrel, chest or
  * enemy in this step's events (walls don't count), add `kick` to its speed
  * along its new direction, up to `maxSpeed`. At most once per step, and each
- * bumper kicks at most once per shot: `kicked` (a Set, fresh each shot)
- * remembers the ones that have, so a ball caught between a bumper and a wall
- * can't be kicked forever.
+ * bumper kicks at most `perBumper` times per shot: `kicked` (a Map from
+ * bumper to kicks given, fresh each shot) keeps count, so a ball caught
+ * between a bumper and a wall can't be kicked forever.
  */
-export function applyBumperKick(world, ball, kick, maxSpeed, kicked = new Set()) {
+export function applyBumperKick(world, ball, kick, maxSpeed, kicked = new Map(), perBumper = 1) {
   let bumper = null;
   for (const ev of world.events) {
     if (ev.type === 'static' && ev.ball === ball) bumper = ev.obj;
     else if (ev.type === 'ball' && (ev.a === ball || ev.b === ball) && (ev.a.kind === 'enemy' || ev.b.kind === 'enemy')) bumper = ev.a === ball ? ev.b : ev.a;
     else continue;
-    if (!kicked.has(bumper)) break;
+    if ((kicked.get(bumper) ?? 0) < perBumper) break;
     bumper = null;
   }
   const speed = speedOf(ball);
   if (!bumper || speed === 0) return false;
-  kicked.add(bumper);
+  kicked.set(bumper, (kicked.get(bumper) ?? 0) + 1);
   const k = Math.min(maxSpeed, speed + kick) / speed;
   ball.vx *= k;
   ball.vz *= k;

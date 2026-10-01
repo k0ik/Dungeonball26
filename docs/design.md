@@ -157,7 +157,7 @@ Starting cards (numbers are defaults to tune):
 | ~~Locksmith~~ | *Shelved for now (not offered or dealt): it's unclear that skipping doors pays off.* Doors open without keys, and keys don't appear |
 | Athletic | Your ball rolls faster and farther: 25% less friction on it (enemies unaffected; the aim preview includes it) |
 | Money Magnet | Gold on the floor (enemy coins, barrel gold and strip coins) is collected from farther away: within 1.5 tiles of your ball's centre instead of just on contact (about 0.6 tiles), drawn in to you as you roll past. Other loot still needs contact |
-| Elasticity | Barrels, chests and enemies act like pinball bumpers for you: when your ball bounces off one, it's kicked away with +1.5 tiles/s of extra speed along the bounce (never above the 9 tiles/s max launch speed). Each bumper kicks once per shot, so a ball caught rattling between a chest and a wall (worst with Athletic) runs down instead of bouncing forever. Walls bounce as normal. The aim preview includes the kick |
+| Elasticity | Barrels, chests and enemies act like pinball bumpers for you: when your ball bounces off one, it's kicked away with +1.5 tiles/s of extra speed along the bounce (never above the 9 tiles/s max launch speed). Each bumper kicks up to 3 times per shot (`cards.elasticityKicksPerBumper`), so a ball caught rattling between a chest and a wall (worst with Athletic) still runs down instead of bouncing forever. Walls bounce as normal. The aim preview includes the kick |
 
 Defaults assumed until you say otherwise: an offer never includes a card you already hold, and a card you replace goes back into the pool. Cards carry over between levels like HP and gold, and a game over restores the cards you entered the level with.
 

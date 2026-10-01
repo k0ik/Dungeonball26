@@ -269,6 +269,7 @@ export const CONFIG = {
     magnetRadius: 1.5, // tiles from the ball's centre
     magnetPull: 10, // how fast pulled coins close in, 1/s
     elasticityKick: 1.5, // tiles/s added on bouncing off a barrel, chest or enemy
+    elasticityKicksPerBumper: 3, // kicks each bumper gives per shot (so a ball pinned against one still runs down)
   },
 
   hero: {

@@ -59,7 +59,7 @@ export function previewPath(level, hero, dirX, dirZ, speed, others = [], statics
   world.statics = statics.map((s) => ({ ...s, lastHit: -Infinity }));
   const combat = createCombat();
   combat.beginShot();
-  const kicked = new Set(); // bumpers that have given their one Elasticity kick
+  const kicked = new Map(); // Elasticity kicks each bumper has given this shot
   const touchesGhost = (ev) => ev.ball === ghost || ev.a === ghost || ev.b === ghost;
 
   const points = [{ x: hero.x, z: hero.z }];
@@ -72,7 +72,7 @@ export function previewPath(level, hero, dirX, dirZ, speed, others = [], statics
     combat.resolve(world, ghost);
     resolveObjects(world, ghost, () => 0.5, { barrelHits });
     applyRubberRebound(world, ghost, RUBBER.rebound, RUBBER.maxRebound); // Rubber enemies
-    if (kick) applyBumperKick(world, ghost, kick, CONFIG.aim.maxLaunchSpeed, kicked); // the Elasticity card
+    if (kick) applyBumperKick(world, ghost, kick, CONFIG.aim.maxLaunchSpeed, kicked, CONFIG.cards.elasticityKicksPerBumper); // the Elasticity card
     world.events.length = 0;
     if (hit) {
       points.push({ x: ghost.x, z: ghost.z });

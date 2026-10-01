@@ -227,3 +227,22 @@ test('enemy drops: sword, shield and potion each on their own rare chance', asyn
   assert.ok(counts.none / N > 0.7, 'most kills drop only coins');
   assert.ok(counts.several > 0, 'a lucky kill can drop more than one');
 });
+
+test('a bomb blast sets off red barrels and cracks or breaks barrels in reach, behind no wall', async () => {
+  const { blastObjects } = await import('../src/objects.js');
+  const lvl = parseLevel(`
+1#########
+#........#
+#.OE...O.#
+#S.......#
+##########`);
+  const world = createWorld(lvl);
+  world.statics = createObjects(lvl);
+  const out = blastObjects(world, 3.5, 3.5, 1.6, { barrelHits: 2 });
+  // The barrel at (2,2) cracks, the red barrel at (3,2) goes off; the far barrel at (7,2) is out of reach.
+  assert.deepEqual(out.map((o) => `${o.type}:${o.obj.kind}`).sort(), ['crack:barrel', 'explode:explosive']);
+  assert.ok(!world.statics.some((s) => s.kind === 'explosive'));
+  assert.ok(out.find((o) => o.type === 'explode').victim === null);
+  const again = blastObjects(world, 3.5, 3.5, 1.6, { barrelHits: 2 });
+  assert.deepEqual(again.map((o) => o.type), ['break']);
+});

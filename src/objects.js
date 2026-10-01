@@ -11,7 +11,7 @@
 // Contacts count in any phase (your shot or the enemy phase).
 
 import { CONFIG } from './config.js';
-import { createStaticCircle, createStaticBox } from './physics.js';
+import { createStaticCircle, createStaticBox, lineClear } from './physics.js';
 import { tileCenter } from './level.js';
 import { randomInt } from './loot.js';
 
@@ -40,6 +40,36 @@ export function createObjects(level) {
  *   { type: 'open', obj, gold }     a chest opened
  *   { type: 'explode', obj, victim } a red barrel went off on `victim`
  */
+/**
+ * A bomb's blast at (x, z) reaching `radius` (centre to the object's edge),
+ * walls shielding: red barrels in reach go off (with no ball to hurt) and
+ * barrels take a hit (crack, or break and drop their loot). Chests are
+ * untouched. Outcomes as resolveObjects; spent objects leave the world.
+ */
+export function blastObjects(world, x, z, radius, { barrelHits = O.barrelHits } = {}) {
+  const out = [];
+  const gone = new Set();
+  for (const s of world.statics) {
+    if (s.kind !== 'explosive' && s.kind !== 'barrel') continue;
+    if (Math.hypot(s.x - x, s.z - z) - s.radius > radius || !lineClear(world.level, { x, z }, s)) continue;
+    if (s.kind === 'explosive') {
+      gone.add(s);
+      out.push({ type: 'explode', obj: s, victim: null });
+    } else {
+      s.lastHit = world.time;
+      s.hits++;
+      if (s.hits >= barrelHits) {
+        gone.add(s);
+        out.push({ type: 'break', obj: s });
+      } else {
+        out.push({ type: 'crack', obj: s, stage: s.hits });
+      }
+    }
+  }
+  if (gone.size) world.statics = world.statics.filter((s) => !gone.has(s));
+  return out;
+}
+
 export function resolveObjects(world, hero, rng = Math.random, { barrelHits = O.barrelHits } = {}) {
   const out = [];
   const gone = new Set();

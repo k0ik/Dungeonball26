@@ -17,7 +17,7 @@
 // Speed never changes the damage, only whether a contact counts.
 
 import { CONFIG } from './config.js';
-import { createBall, bounceOffFixed, overlapsSolid } from './physics.js';
+import { createBall, bounceOffFixed, lineClear } from './physics.js';
 import { heroDamage } from './turns.js';
 
 const E = CONFIG.enemy;
@@ -41,17 +41,6 @@ export function createEnemy({ x, z, level, id, type = null, stage = 0 }) {
   ball.hp = ball.maxHp;
   ball.lastHit = -Infinity;
   return ball;
-}
-
-/** No wall between two points (a thin sweep, like sight's). */
-function clearLine(level, a, b) {
-  const d = Math.hypot(b.x - a.x, b.z - a.z);
-  const steps = Math.ceil(d / 0.1);
-  for (let i = 1; i < steps; i++) {
-    const t = i / steps;
-    if (overlapsSolid(level, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, 0.05)) return false;
-  }
-  return true;
 }
 
 export function createCombat() {
@@ -201,7 +190,7 @@ export function createCombat() {
         const dx = ball.x - bomb.x;
         const dz = ball.z - bomb.z;
         const d = Math.hypot(dx, dz);
-        if (d > B.blastRadius || !clearLine(world.level, bomb, ball)) continue;
+        if (d > B.blastRadius || !lineClear(world.level, bomb, ball)) continue;
         const push = B.blastPush * (1 - d / B.blastRadius);
         if (d > 1e-6) {
           ball.vx += (dx / d) * push;

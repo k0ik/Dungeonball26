@@ -34,7 +34,7 @@ import { createHud } from './render/hud.js';
 import { createAimView } from './render/aimView.js';
 import { createCameraRig } from './render/cameraRig.js';
 import { createAudio } from './audio.js';
-import { createObjects, resolveObjects } from './objects.js';
+import { createObjects, resolveObjects, blastObjects } from './objects.js';
 import { rollLoot, rollEnemyDrops, canCollect, collect, swingSword, endSwordShot, coinStreakBonus } from './loot.js';
 import { createObjectsView } from './render/objectsView.js';
 import { createItemsView } from './render/itemsView.js';
@@ -648,7 +648,7 @@ export function createGame(container, levels, startIndex = 0) {
         sfx.play('explode', 1);
         objectsView.remove(obj);
         objectsView.blast(obj.x, obj.z);
-        handleOutcomes(combat.explosion(world, o.victim, hero));
+        if (o.victim) handleOutcomes(combat.explosion(world, o.victim, hero)); // none when a bomb's blast set it off
       }
     }
   }
@@ -701,6 +701,8 @@ export function createGame(container, levels, startIndex = 0) {
         sfx.play('explode', 1);
         objectsView.blast(o.target.x, o.target.z, CONFIG.enemy.types.bomb.blastRadius / 1.4);
         enemyViews.get(o.target)?.die();
+        // It also sets off red barrels and cracks or breaks barrels in reach.
+        handleObjects(blastObjects(world, o.target.x, o.target.z, CONFIG.enemy.types.bomb.blastRadius, { barrelHits: card('barrelOfFun') ? 1 : CONFIG.objects.barrelHits }));
       } else if (o.type === 'blast') {
         if (o.amount) floatAt(o.target, `-${o.amount}`, 'hurt');
       } else if (o.type === 'kill') {

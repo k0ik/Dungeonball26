@@ -281,6 +281,17 @@ function resolveWalls(world, b) {
   }
 }
 
+/** No wall between two points (a thin sweep, like sight's): what a blast can reach. */
+export function lineClear(level, a, b) {
+  const d = Math.hypot(b.x - a.x, b.z - a.z);
+  const steps = Math.ceil(d / 0.1);
+  for (let i = 1; i < steps; i++) {
+    const t = i / steps;
+    if (overlapsSolid(level, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, 0.05)) return false;
+  }
+  return true;
+}
+
 /** True if a circle at (x, z) overlaps any solid tile (or rounded wall). */
 export function overlapsSolid(level, x, z, r) {
   if (level.geometry) {

@@ -26,19 +26,18 @@ export function enemyMaxHp(level) {
   return E.hpPerLevel * level;
 }
 
-export function createEnemy({ x, z, level, id, type = null, tier }) {
+export function createEnemy({ x, z, level, id, type = null, stage = 0 }) {
   // An enemy type (CONFIG.enemy.types) changes one thing about it.
   const T = type ? CONFIG.enemy.types[type] : null;
-  // Golems: a whole one unless a tier is given (the pieces it splits into).
-  if (type === 'golem') tier ??= T.tiers;
-  const radius = type === 'golem' ? T.radii[tier - 1] : T?.radius;
+  // Golems: a whole one unless a later `stage` is given (the pieces it splits into).
+  const radius = type === 'golem' ? T.stageRadius[stage] : T?.radius;
   const ball = createBall({ x, z, kind: 'enemy', id, radius });
-  if (type === 'golem') ball.tier = tier;
+  if (type === 'golem') ball.stage = stage;
   ball.level = level;
   ball.type = type;
   if (T?.friction != null) ball.friction = T.friction;
   if (T?.mass != null) ball.mass = T.mass;
-  ball.maxHp = type === 'golem' ? tier : enemyMaxHp(level) * (T?.hpScale ?? 1);
+  ball.maxHp = type === 'golem' ? T.stageHp[stage] : enemyMaxHp(level) * (T?.hpScale ?? 1);
   ball.hp = ball.maxHp;
   ball.lastHit = -Infinity;
   return ball;
@@ -59,13 +58,13 @@ export function createCombat() {
   let world = null; // the world being resolved (golems add their pieces to it)
 
   /**
-   * Golem split: `enemy` leaves the board and two golems a tier smaller take
+   * Golem split: `enemy` leaves the board and two golems of the next stage take
    * its place, side by side across its path, each veering off along it at
    * its speed (as if they'd just been struck). The split itself doesn't hurt them.
    */
   function split(enemy, time, out, ev) {
     const G = E.types.golem;
-    const tier = enemy.tier - 1;
+    const stage = enemy.stage + 1;
     let speed = Math.hypot(enemy.vx, enemy.vz);
     // Direction: its new motion, else away from whatever hit it.
     let dx = enemy.vx;
@@ -79,7 +78,7 @@ export function createCombat() {
     const len = Math.hypot(dx, dz) || 1;
     dx /= len;
     dz /= len;
-    const r = G.radii[tier - 1];
+    const r = G.stageRadius[stage];
     const pieces = [-1, 1].map((side, i) => {
       const piece = createEnemy({
         x: enemy.x - dz * side * (r + 0.01),
@@ -87,7 +86,7 @@ export function createCombat() {
         level: enemy.level,
         id: `${enemy.id}${'ab'[i]}`,
         type: 'golem',
-        tier,
+        stage,
       });
       const a = side * G.spread;
       piece.vx = (dx * Math.cos(a) - dz * Math.sin(a)) * speed;
@@ -102,7 +101,7 @@ export function createCombat() {
 
   function damage(enemy, amount, time, out, ev, kind) {
     // A whole golem splits as soon as it's hit; a smaller one when it would die.
-    if (enemy.type === 'golem' && enemy.tier > 1 && (enemy.tier === E.types.golem.tiers || enemy.hp - amount <= 0)) {
+    if (enemy.type === 'golem' && enemy.stage < E.types.golem.stageHp.length - 1 && (enemy.stage === 0 || enemy.hp - amount <= 0)) {
       if (kind === 'hit') enemy.lastHit = time;
       if (!damagedThisShot.has(enemy)) damagedThisShot.add(enemy);
       out.push({ type: kind, target: enemy, amount: 0, event: ev, chain: 0 });

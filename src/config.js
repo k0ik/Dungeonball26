@@ -107,13 +107,14 @@ export const CONFIG = {
         color: 0x8b5a2b, // brown
       },
       golem: {
-        // A golem's tier is its HP: 3 (whole), 2, 1. The whole golem splits
-        // into two tier-2 golems the moment it's hit; a tier-2 golem splits
-        // into two tier-1s when it's destroyed; a tier-1 just dies.
-        tiers: 3,
-        radii: [0.25, 0.32, 0.42], // tiles, by tier 1..3
+        // Its stages, whole golem first: 1 golem of 4 HP, then 2 of 2 HP,
+        // then 4 of 1 HP. The whole golem splits into two of the next stage
+        // the moment it's hit; a middle-stage golem takes damage and splits
+        // when it would die; a last-stage golem just dies.
+        stageHp: [4, 2, 1],
+        stageRadius: [0.45, 0.34, 0.26], // tiles
         spread: 0.45, // radians each piece veers off the struck golem's path
-        color: 0xc8a27a, // light brown
+        color: 0x7a5a9c, // dark lilac
       },
     },
     // Testing aid: every enemy on these levels (ids from src/main.js) is this

@@ -190,12 +190,13 @@ test('a killing blow ricochets off the enemy instead of stopping dead', () => {
   assert.ok(hero.vx < -3, `the hero bounced back (vx ${hero.vx.toFixed(2)})`);
 });
 
-test('Golem: splits into two 2-HP golems when first hit, each of those into two 1-HP ones when destroyed', () => {
+test('Golem: 1 of 4 HP splits into 2 of 2 HP when first hit; each of those into 2 of 1 HP when destroyed', () => {
   const ctx = setup([]);
   const { world, hero, combat } = ctx;
+  const G = CONFIG.enemy.types.golem;
   const golem = createEnemy({ x: 6, z: 4.5, level: 1, id: 'g', type: 'golem' });
-  assert.equal(golem.hp, 3);
-  assert.equal(golem.radius, CONFIG.enemy.types.golem.radii[2]);
+  assert.equal(golem.hp, 4);
+  assert.equal(golem.radius, G.stageRadius[0]);
   world.balls.push(golem);
   const hit = (target) => {
     world.time += 1; // past every hit cooldown
@@ -210,7 +211,7 @@ test('Golem: splits into two 2-HP golems when first hit, each of those into two 
   let out = hit(golem);
   assert.ok(out.some((o) => o.type === 'split' && o.target === golem));
   assert.ok(!world.balls.includes(golem), 'the whole golem is gone');
-  assert.deepEqual(golems().map((g) => [g.tier, g.hp]), [[2, 2], [2, 2]]);
+  assert.deepEqual(golems().map((g) => [g.stage, g.hp]), [[1, 2], [1, 2]]);
   // The pieces roll off along the hit, veering apart, at its speed.
   const [p, q] = golems();
   assert.ok(p.vx > 0 && q.vx > 0 && Math.sign(p.vz) === -Math.sign(q.vz));
@@ -221,10 +222,10 @@ test('Golem: splits into two 2-HP golems when first hit, each of those into two 
   assert.equal(golems().length, 2);
   out = hit(p);
   assert.ok(out.some((o) => o.type === 'split' && o.target === p));
-  assert.deepEqual(golems().map((g) => g.tier).sort(), [1, 1, 2]);
+  assert.deepEqual(golems().map((g) => g.hp).sort(), [1, 1, 2]);
   // A 1-HP golem just dies, and no kill was counted for the splits.
-  const small = golems().find((g) => g.tier === 1);
+  const small = golems().find((g) => g.hp === 1);
   out = hit(small);
   assert.ok(out.some((o) => o.type === 'kill' && o.target === small));
-  assert.deepEqual(golems().map((g) => g.tier).sort(), [1, 2]);
+  assert.deepEqual(golems().map((g) => g.hp).sort(), [1, 2]);
 });

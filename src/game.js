@@ -662,7 +662,7 @@ export function createGame(container, levels, startIndex = 0) {
           sfx.play('combo', 0.9);
           comboSounded = true;
         }
-        if (o.amount) floatAt(o.target, `-${o.amount}`, o.type === 'combo' ? 'combo' : ''); // a golem's split shows "Split!" instead
+        if (o.amount) floatAt(o.target, `-${o.amount}`, o.type === 'combo' ? 'combo' : ''); // (a golem's split does no damage)
         // Every enemy after the first one damaged this shot is a combo.
         if (o.chain >= 2) floatAt(o.target, 'Combo!', 'combo-label', 0.8);
       } else if (o.type === 'split') {
@@ -671,7 +671,6 @@ export function createGame(container, levels, startIndex = 0) {
         enemyViews.get(o.target)?.die();
         overlay.removeBar(o.target);
         for (const piece of o.pieces) addEnemyView(piece);
-        floatAt(o.target, 'Split!', 'combo-label');
       } else if (o.type === 'blast') {
         if (o.amount) floatAt(o.target, `-${o.amount}`, 'hurt');
       } else if (o.type === 'kill') {

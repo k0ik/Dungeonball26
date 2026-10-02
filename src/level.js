@@ -41,8 +41,10 @@ const KEY_COLORS = { r: 'red', b: 'blue', y: 'yellow', R: 'red', B: 'blue', Y: '
 /**
  * Parse a level text into a grid of base tiles plus entity spawn lists.
  * Base tiles are 'wall', 'floor', 'exit' or 'door'; everything else sits on floor.
+ * `requireStart: false` accepts a level with no start yet (the level editor's
+ * outline preview of a half-drawn level).
  */
-export function parseLevel(text, name = 'level') {
+export function parseLevel(text, name = 'level', { requireStart = true } = {}) {
   const lines = text.replace(/\r/g, '').split('\n').map((l) => l.trimEnd());
   while (lines.length && lines[0] === '') lines.shift();
   while (lines.length && lines[lines.length - 1] === '') lines.pop();
@@ -130,7 +132,7 @@ export function parseLevel(text, name = 'level') {
     tiles.push(tileRow);
   });
 
-  if (!level.start) throw new Error(`${name}: no hero start 'S'`);
+  if (!level.start && requireStart) throw new Error(`${name}: no hero start 'S'`);
   // Each door is a slab across its tile, running the way the wall runs:
   // along x between walls to its left and right, else along z.
   const blocks = (c, r) => ['wall', 'door'].includes(tileAt(level, c, r));
@@ -161,7 +163,7 @@ export function placedSpots(level) {
   const ball = CONFIG.ball.diameter / 2;
   const at = (list, clear) => list.map((t) => ({ x: t.col + 0.5, z: t.row + 0.5, clear }));
   return [
-    ...at([level.start, ...level.enemies], ball),
+    ...at([level.start, ...level.enemies].filter(Boolean), ball),
     ...at([...level.barrels, ...level.explosives], O.barrelRadius),
     ...at(level.chests, Math.hypot(O.chestHalfX, O.chestHalfZ)),
     ...at([...level.keys, ...level.coins], O.itemRadius),

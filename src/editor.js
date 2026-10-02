@@ -85,7 +85,7 @@ export function createEditor({ getLevel, onPlay }) {
       <div class="ed-palette"></div>
       <div class="ed-stage"><canvas></canvas></div>
     </div>
-    <div class="ed-help">Click or drag to paint · right-drag to erase · the outer wall stays put · E to close</div>
+    <div class="ed-help">Click or drag to paint · right-drag to erase · the outer wall stays put · E to close (your edits are kept until you Play or start a New level)</div>
     <div class="ed-modal" hidden><div><p>Level text (copied, if your browser allowed it):</p><textarea readonly></textarea><button class="ed-modal-close">Done</button></div></div>
   `;
   document.body.appendChild(root);
@@ -102,6 +102,7 @@ export function createEditor({ getLevel, onPlay }) {
   let hover = null;
   let tile = 24; // pixels per tile
   let painting = null; // the character being painted during a drag
+  let dirty = false; // changes not yet played (nothing is saved yet)
 
   // --- Palette and bar --------------------------------------------------------
   const palette = root.querySelector('.ed-palette');
@@ -127,6 +128,7 @@ export function createEditor({ getLevel, onPlay }) {
     b.textContent = c;
     b.title = c === 1 ? 'Square corners' : c === 5 ? 'Roundest' : '';
     b.onclick = () => {
+      if (curve !== c) dirty = true;
       curve = c;
       refresh();
     };
@@ -134,6 +136,8 @@ export function createEditor({ getLevel, onPlay }) {
   }
   for (const b of root.querySelectorAll('[data-new]')) {
     b.onclick = () => {
+      if (dirty && !confirm(`Start a new level? Your changes to "${name}" haven't been played or saved, and will be lost.`)) return;
+      dirty = false;
       grid = blankGrid(...SIZES[b.dataset.new]);
       curve = DEFAULT_CURVE;
       name = 'New level';
@@ -142,6 +146,7 @@ export function createEditor({ getLevel, onPlay }) {
     };
   }
   root.querySelector('.ed-play').onclick = () => {
+    dirty = false; // the run now holds these edits
     close();
     onPlay({ id, name, text: toText(grid, curve) });
   };
@@ -169,6 +174,7 @@ export function createEditor({ getLevel, onPlay }) {
     // Only one start: placing it moves it.
     if (ch === 'S') for (const r of grid) for (let c = 0; c < r.length; c++) if (r[c] === 'S') r[c] = '.';
     grid[cell.row][cell.col] = ch;
+    dirty = true;
     refresh();
   }
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -199,7 +205,7 @@ export function createEditor({ getLevel, onPlay }) {
     outline = null;
     if (curve <= 1) return;
     try {
-      const level = parseLevel(toText(grid, curve), name);
+      const level = parseLevel(toText(grid, curve), name, { requireStart: false });
       if (level.geometry) outline = loopPolygons(level.geometry, (r) => Math.max(4, Math.ceil(r * 12)));
     } catch {
       outline = null; // a grid the loader rejects: fall back to square walls
@@ -410,7 +416,8 @@ export function createEditor({ getLevel, onPlay }) {
   new ResizeObserver(() => !root.hidden && refresh()).observe(stage);
 
   function open() {
-    const def = getLevel();
+    // Unplayed edits are kept: closing and reopening picks up where you left off.
+    const def = dirty ? null : getLevel();
     if (def) {
       ({ grid, curve } = fromText(def.text));
       name = def.name;

@@ -1,4 +1,5 @@
 import { createGame } from './game.js';
+import { createEditor } from './editor.js';
 import longHall from './levels/long-hall.txt?raw';
 import breakables from './levels/breakables.txt?raw';
 import oneKey from './levels/one-key.txt?raw';
@@ -40,3 +41,6 @@ const LEVELS = [
 // Start on a level with the URL hash, e.g. #one-key.
 const fromHash = LEVELS.findIndex((l) => `#${l.id}` === location.hash);
 window.game = createGame(document.getElementById('game'), LEVELS, Math.max(0, fromHash));
+
+// The level editor (desktop): E opens the current level in it.
+createEditor({ getLevel: () => window.game.levelDef, onPlay: (def) => window.game.playLevel(def) });

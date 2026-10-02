@@ -951,6 +951,7 @@ export function createGame(container, levels, startIndex = 0) {
   container.appendChild(debug);
 
   window.addEventListener('keydown', (e) => {
+    if (document.body.classList.contains('editing')) return; // the level editor has the keyboard
     if (e.key === 'd' || e.key === '`') debug.hidden = !debug.hidden;
     if (e.key === 'r' && state.phase === 'aim') respawn();
     if (e.key === 'n' && state.phase !== 'won' && state.phase !== 'pick') {
@@ -1260,5 +1261,20 @@ export function createGame(container, levels, startIndex = 0) {
     rig,
     respawn,
     loadLevel,
+    /** The level being played, as { id, name, text } (the level editor opens it). */
+    get levelDef() {
+      return levels[levelIndex];
+    },
+    /**
+     * Play a level from the editor: it replaces the run's level with the same
+     * id (for this session only), or is slotted in at the current place.
+     */
+    playLevel(def) {
+      let i = levels.findIndex((l) => l.id === def.id);
+      if (i < 0) levels.splice((i = levelIndex), 0, { ...def });
+      else levels[i] = { ...levels[i], ...def };
+      loadLevel(i);
+      levelBanner();
+    },
   };
 }

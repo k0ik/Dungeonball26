@@ -777,3 +777,120 @@ body {
     -1px 0 0 #0b2350;
   animation-duration: 1.6s;
 }
+
+/* --- Level editor (src/editor.js): desktop, over the whole window. --- */
+.editor {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  background: #1b1c1f;
+  color: #e6e7ea;
+  font: 13px/1.3 system-ui, -apple-system, sans-serif;
+}
+.editor button {
+  font: inherit;
+  color: inherit;
+  background: #2c2e33;
+  border: 1px solid #44474e;
+  border-radius: 6px;
+  padding: 4px 9px;
+  margin: 0 2px;
+  cursor: pointer;
+}
+.editor button:hover {
+  background: #383b41;
+}
+.editor button.on {
+  background: #3f6fd8;
+  border-color: #6d95f0;
+}
+.editor button.primary {
+  background: #2f8f55;
+  border-color: #4cbf78;
+}
+.ed-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #33353a;
+}
+.ed-title {
+  font-size: 15px;
+}
+.ed-spacer {
+  flex: 1;
+}
+.ed-main {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+.ed-palette {
+  width: 150px;
+  padding: 8px;
+  overflow-y: auto;
+  border-right: 1px solid #33353a;
+}
+.ed-palette button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 0 0 4px;
+  text-align: left;
+}
+.ed-palette canvas {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  flex: none;
+}
+.ed-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
+}
+.ed-stage canvas {
+  cursor: crosshair;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.5);
+}
+.ed-help {
+  padding: 6px 12px;
+  color: #9a9ca3;
+  border-top: 1px solid #33353a;
+}
+.ed-modal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+.ed-modal > div {
+  background: #26282c;
+  padding: 16px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ed-modal textarea {
+  width: 420px;
+  height: 360px;
+  font: 14px/1.15 ui-monospace, Menlo, Consolas, monospace;
+  background: #15161a;
+  color: #e6e7ea;
+  border: 1px solid #44474e;
+  border-radius: 6px;
+  padding: 8px;
+}
+.ed-modal p {
+  margin: 0;
+}

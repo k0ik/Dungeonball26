@@ -103,6 +103,7 @@ export function createEditor({ getLevel, onPlay }) {
   let tile = 24; // pixels per tile
   let painting = null; // the character being painted during a drag
   let dirty = false; // changes not yet played (nothing is saved yet)
+  let elsewhere = null; // the game's level, when the editor is on a different one
 
   // --- Palette and bar --------------------------------------------------------
   const palette = root.querySelector('.ed-palette');
@@ -142,11 +143,13 @@ export function createEditor({ getLevel, onPlay }) {
       curve = DEFAULT_CURVE;
       name = 'New level';
       id = 'draft';
+      elsewhere = getLevel()?.name ?? null;
       refresh();
     };
   }
   root.querySelector('.ed-play').onclick = () => {
     dirty = false; // the run now holds these edits
+    elsewhere = null;
     close();
     onPlay({ id, name, text: toText(grid, curve) });
   };
@@ -407,7 +410,7 @@ export function createEditor({ getLevel, onPlay }) {
   }
 
   function refresh() {
-    root.querySelector('.ed-title').textContent = name;
+    root.querySelector('.ed-title').textContent = elsewhere ? `${name} (the game is on ${elsewhere})` : name;
     for (const b of curves.children) b.classList.toggle('on', Number(b.textContent) === curve);
     computeOutline();
     layout();
@@ -416,13 +419,19 @@ export function createEditor({ getLevel, onPlay }) {
   new ResizeObserver(() => !root.hidden && refresh()).observe(stage);
 
   function open() {
-    // Unplayed edits are kept: closing and reopening picks up where you left off.
-    const def = dirty ? null : getLevel();
-    if (def) {
+    // The editor opens the level the game is on. Unplayed edits to that same
+    // level are kept (closing and reopening picks up where you left off);
+    // unplayed edits to another level (the game has moved on, say) are only
+    // kept if you choose to.
+    const def = getLevel();
+    const keep = dirty && (def?.id === id || !confirm(`The game is on "${def?.name}", but you have unplayed edits to "${name}".\n\nOK: open "${def?.name}" (your edits to "${name}" are lost).\nCancel: keep editing "${name}".`));
+    if (def && !keep) {
       ({ grid, curve } = fromText(def.text));
       name = def.name;
       id = def.id;
+      dirty = false;
     }
+    elsewhere = def && def.id !== id ? def.name : null;
     root.hidden = false;
     document.body.classList.add('editing');
     refresh();

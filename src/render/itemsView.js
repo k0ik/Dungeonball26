@@ -206,6 +206,13 @@ export function createItemsView(scene) {
         }
       }
       for (const [item, g] of views) {
+        // A coin knocked out of you is red until it can be taken, then gold.
+        if (item.kind === 'coin' && g.userData.hot !== !!item.hot) {
+          g.userData.hot = !!item.hot;
+          const [, body, xray] = g.children[0].children;
+          body.material.color.setHex(item.hot ? C.hurtCoin : C.coin);
+          xray.material = xrayMaterial(item.hot ? C.hurtCoin : C.coin);
+        }
         // Matching pickups on the floor move in step: every coin shares one
         // angle, every shield another, and so on (each kind with its own
         // offset), and bob together. A flying one spins fast.

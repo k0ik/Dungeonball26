@@ -218,6 +218,9 @@ export const CONFIG = {
     // speed (tiles/s), rounded up, from 1 up to hurtCoinsMax, scattered around you.
     hurtCoinsPerSpeed: 2,
     hurtCoinsMax: 4,
+    // Those dropped coins land red and stay red for this long (seconds, from
+    // landing), and can't be taken until they turn gold: you're losing money.
+    hurtCoinRedSeconds: 1,
     // Besides its coins, a kill has these separate, rare chances of dropping
     // gear or a potion (rolled independently, so more than one can drop).
     enemyDrops: { sword: 0.05, shield: 0.08, potion: 0.12, superPotionShare: 0.25 },
@@ -386,6 +389,7 @@ export const CONFIG = {
     chestBand: 0xffd84a,
     explosion: 0xff9a2a,
     coin: 0xffc24a,
+    hurtCoin: 0xd8242c, // a coin knocked out of you, while it can't be taken yet
     potion: 0xe8336f,
     superPotion: 0x9b5cff,
     shieldItem: 0x3a86ff,

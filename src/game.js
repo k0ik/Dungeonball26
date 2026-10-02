@@ -600,7 +600,7 @@ export function createGame(container, levels, startIndex = 0) {
     if (!card('moneyMagnet')) return;
     const k = 1 - Math.exp(-CONFIG.cards.magnetPull * dt);
     for (const item of world.items) {
-      if (item.kind !== 'coin' || item.fly) continue;
+      if (item.kind !== 'coin' || item.fly || item.hot) continue;
       const d = Math.hypot(item.x - hero.x, item.z - hero.z);
       if (d > CONFIG.cards.magnetRadius) continue;
       item.x += (hero.x - item.x) * k;
@@ -627,13 +627,13 @@ export function createGame(container, levels, startIndex = 0) {
    * there and the way to it crosses no wall, door or bumper; after a few
    * misses it just drops close by.
    */
-  function scatterCoins(x, z, n, extras = []) {
+  function scatterCoins(x, z, n, extras = [], coin = {}) {
     const L = CONFIG.loot;
     const r = CONFIG.objects.itemRadius;
     const blocked = (px, pz) =>
       overlapsSolid(level, px, pz, r) || world.statics.some((s) => Math.hypot(s.x - px, s.z - pz) < (s.radius ?? Math.hypot(s.halfX, s.halfZ)) + r);
     const rand = (a, b) => a + Math.random() * (b - a);
-    const items = [...Array.from({ length: n }, () => ({ kind: 'coin', value: 1 })), ...extras.map((kind) => ({ kind }))];
+    const items = [...Array.from({ length: n }, () => ({ kind: 'coin', value: 1, ...coin })), ...extras.map((kind) => ({ kind }))];
     for (const item of items) {
       let to = null;
       for (let tries = 0; tries < 12 && !to; tries++) {
@@ -655,11 +655,18 @@ export function createGame(container, levels, startIndex = 0) {
     }
   }
 
-  /** Move flying coins along their arcs; a coin can be taken once it has landed. */
+  /**
+   * Move flying coins along their arcs; a coin can be taken once it has
+   * landed. A coin knocked out of you (hot) then stays red for a moment before
+   * it turns gold and can be taken.
+   */
   function updateFlyingCoins(dt) {
     for (const item of world.items) {
       const f = item.fly;
-      if (!f) continue;
+      if (!f) {
+        if (item.hot) item.hot = Math.max(0, item.hot - dt);
+        continue;
+      }
       f.t += dt;
       // Across the ground during the first arc; the bounce lands on the spot.
       const k = Math.min(1, f.t / (f.dur * CONFIG.loot.scatterBounceAt));
@@ -750,7 +757,7 @@ export function createGame(container, levels, startIndex = 0) {
   function checkPickups() {
     const reach = hero.radius + CONFIG.objects.itemRadius;
     for (const item of [...world.items]) {
-      if (item.fly || Math.hypot(item.x - hero.x, item.z - hero.z) > reach || !canCollect(item, hero)) continue;
+      if (item.fly || item.hot || Math.hypot(item.x - hero.x, item.z - hero.z) > reach || !canCollect(item, hero)) continue;
       world.items.splice(world.items.indexOf(item), 1);
       pickUp(item);
     }
@@ -867,7 +874,7 @@ export function createGame(container, levels, startIndex = 0) {
         if (o.event && state.gold > 0) {
           const n = Math.min(state.gold, impactCoins(o.event.speed));
           state.gold -= n;
-          scatterCoins(hero.x, hero.z, n);
+          scatterCoins(hero.x, hero.z, n, [], { hot: CONFIG.loot.hurtCoinRedSeconds }); // red at first: see updateFlyingCoins
           floatAt(hero, `-${n} gold`, 'gold', 0.5);
         }
         if (hero.hp <= 0 && state.phase !== 'down') knockedOut();

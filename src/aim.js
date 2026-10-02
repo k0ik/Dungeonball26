@@ -3,6 +3,7 @@
 
 import { CONFIG } from './config.js';
 import { createWorld, createBall, stepWorld, applyBumperKick, applyRubberRebound } from './physics.js';
+import { createIce, copyIce, meltIce, stepIce } from './ice.js';
 import { createCombat } from './combat.js';
 import { resolveObjects } from './objects.js';
 
@@ -35,10 +36,12 @@ export function canGrab(hero, pointer) {
  * second crack breaks and gets out of the way, and a red barrel goes off,
  * exactly as in the real shot. It keeps up to `previewBounces` bounces and
  * ends at the next contact. `hero` supplies position, ATK, HP and friction;
- * `kick` and `barrelHits` carry card effects (Elasticity, Barrel of Fun).
+ * `kick` and `barrelHits` carry card effects (Elasticity, Barrel of Fun);
+ * `ice` (the board's puddles) and `move` (the shot's move number) make the
+ * path speed up over ice, with Ice balls icing the floor as they go.
  * Returns { points: [start, ...bends, end], bends: count, stopped }.
  */
-export function previewPath(level, hero, dirX, dirZ, speed, others = [], statics = [], { kick = 0, barrelHits } = {}) {
+export function previewPath(level, hero, dirX, dirZ, speed, others = [], statics = [], { kick = 0, barrelHits, ice, move = 0 } = {}) {
   const world = createWorld(level);
   const ghost = Object.assign(createBall({ x: hero.x, z: hero.z, radius: hero.radius, kind: 'hero', id: 'ghost' }), {
     atk: hero.atk ?? 1,
@@ -60,6 +63,8 @@ export function previewPath(level, hero, dirX, dirZ, speed, others = [], statics
   const combat = createCombat();
   combat.beginShot();
   const kicked = new Map(); // Elasticity kicks each bumper has given this shot
+  const puddles = ice ? copyIce(ice) : createIce();
+  meltIce(puddles, move);
   const touchesGhost = (ev) => ev.ball === ghost || ev.a === ghost || ev.b === ghost;
 
   const points = [{ x: hero.x, z: hero.z }];
@@ -68,6 +73,7 @@ export function previewPath(level, hero, dirX, dirZ, speed, others = [], statics
   // Stop once the ghost rests; knocked obstacles may still be rolling.
   for (let i = 0; i < maxSteps && (ghost.vx !== 0 || ghost.vz !== 0); i++) {
     stepWorld(world);
+    stepIce(world, level, puddles, move);
     const hit = world.events.some(touchesGhost);
     combat.resolve(world, ghost);
     resolveObjects(world, ghost, () => 0.5, { barrelHits });

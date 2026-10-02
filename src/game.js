@@ -37,6 +37,8 @@ import { createAudio } from './audio.js';
 import { createObjects, resolveObjects, blastObjects } from './objects.js';
 import { rollLoot, rollEnemyDrops, canCollect, collect, swingSword, endSwordShot, coinStreakBonus, hurtGold, splitGold } from './loot.js';
 import { createObjectsView } from './render/objectsView.js';
+import { createIceView } from './render/iceView.js';
+import { createIce, meltIce, stepIce } from './ice.js';
 import { createItemsView } from './render/itemsView.js';
 import { createDoorsView } from './render/doorsView.js';
 import { openDoors } from './doors.js';
@@ -75,6 +77,8 @@ export function createGame(container, levels, startIndex = 0) {
 
   const combat = createCombat();
   const objectsView = createObjectsView(scene);
+  const iceView = createIceView(scene);
+  let ice = createIce(); // Ice balls' puddles (src/ice.js)
   const itemsView = createItemsView(scene);
   const doorsView = createDoorsView(scene);
   const enemyViews = new Map(); // enemy ball -> view
@@ -213,6 +217,8 @@ export function createGame(container, levels, startIndex = 0) {
     levelView = buildLevelView(level);
     scene.add(levelView);
     world = createWorld(level);
+    ice = createIce();
+    iceView.clear();
     world.balls.push(hero);
     world.statics = createObjects(level);
     // Floor pickups: kill coins, barrel loot, the level's keys and its coin strips.
@@ -363,6 +369,7 @@ export function createGame(container, levels, startIndex = 0) {
     hero.vz = shot.dirZ * shot.speed;
     state.phase = 'shot';
     state.shots++;
+    nextMove();
     combat.beginShot();
     armBombs(); // bombs lit before this shot go off when it comes to rest
     state.kicked = new Map(); // Elasticity: each bumper kicks up to elasticityKicksPerBumper times a shot
@@ -425,6 +432,12 @@ export function createGame(container, levels, startIndex = 0) {
     state.waited = 0;
   }
 
+  /** A move starts (your shot or the enemy move): old ice puddles melt. */
+  function nextMove() {
+    state.move = (state.move ?? 0) + 1;
+    meltIce(ice, state.move);
+  }
+
   /** Your turn comes round again: every Ghost switches between solid and faded. */
   function newRound() {
     for (const e of enemies()) {
@@ -475,6 +488,7 @@ export function createGame(container, levels, startIndex = 0) {
     }
     if (lunged) sfx.play('lunge', 0.9);
     state.phase = 'enemyMove';
+    nextMove();
   }
 
   // Death screen: input is blocked and the screen darkens for
@@ -949,6 +963,7 @@ export function createGame(container, levels, startIndex = 0) {
     let steps = 0;
     while (acc >= step && steps < CONFIG.physics.maxStepsPerFrame) {
       stepWorld(world, step);
+      stepIce(world, level, ice, state.move ?? 0);
       rollGold(step);
       settleGhosts();
       dampStalls(step);
@@ -1036,6 +1051,8 @@ export function createGame(container, levels, startIndex = 0) {
       const preview = shot.cancel ? null : previewPath(level, hero, shot.dirX, shot.dirZ, shot.speed, others, world.statics, {
             kick: card('elasticity') ? CONFIG.cards.elasticityKick : 0,
             barrelHits: card('barrelOfFun') ? 1 : CONFIG.objects.barrelHits,
+            ice,
+            move: (state.move ?? 0) + 1,
           });
       aimView.show(hero, shot, preview, rig.viewWidth / rig.aimStartWidth);
       seePath = preview?.points ?? null;
@@ -1081,6 +1098,7 @@ export function createGame(container, levels, startIndex = 0) {
     );
     heroView.update(dt);
     objectsView.update(dt);
+    iceView.update(ice, state.move ?? 0, dt);
     doorsView.update(dt);
     objectsView.fadeChests(hero, state.aiming, dt);
     itemsView.sync(world.items);

@@ -89,10 +89,14 @@ export const CONFIG = {
     // Enemy types (design doc: "Enemy ideas"). Each changes one thing about
     // the basic enemy; anything a type doesn't set uses the values above.
     types: {
-      slider: {
-        friction: 0.25, // of normal friction: it glides far on every move, lunges included
+      ice: {
+        // The Slider grown up: it glides far on every move, lunges included...
+        friction: 0.25, // of normal friction
         patrolRadius: 6, // tiles; its patrols range further too
-        color: 0xa9dcf5, // pale blue
+        color: 0xa9dcf5, // pale ice blue, with a crown of ice crystals
+        // ...and leaves an icy puddle on every floor tile it crosses (src/ice.js).
+        puddleKick: 1.5, // tiles/s added to a ball rolling onto a puddle (once per puddle per move; never past the max launch speed)
+        puddleMoves: 1, // a puddle lasts the move it's laid in and this many more, then melts
       },
       rubber: {
         rebound: 2, // your ball comes off it at this times its rebound speed...
@@ -334,6 +338,13 @@ export const CONFIG = {
   },
 
   render: {
+    // Ice puddles (iceView): size and corner rounding in tiles, opacity when
+    // fresh, the share of it left in the move after, and how fast they ease.
+    icePuddleSize: 0.92,
+    icePuddleCorner: 0.22,
+    iceOpacity: 0.6,
+    iceOldShare: 0.5,
+    iceFadeRate: 4,
     maxAspect: 9 / 16, // desktop browsers get a portrait column like a phone
     maxPixelRatio: 2,
     // The mockup's walls stand a bit taller than the ball; kept lower here so a
@@ -400,6 +411,7 @@ export const CONFIG = {
     chestBand: 0xffd84a,
     explosion: 0xff9a2a,
     coin: 0xffc24a,
+    ice: 0xbfe9ff, // ice puddles
     hurtCoin: 0xd8242c, // a coin knocked out of you, while it can't be taken yet
     potion: 0xe8336f,
     superPotion: 0x9b5cff,

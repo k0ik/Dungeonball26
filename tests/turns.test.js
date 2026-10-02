@@ -180,7 +180,7 @@ test('patrol never heads through or onto a barrel', () => {
   }
 });
 
-test('Slider: glides on a quarter of the friction, patrols further, and still stops where it aims', () => {
+test('Ice: glides on a quarter of the friction, patrols further, and still stops where it aims', () => {
   const hall = parseLevel(`
 1##############
 #.............#
@@ -191,9 +191,9 @@ test('Slider: glides on a quarter of the friction, patrols further, and still st
 #.............#
 #.............#
 ###############`);
-  const s = createEnemy({ x: 7.5, z: 4.5, level: 1, id: 's', type: 'slider' });
-  assert.equal(s.type, 'slider');
-  assert.equal(s.friction, CONFIG.enemy.types.slider.friction);
+  const s = createEnemy({ x: 7.5, z: 4.5, level: 1, id: 's', type: 'ice' });
+  assert.equal(s.type, 'ice');
+  assert.equal(s.friction, CONFIG.enemy.types.ice.friction);
   // Same launch, much further roll than a basic enemy.
   const roll = (b) => {
     const world = createWorld(hall);
@@ -202,14 +202,14 @@ test('Slider: glides on a quarter of the friction, patrols further, and still st
     while (!isAtRest(world)) stepWorld(world);
     return b.x - 1.5;
   };
-  assert.ok(roll(createEnemy({ x: 0, z: 0, level: 1, id: 'b' })) * 3 < roll(createEnemy({ x: 0, z: 0, level: 1, id: 's2', type: 'slider' })));
+  assert.ok(roll(createEnemy({ x: 0, z: 0, level: 1, id: 'b' })) * 3 < roll(createEnemy({ x: 0, z: 0, level: 1, id: 's2', type: 'ice' })));
   let seed = 0.21;
   const rng = () => (seed = (seed * 9301 + 0.49297) % 1);
   let far = 0;
   for (let i = 0; i < 30; i++) {
-    const e = createEnemy({ x: 7.5, z: 4.5, level: 1, id: 's', type: 'slider' });
+    const e = createEnemy({ x: 7.5, z: 4.5, level: 1, id: 's', type: 'ice' });
     const move = patrolMove(hall, e, [e], rng);
-    assert.ok(move.target.d <= CONFIG.enemy.types.slider.patrolRadius);
+    assert.ok(move.target.d <= CONFIG.enemy.types.ice.patrolRadius);
     if (move.target.d > CONFIG.enemy.patrolRadius) far++;
     if (move.target.d < 2) continue; // the minimum patrol speed overshoots the nearest tiles a little
     const world = createWorld(hall);

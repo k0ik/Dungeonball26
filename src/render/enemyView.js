@@ -62,6 +62,16 @@ export function createEnemyView(ball, toCamera) {
     tip.position.set(0, r * 2 + 0.2, 0);
     group.add(stalk, tip);
   }
+  // An Ice ball wears a crown of ice crystals (its shape cue, not just its colour).
+  if (ball.type === 'ice') {
+    const crystal = toonMaterial(0xf2fbff);
+    for (const [ang, tilt, h] of [[0, 0, 0.28], [2.1, 0.5, 0.21], [4.2, 0.5, 0.19], [1.05, 0.55, 0.15]]) {
+      const c = new THREE.Mesh(new THREE.ConeGeometry(0.06, h, 5).translate(0, h / 2, 0), crystal);
+      c.position.set(Math.cos(ang) * 0.06 * Math.sign(tilt), r * 2 - 0.03, Math.sin(ang) * 0.06 * Math.sign(tilt));
+      c.rotation.set(Math.sin(ang) * tilt, 0, -Math.cos(ang) * tilt);
+      group.add(c);
+    }
+  }
   let ghostOpacity = ball.phased ? CONFIG.enemy.types.ghost.fadedOpacity : 1;
 
   let dying = -1;

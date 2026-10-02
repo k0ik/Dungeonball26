@@ -85,7 +85,7 @@ export function createEditor({ getLevel, onPlay }) {
       <div class="ed-palette"></div>
       <div class="ed-stage"><canvas></canvas></div>
     </div>
-    <div class="ed-help">Click or drag to paint · right-drag to erase · the outer wall stays put · E to close (your edits are kept until you Play or start a New level)</div>
+    <div class="ed-help">Click or drag to paint · click a tile with its own brush (or right-drag) to erase · the outer wall stays put · E to close (your edits are kept until you Play or start a New level)</div>
     <div class="ed-modal" hidden><div><p>Level text (copied, if your browser allowed it):</p><textarea readonly></textarea><button class="ed-modal-close">Done</button></div></div>
   `;
   document.body.appendChild(root);
@@ -182,7 +182,11 @@ export function createEditor({ getLevel, onPlay }) {
   }
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   canvas.addEventListener('pointerdown', (e) => {
-    painting = e.button === 2 ? '.' : tool;
+    const cell = cellAt(e);
+    // Clicking a tile with its own brush clears it to floor (a drag that
+    // starts there erases the same way); right-click always erases.
+    const same = cell && tool !== '.' && grid[cell.row][cell.col] === tool;
+    painting = e.button === 2 || same ? '.' : tool;
     canvas.setPointerCapture(e.pointerId);
     paint(cellAt(e), painting);
   });

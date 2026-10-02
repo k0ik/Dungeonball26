@@ -214,6 +214,8 @@ Trick shots are special one-shot combos, tracked as achievements. Each one pays 
 | Long Drop | Combo an enemy into a pit: it falls in after being hit by another knocked enemy, not by you directly (needs pits) | +30 gold |
 | Boomerang | Hit enemy A, it bounces off enemy B and comes back into you, and that return hit kills it (your hits count whichever ball is moving) | +25 gold |
 | Backfire | On the enemy turn, an enemy hits you, bounces off into a barrel and dies. Only a red barrel can kill it, since plain barrels don't deal damage; if plain barrels ever learn to hurt (a card, say), they'd count too. A shield that blocks the hit still counts | +20 gold |
+| *(unnamed)* | Open a chest and kill an enemy in the same shot, in either order | +15 gold |
+| *(unnamed)* | Open 2 chests in one shot | +15 gold |
 
 The names and bonus amounts are placeholders to tune.
 - **Tracking:** credit for a hit passes along a chain. An enemy you hit is "knocked by you", and an enemy it hits is "combo-knocked". Whatever a knocked enemy touches next (a barrel, a pit, another enemy) is credited to the chain for the rest of the shot.

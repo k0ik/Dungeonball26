@@ -878,7 +878,6 @@ export function createGame(container, levels, startIndex = 0) {
           state.gold -= lost;
           const pieces = Math.min(scattered, CONFIG.loot.hurtCoinsMaxPieces);
           scatterCoins(hero.x, hero.z, 0, [], splitGold(scattered, pieces).map((value) => ({ kind: 'coin', value, hot: CONFIG.loot.hurtCoinRedSeconds + CONFIG.loot.hurtCoinFadeSeconds })));
-          floatAt(hero, `-${lost} gold`, 'gold', 0.5);
         }
         if (hero.hp <= 0 && state.phase !== 'down') knockedOut();
       } else if (o.type === 'blocked') {

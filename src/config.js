@@ -163,12 +163,14 @@ export const CONFIG = {
       },
     },
     // Testing aid: every enemy on these levels (ids from src/main.js) is this
-    // type, so one type at a time can be tried out. null leaves them all basic.
-    testType: 'seeker',
+    // type, so one type at a time can be tried out. 'random' gives each one a
+    // random type from `types` (tool balls included); null leaves them all basic.
+    testType: 'random',
     testLevels: ['enemytester01'],
     // Testing aid for tool balls: on the test levels, every other enemy
     // becomes this tool ball instead (so there are still enemies to roll it).
-    testTool: 'gold',
+    // null to leave them all testType.
+    testTool: null,
   },
 
   // Barrels, chests and red barrels (design doc: "Objects").

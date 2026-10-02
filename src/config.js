@@ -219,8 +219,10 @@ export const CONFIG = {
     hurtCoinsPerSpeed: 2,
     hurtCoinsMax: 4,
     // Those dropped coins land red and stay red for this long (seconds, from
-    // landing), and can't be taken until they turn gold: you're losing money.
+    // landing), then fade softly to gold over hurtCoinFadeSeconds; they can't
+    // be taken until they're gold: you're losing money.
     hurtCoinRedSeconds: 1,
+    hurtCoinFadeSeconds: 0.5,
     // Besides its coins, a kill has these separate, rare chances of dropping
     // gear or a potion (rolled independently, so more than one can drop).
     enemyDrops: { sword: 0.05, shield: 0.08, potion: 0.12, superPotionShare: 0.25 },

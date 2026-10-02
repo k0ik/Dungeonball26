@@ -135,6 +135,7 @@ export function createItemsView(scene) {
   const sparks = []; // chest coins: show only, not pickups
   const white = new THREE.Color(0xffffff);
   const coinColor = new THREE.Color(C.coin);
+  const hurtCoinColor = new THREE.Color(C.hurtCoin);
   let t = 0;
 
   /** One show-only coin on an arc from `from` to `to`, starting after `delay` s (t < 0 waits). */
@@ -206,12 +207,22 @@ export function createItemsView(scene) {
         }
       }
       for (const [item, g] of views) {
-        // A coin knocked out of you is red until it can be taken, then gold.
-        if (item.kind === 'coin' && g.userData.hot !== !!item.hot) {
-          g.userData.hot = !!item.hot;
+        // A coin knocked out of you is red, then fades softly to gold over
+        // the last hurtCoinFadeSeconds of its wait, when it can be taken.
+        if (item.kind === 'coin' && (item.hot || g.userData.hot)) {
           const [, body, xray] = g.children[0].children;
-          body.material.color.setHex(item.hot ? C.hurtCoin : C.coin);
-          xray.material = xrayMaterial(item.hot ? C.hurtCoin : C.coin);
+          if (!g.userData.hot) {
+            g.userData.hot = true;
+            xray.material = xray.material.clone(); // its own, to fade (the shared one stays gold)
+          }
+          const k = Math.min(1, (item.hot ?? 0) / CONFIG.loot.hurtCoinFadeSeconds); // 1 red .. 0 gold
+          body.material.color.lerpColors(coinColor, hurtCoinColor, k);
+          xray.material.color.copy(body.material.color);
+          if (!item.hot) {
+            g.userData.hot = false;
+            xray.material.dispose();
+            xray.material = xrayMaterial(C.coin);
+          }
         }
         // Matching pickups on the floor move in step: every coin shares one
         // angle, every shield another, and so on (each kind with its own

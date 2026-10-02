@@ -874,7 +874,7 @@ export function createGame(container, levels, startIndex = 0) {
         if (o.event && state.gold > 0) {
           const n = Math.min(state.gold, impactCoins(o.event.speed));
           state.gold -= n;
-          scatterCoins(hero.x, hero.z, n, [], { hot: CONFIG.loot.hurtCoinRedSeconds }); // red at first: see updateFlyingCoins
+          scatterCoins(hero.x, hero.z, n, [], { hot: CONFIG.loot.hurtCoinRedSeconds + CONFIG.loot.hurtCoinFadeSeconds }); // red at first: see updateFlyingCoins
           floatAt(hero, `-${n} gold`, 'gold', 0.5);
         }
         if (hero.hp <= 0 && state.phase !== 'down') knockedOut();

@@ -39,6 +39,7 @@ import { rollLoot, rollEnemyDrops, canCollect, collect, swingSword, endSwordShot
 import { createObjectsView } from './render/objectsView.js';
 import { createIceView } from './render/iceView.js';
 import { createIce, meltIce, stepIce } from './ice.js';
+import { createLooks } from './look.js';
 import { createItemsView } from './render/itemsView.js';
 import { createDoorsView } from './render/doorsView.js';
 import { openDoors } from './doors.js';
@@ -79,6 +80,8 @@ export function createGame(container, levels, startIndex = 0) {
   const objectsView = createObjectsView(scene);
   const iceView = createIceView(scene);
   let ice = createIce(); // Ice balls' puddles (src/ice.js)
+  const looks = createLooks(); // where faces look (src/look.js)
+  const hasFace = (b) => b === hero || (b.kind === 'enemy' && !isTool(b));
   const itemsView = createItemsView(scene);
   const doorsView = createDoorsView(scene);
   const enemyViews = new Map(); // enemy ball -> view
@@ -430,6 +433,28 @@ export function createGame(container, levels, startIndex = 0) {
     state.phase = 'enemyWait';
     state.timer = Math.max(lunge ? CONFIG.enemy.lungeTelegraph : CONFIG.enemy.patrolDelay, CONFIG.enemy.turnRingBeat);
     state.waited = 0;
+  }
+
+  /**
+   * Where every face looks this frame (src/look.js). Your ball: where the
+   * shot would go while aiming; the nearest moving enemy during the enemy
+   * move. An enemy: the ball it's watching (you, or a Jekyll's target).
+   */
+  function updateLooks(dt, enemyMove) {
+    const dirTo = (b, t) => (t ? { x: t.x - b.x, z: t.z - b.z } : null);
+    let focus = null;
+    if (state.aiming && state.shownShot && !state.shownShot.cancel) focus = { x: state.shownShot.dirX, z: state.shownShot.dirZ };
+    else if (enemyMove) {
+      let best = null;
+      for (const e of enemies()) {
+        if (speedOf(e) <= CONFIG.look.moveMin) continue;
+        const d = Math.hypot(e.x - hero.x, e.z - hero.z);
+        if (d <= CONFIG.look.watchRange && (!best || d < best.d)) best = { e, d };
+      }
+      focus = dirTo(hero, best?.e);
+    }
+    looks.update(hero, dt, focus, true);
+    for (const e of enemies()) if (hasFace(e)) looks.update(e, dt, dirTo(e, e.watching), false);
   }
 
   /** A move starts (your shot or the enemy move): old ice puddles melt. */
@@ -800,6 +825,7 @@ export function createGame(container, levels, startIndex = 0) {
         sfx.play('explode', 1);
         objectsView.remove(obj);
         objectsView.blast(obj.x, obj.z);
+        looks.blast(level, obj.x, obj.z, world.balls, hasFace);
         if (o.victim) handleOutcomes(combat.explosion(world, o.victim, hero)); // none when a bomb's blast set it off
       }
     }
@@ -852,6 +878,7 @@ export function createGame(container, levels, startIndex = 0) {
       } else if (o.type === 'boom') {
         sfx.play('explode', 1);
         objectsView.blast(o.target.x, o.target.z, CONFIG.enemy.types.bomb.blastRadius / 1.4);
+        looks.blast(level, o.target.x, o.target.z, world.balls, hasFace);
         enemyViews.get(o.target)?.die();
         // It also sets off red barrels and cracks or breaks barrels in reach.
         handleObjects(blastObjects(world, o.target.x, o.target.z, CONFIG.enemy.types.bomb.blastRadius, { barrelHits: card('barrelOfFun') ? 1 : CONFIG.objects.barrelHits }));
@@ -964,6 +991,7 @@ export function createGame(container, levels, startIndex = 0) {
     while (acc >= step && steps < CONFIG.physics.maxStepsPerFrame) {
       stepWorld(world, step);
       stepIce(world, level, ice, state.move ?? 0);
+      looks.noteHits(world.events, hasFace);
       rollGold(step);
       settleGhosts();
       dampStalls(step);
@@ -1127,20 +1155,25 @@ export function createGame(container, levels, startIndex = 0) {
         // Once its attack connects (you or an enemy), it's spent and calm again.
         const lunging = lungers.has(enemy) && !combat.hasHitHero(enemy);
         const on = enemy.enraged || lunging;
+        enemy.watching = on ? (jekyllTarget(enemy) ?? null) : null;
         overlay.setAlert(enemy, on, lunging);
         enemyViews.get(enemy)?.setAngry(on);
         continue;
       }
       if (enemyMove && combat.hasHitHero(enemy)) {
+        enemy.watching = null;
         overlay.setAlert(enemy, false, false);
         enemyViews.get(enemy)?.setAngry(false);
         continue;
       }
       const lunging = lungers.has(enemy);
       const aware = lunging || canSee(level, enemy, hero, world.balls, world.statics);
+      enemy.watching = aware ? hero : null;
       overlay.setAlert(enemy, aware, lunging);
       enemyViews.get(enemy)?.setAngry(aware);
     }
+
+    updateLooks(dt, enemyMove);
 
     if (state.aiming) {
       // Aiming: zoom out with shot power, anchored on the ball.

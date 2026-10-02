@@ -175,3 +175,42 @@ export function faceSprite(texture, r, toCamera) {
   face.position.set(0, r, 0).addScaledVector(toCamera, r * 1.02);
   return face;
 }
+
+/**
+ * Slide a face sprite (from faceSprite) toward where its ball looks:
+ * returns update(look, dt), with `look` from src/look.js ({ x, z, amount } on
+ * the ground, { sx, sy, amount } on screen, or null for front and centre).
+ * The face moves within the plane facing the camera, so it stays in front of
+ * the sphere, glides there, narrows a little along the look as if turning,
+ * and goes no further than CONFIG.look.offset of the radius, so it never
+ * leaves the ball's outline.
+ */
+export function faceLook(face, r, toCamera) {
+  const L = CONFIG.look;
+  const base = face.position.clone();
+  const size = face.scale.x;
+  const forward = toCamera.clone().negate();
+  const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+  const up = new THREE.Vector3().crossVectors(right, forward).normalize();
+  let cx = 0;
+  let cy = 0;
+  return (look, dt) => {
+    let tx = 0;
+    let ty = 0;
+    if (look) {
+      // A ground direction shows on screen along the isometric projection.
+      const sx = look.sx ?? look.x * right.x + look.z * right.z;
+      const sy = look.sy ?? look.x * up.x + look.z * up.z;
+      const len = Math.hypot(sx, sy);
+      if (len > 1e-6) {
+        tx = (sx / len) * look.amount;
+        ty = (sy / len) * look.amount;
+      }
+    }
+    const k = dt > 0 ? 1 - Math.exp(-dt / L.ease) : 0;
+    cx += (tx - cx) * k;
+    cy += (ty - cy) * k;
+    face.position.copy(base).addScaledVector(right, cx * L.offset * r).addScaledVector(up, cy * L.offset * r);
+    face.scale.set(size * (1 - L.squash * Math.abs(cx)), size * (1 - L.squash * Math.abs(cy)), 1);
+  };
+}

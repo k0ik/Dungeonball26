@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { toonMaterial, silverMaterial, outlineHullMaterial, clearOccluder } from './materials.js';
-import { heroFaces, faceSprite } from './faces.js';
+import { heroFaces, faceSprite, faceLook } from './faces.js';
 
 const shadowMaterial = new THREE.MeshBasicMaterial({
   color: CONFIG.colors.shadow,
@@ -54,6 +54,7 @@ export function createBallView(ball, { color, stripe, silver = false, toCamera =
   // The face doesn't roll with the body: it always looks at the camera.
   const face = toCamera ? faceSprite(heroFaces.confident(), r, toCamera) : null;
   if (face) group.add(face);
+  const lookFace = face ? faceLook(face, r, toCamera) : null; // slides toward ball.look (src/look.js)
   let expression = 'confident';
 
   const axis = new THREE.Vector3();
@@ -90,6 +91,7 @@ export function createBallView(ball, { color, stripe, silver = false, toCamera =
     },
     /** Sync to the simulation and roll by the distance moved since last frame. */
     update(dt = 0) {
+      lookFace?.(ball.look, dt);
       if (flashLeft > 0 || flashLevel > 0) {
         flashLeft = Math.max(0, flashLeft - dt);
         flashLevel = flashLeft / CONFIG.render.hitFlashSeconds;

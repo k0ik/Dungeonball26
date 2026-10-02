@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { toonMaterial, outlineHullMaterial, clearOccluder } from './materials.js';
-import { calmFace, angryFace, faceSprite } from './faces.js';
+import { calmFace, angryFace, faceSprite, faceLook } from './faces.js';
 
 const shadowMaterial = new THREE.MeshBasicMaterial({
   color: CONFIG.colors.shadow,
@@ -29,6 +29,7 @@ export function createEnemyView(ball, toCamera) {
   // A bomb has no face: it's a thing, not a creature (it never attacks).
   const face = ball.type === 'bomb' || ball.type === 'gold' ? null : faceSprite(calmFace(), r, toCamera);
   let angry = false;
+  const lookFace = face ? faceLook(face, r, toCamera) : null; // slides toward ball.look (src/look.js)
 
   const shadow = new THREE.Mesh(new THREE.CircleGeometry(r * 0.95, 24), shadowMaterial);
   shadow.rotation.x = -Math.PI / 2;
@@ -80,6 +81,7 @@ export function createEnemyView(ball, toCamera) {
     object: group,
     update(dt) {
       group.position.set(ball.x, 0, ball.z);
+      lookFace?.(ball.look, dt);
       if (ball.type === 'gold' && dying < 0) {
         // It shrinks as it wears down (its physics radius shrinks with it).
         const s = group.scale.x + (ball.radius / r - group.scale.x) * Math.min(1, dt * 6);

@@ -337,6 +337,23 @@ export const CONFIG = {
     distance: 60, // orthographic, so this only has to clear the scene
   },
 
+  // Where faces look (src/look.js; drawn by faces.js faceLook): a ball's
+  // face slides toward the side of the ball it's looking at.
+  look: {
+    offset: 0.42, // of the ball's radius at a full look (the face stays inside the outline)
+    squash: 0.12, // the face narrows this much along the look, as if turning on the ball
+    ease: 0.08, // seconds: the face glides to its new spot (time constant)
+    moveMin: 0.15, // tiles/s: slower than this isn't "moving"
+    moveFull: 2, // tiles/s: from here up it looks fully along its way; slower, the look eases back to centre
+    reactSeconds: 1, // a ball that's hit looks at its attacker, and balls near a blast at the blast, this long
+    blastRadius: 3, // tiles: balls this close to a red barrel or bomb going off (with no wall between) look at it
+    watchRange: 7, // tiles: during the enemy move, your ball watches the nearest moving enemy this close
+    heroIdleSeconds: 5, // your ball waits this long with nothing to look at before glancing about
+    idleMin: 2, // seconds between an enemy's idle glances (random in between; yours too, after the wait)
+    idleMax: 6,
+    glanceSeconds: 1, // how long a glance lasts before the face drifts back to centre
+  },
+
   render: {
     // Ice puddles (iceView): size and corner rounding in tiles, opacity when
     // fresh, the share of it left in the move after, and how fast they ease.

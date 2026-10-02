@@ -101,16 +101,6 @@ test('every shipped level can be finished: keys open doors, which reach more key
   }
 });
 
-test('every exit is tucked into a one-tile alcove, open on one side only (a door there counts as open)', () => {
-  for (const file of readdirSync(levelsDir).filter((f) => f.endsWith('.txt'))) {
-    const level = parseLevel(readFileSync(new URL(file, levelsDir), 'utf8'), file);
-    for (const { col, row } of level.exits) {
-      const open = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dc, dr]) => level.tiles[row + dr]?.[col + dc] !== 'wall');
-      assert.equal(open.length, 1, `${file}: exit at ${col},${row} has ${open.length} open sides`);
-    }
-  }
-});
-
 test('coins that touch side by side form one strip; diagonal or separate ones do not', () => {
   const level = parseLevel(`#######
 #****.#

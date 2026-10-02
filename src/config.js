@@ -281,7 +281,7 @@ export const CONFIG = {
     offer: 3, // cards offered after each level
     // Testing aid: every new game starts with this many random cards already
     // dealt (0 for the normal game, which starts with none).
-    startDealt: 3,
+    startDealt: 0,
     vampirismHeal: 1, // HP per kill
     bullionaire: 1.5, // gold multiplier (fractions carry over, so it's exact)
     junkHunter: 2, // barrel weight multiplier for swords and shields

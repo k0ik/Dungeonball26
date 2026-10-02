@@ -32,32 +32,28 @@ function meshFrom(pos, col, material = flatMaterial) {
 }
 
 /**
- * A rounded level's exit: a green patch on the floor tile whose open corners
- * round like the walls do (at curviness 5 a free side is a half circle). A
- * corner against a wall or door stays square, so an exit in an alcove still
- * fills it. Only the look: the whole tile is still the exit.
+ * A rounded level's exit: a green patch on the floor tile with all four
+ * corners rounded by the level's curviness (at 5 it's a circle), wherever it
+ * stands, in an alcove or in the open. Only the look: the whole tile is
+ * still the exit.
  */
-const exitMaterial = new THREE.MeshBasicMaterial();
+const exitMaterial = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }); // laid flat face-down, so both sides
 function roundedExit(level, col, row, color) {
-  const solid = (c, r) => ['wall', 'door'].includes(tileAt(level, c, r));
-  const rMax = 0.5 * level.share;
-  // Corner radius at each corner, by its two side neighbours.
-  const rad = (dc, dr) => (solid(col + dc, row) || solid(col, row + dr) ? 0 : rMax);
-  const [nw, ne, se, sw] = [rad(-1, -1), rad(1, -1), rad(1, 1), rad(-1, 1)];
-  // Drawn in x/y with y = -z, then laid flat (so +y in the shape is -z, north).
+  const r = 0.5 * level.share;
   const s = new THREE.Shape();
-  s.moveTo(0, -1 + sw); // west side, going clockwise from the south-west in world terms
-  s.lineTo(0, -nw);
-  if (nw) s.quadraticCurveTo(0, 0, nw, 0);
-  s.lineTo(1 - ne, 0);
-  if (ne) s.quadraticCurveTo(1, 0, 1, -ne);
-  s.lineTo(1, -1 + se);
-  if (se) s.quadraticCurveTo(1, -1, 1 - se, -1);
-  s.lineTo(sw, -1);
-  if (sw) s.quadraticCurveTo(0, -1, 0, -1 + sw);
-  const geo = new THREE.ShapeGeometry(s, 8).rotateX(-Math.PI / 2);
-  const mesh = new THREE.Mesh(geo, exitMaterial);
+  const q = Math.PI / 2;
+  s.moveTo(r, 0);
+  s.lineTo(1 - r, 0);
+  if (r) s.absarc(1 - r, r, r, -q, 0, false);
+  s.lineTo(1, 1 - r);
+  if (r) s.absarc(1 - r, 1 - r, r, 0, q, false);
+  s.lineTo(r, 1);
+  if (r) s.absarc(r, 1 - r, r, q, 2 * q, false);
+  s.lineTo(0, r);
+  if (r) s.absarc(r, r, r, 2 * q, 3 * q, false);
+  const geo = new THREE.ShapeGeometry(s, 12).rotateX(Math.PI / 2); // shape y -> world z
   exitMaterial.color.copy(color);
+  const mesh = new THREE.Mesh(geo, exitMaterial);
   mesh.position.set(col, 0.002, row);
   return mesh;
 }
@@ -196,7 +192,6 @@ function addOutlineWalls(group, level, h) {
   }
   const geo = new THREE.ExtrudeGeometry([outer, ...shapes.map((s) => s.shape)], { depth: h, bevelEnabled: false });
   geo.rotateX(-Math.PI / 2);
-  geo.computeVertexNormals();
 
   const top = new THREE.Color(C.wallTop);
   const front = new THREE.Color(C.wallFront); // +z

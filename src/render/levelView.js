@@ -31,6 +31,37 @@ function meshFrom(pos, col, material = flatMaterial) {
   return new THREE.Mesh(geo, material);
 }
 
+/**
+ * A rounded level's exit: a green patch on the floor tile whose open corners
+ * round like the walls do (at curviness 5 a free side is a half circle). A
+ * corner against a wall or door stays square, so an exit in an alcove still
+ * fills it. Only the look: the whole tile is still the exit.
+ */
+const exitMaterial = new THREE.MeshBasicMaterial();
+function roundedExit(level, col, row, color) {
+  const solid = (c, r) => ['wall', 'door'].includes(tileAt(level, c, r));
+  const rMax = 0.5 * level.share;
+  // Corner radius at each corner, by its two side neighbours.
+  const rad = (dc, dr) => (solid(col + dc, row) || solid(col, row + dr) ? 0 : rMax);
+  const [nw, ne, se, sw] = [rad(-1, -1), rad(1, -1), rad(1, 1), rad(-1, 1)];
+  // Drawn in x/y with y = -z, then laid flat (so +y in the shape is -z, north).
+  const s = new THREE.Shape();
+  s.moveTo(0, -1 + sw); // west side, going clockwise from the south-west in world terms
+  s.lineTo(0, -nw);
+  if (nw) s.quadraticCurveTo(0, 0, nw, 0);
+  s.lineTo(1 - ne, 0);
+  if (ne) s.quadraticCurveTo(1, 0, 1, -ne);
+  s.lineTo(1, -1 + se);
+  if (se) s.quadraticCurveTo(1, -1, 1 - se, -1);
+  s.lineTo(sw, -1);
+  if (sw) s.quadraticCurveTo(0, -1, 0, -1 + sw);
+  const geo = new THREE.ShapeGeometry(s, 8).rotateX(-Math.PI / 2);
+  const mesh = new THREE.Mesh(geo, exitMaterial);
+  exitMaterial.color.copy(color);
+  mesh.position.set(col, 0.002, row);
+  return mesh;
+}
+
 export function buildLevelView(level) {
   const group = new THREE.Group();
   const h = CONFIG.render.wallHeight;
@@ -45,8 +76,9 @@ export function buildLevelView(level) {
   for (let row = 0; row < level.height; row++) {
     for (let col = 0; col < level.width; col++) {
       const tile = tileAt(level, col, row);
-      const color = tile === 'exit' ? exitCol : (col + row) % 2 ? floorB : floorA;
+      const color = tile === 'exit' && !level.geometry ? exitCol : (col + row) % 2 ? floorB : floorA;
       pushQuad(floorPos, floorCol, [col, 0, row + 1], [col + 1, 0, row + 1], [col + 1, 0, row], [col, 0, row], color);
+      if (tile === 'exit' && level.geometry) group.add(roundedExit(level, col, row, exitCol));
     }
   }
   group.add(meshFrom(floorPos, floorCol));

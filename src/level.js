@@ -150,6 +150,7 @@ export function parseLevel(text, name = 'level') {
   }
   // Rounded walls: physics, sight and drawing use this outline instead of square tiles.
   const share = (curve - 1) / 4; // of each corner's biggest possible curve
+  level.share = share;
   if (share > 0) level.geometry = buildWallGeometry(level, share, CONFIG.walls.maxRound, placedSpots(level));
   return level;
 }

@@ -292,7 +292,7 @@ An illustrative level in this format, with one enemy, two barrels, a chest, a re
 
 Every level is ringed by walls: the loader rejects a grid with anything else on its edge. The one exception is the top-left corner, which may hold the level's curviness digit (see Rounded walls below); the loader reads it and then treats that corner as wall like the rest.
 
-Exits usually sit in a one-tile alcove in the outer wall (walls on three sides, open to the room, or to a door, on one), so you leave on purpose, by aiming into the gap, rather than rolling across it by accident. That's a habit, not a rule: an exit can also stand in the open, like the hole on a putting green, reachable from any side (Tutorial 04 does this); rolling over it at any speed still counts. There used to be a test requiring the alcove; it was dropped.
+Exits usually sit in a one-tile alcove in the outer wall (walls on three sides, open to the room, or to a door, on one), so you leave on purpose, by aiming into the gap, rather than rolling across it by accident. That's a habit, not a rule: an exit can also stand in the open, like the hole on a putting green, reachable from any side (Tutorial 04 does this); rolling over it at any speed still counts. There used to be a test requiring the alcove; it was dropped. On a rounded level the exit's green patch rounds with the walls: each corner of the tile with open floor on both of its sides is curved like a wall corner at that curviness (at 5, a free side becomes a half circle), while a corner against a wall or door stays square, so an alcove exit still fills its alcove. That's only the look; the whole tile still counts as the exit.
 
 Barrel loot is random by default. Per-barrel overrides can be added later without changing the format.
 

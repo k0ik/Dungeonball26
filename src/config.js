@@ -214,10 +214,19 @@ export const CONFIG = {
     superPotionHeal: 5,
     swordAtk: 3, // added to ATK while you hold a sword (it lasts one round: your next shot)
     killGoldPerLevel: 1, // a kill drops coins worth the enemy's level
-    // When an enemy hits you, you drop gold: one coin per this much impact
-    // speed (tiles/s), rounded up, from 1 up to hurtCoinsMax, scattered around you.
-    hurtCoinsPerSpeed: 2,
-    hurtCoinsMax: 4,
+    // When an enemy hits you, you lose this share of your gold (rounded up)...
+    hurtGoldShare: 0.1,
+    // ...and this share of that (rounded up) is scattered around you to win
+    // back; the rest is gone. 100 gold: lose 10, 5 scattered, 5 gone.
+    hurtScatterShare: 0.5,
+    // At most this many coin pieces fly out per hit; above it, the gold is
+    // shared out among them (some coins worth more than 1), so a big purse
+    // can't flood the board.
+    hurtCoinsMaxPieces: 20,
+    // A Gold ball struck bursts one coin per this much impact speed
+    // (tiles/s), rounded up, from 1 up to impactCoinsMax.
+    impactCoinsPerSpeed: 2,
+    impactCoinsMax: 4,
     // Those dropped coins land red and stay red for this long (seconds, from
     // landing), then fade softly to gold over hurtCoinFadeSeconds; they can't
     // be taken until they're gold: you're losing money.

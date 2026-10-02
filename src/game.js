@@ -35,7 +35,7 @@ import { createAimView } from './render/aimView.js';
 import { createCameraRig } from './render/cameraRig.js';
 import { createAudio } from './audio.js';
 import { createObjects, resolveObjects, blastObjects } from './objects.js';
-import { rollLoot, rollEnemyDrops, canCollect, collect, swingSword, endSwordShot, coinStreakBonus } from './loot.js';
+import { rollLoot, rollEnemyDrops, canCollect, collect, swingSword, endSwordShot, coinStreakBonus, hurtGold, splitGold } from './loot.js';
 import { createObjectsView } from './render/objectsView.js';
 import { createItemsView } from './render/itemsView.js';
 import { createDoorsView } from './render/doorsView.js';
@@ -124,10 +124,10 @@ export function createGame(container, levels, startIndex = 0) {
     else if (enemy.type !== 'bomb') overlay.addBar(enemy);
   }
 
-  /** Coins knocked loose by an impact at `speed`: 1 to 4 (you hit by an enemy, or a Gold ball struck). */
+  /** Coins knocked loose from a Gold ball by an impact at `speed`: 1 to 4. */
   function impactCoins(speed) {
     const L = CONFIG.loot;
-    return Math.max(1, Math.min(L.hurtCoinsMax, Math.ceil(speed / L.hurtCoinsPerSpeed)));
+    return Math.max(1, Math.min(L.impactCoinsMax, Math.ceil(speed / L.impactCoinsPerSpeed)));
   }
 
   /**
@@ -621,19 +621,20 @@ export function createGame(container, levels, startIndex = 0) {
 
   /**
    * Throw `n` single coins (the same coins as strips), plus any `extras`
-   * (other pickups), out from (x, z): each flies to a random clear spot at a
+   * (other pickups, by kind) and any `given` items as they are, out from
+   * (x, z): each flies to a random clear spot at a
    * random distance, with a random arc height and flight time, so they land
    * one after another, and bounces once. A spot is clear if the item fits
    * there and the way to it crosses no wall, door or bumper; after a few
    * misses it just drops close by.
    */
-  function scatterCoins(x, z, n, extras = [], coin = {}) {
+  function scatterCoins(x, z, n, extras = [], given = []) {
     const L = CONFIG.loot;
     const r = CONFIG.objects.itemRadius;
     const blocked = (px, pz) =>
       overlapsSolid(level, px, pz, r) || world.statics.some((s) => Math.hypot(s.x - px, s.z - pz) < (s.radius ?? Math.hypot(s.halfX, s.halfZ)) + r);
     const rand = (a, b) => a + Math.random() * (b - a);
-    const items = [...Array.from({ length: n }, () => ({ kind: 'coin', value: 1, ...coin })), ...extras.map((kind) => ({ kind }))];
+    const items = [...Array.from({ length: n }, () => ({ kind: 'coin', value: 1 })), ...extras.map((kind) => ({ kind })), ...given];
     for (const item of items) {
       let to = null;
       for (let tries = 0; tries < 12 && !to; tries++) {
@@ -869,13 +870,15 @@ export function createGame(container, levels, startIndex = 0) {
         heroView.flash();
         state.ouch = CONFIG.render.heroOuchSeconds;
         floatAt(hero, `-${o.amount}`, 'hurt');
-        // Hit by an enemy, you drop gold: 1 to 4 coins by how hard it hit,
-        // scattered around you to win back (not from a blast).
+        // Hit by an enemy, you lose a share of your gold; part of it is
+        // scattered around you to win back, red at first (see updateFlyingCoins).
+        // Not from a blast.
         if (o.event && state.gold > 0) {
-          const n = Math.min(state.gold, impactCoins(o.event.speed));
-          state.gold -= n;
-          scatterCoins(hero.x, hero.z, n, [], { hot: CONFIG.loot.hurtCoinRedSeconds + CONFIG.loot.hurtCoinFadeSeconds }); // red at first: see updateFlyingCoins
-          floatAt(hero, `-${n} gold`, 'gold', 0.5);
+          const { lost, scattered } = hurtGold(state.gold);
+          state.gold -= lost;
+          const pieces = Math.min(scattered, CONFIG.loot.hurtCoinsMaxPieces);
+          scatterCoins(hero.x, hero.z, 0, [], splitGold(scattered, pieces).map((value) => ({ kind: 'coin', value, hot: CONFIG.loot.hurtCoinRedSeconds + CONFIG.loot.hurtCoinFadeSeconds })));
+          floatAt(hero, `-${lost} gold`, 'gold', 0.5);
         }
         if (hero.hp <= 0 && state.phase !== 'down') knockedOut();
       } else if (o.type === 'blocked') {

@@ -109,3 +109,20 @@ export function collect(item, hero, run) {
       throw new Error(`unknown item ${item.kind}`);
   }
 }
+
+/**
+ * Hit by an enemy with `gold`: you lose hurtGoldShare of it (rounded up) and
+ * hurtScatterShare of that (rounded up) is scattered to win back; the rest is
+ * gone. 100 gold: { lost: 10, scattered: 5 }.
+ */
+export function hurtGold(gold) {
+  if (gold <= 0) return { lost: 0, scattered: 0 };
+  const lost = Math.min(gold, Math.ceil(gold * L.hurtGoldShare));
+  return { lost, scattered: Math.ceil(lost * L.hurtScatterShare) };
+}
+
+/** Share `gold` out among `pieces` coins as evenly as whole numbers allow (largest first). */
+export function splitGold(gold, pieces) {
+  const base = Math.floor(gold / pieces);
+  return Array.from({ length: pieces }, (_, i) => base + (i < gold % pieces ? 1 : 0));
+}

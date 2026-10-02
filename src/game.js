@@ -19,7 +19,7 @@
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
 import { parseLevel, tileCenter, tileAt } from './level.js';
-import { createWorld, createBall, stepWorld, isAtRest, speedOf, overlapsSolid, applyBumperKick, applyRubberRebound } from './physics.js';
+import { createWorld, createBall, stepWorld, isAtRest, speedOf, overlapsSolid, applyBumperKicks, applyRubberRebound } from './physics.js';
 import { createCombat, createEnemy } from './combat.js';
 import { canSee } from './sight.js';
 import { lungeVelocity, patrolMove, pickPatrollers, walkDistances, seekerMove } from './turns.js';
@@ -101,7 +101,7 @@ export function createGame(container, levels, startIndex = 0) {
     returnBoost: 0, // seconds left of the camera's fast return to you
     shotCoins: 0, // coins taken this shot: the streak count (and the tick's pitch)
     keys: [], // colours of the keys you hold; this level only
-    kicked: new Map(), // Elasticity kicks each bumper has given this shot
+    kicked: new Map(), // bumper kicks given this move: ball -> (bumper -> count)
     panned: false, // you dragged the map to look around; the view holds until you shoot
     entry: null, // HP, gear and gold when this level was entered; game over restores them
     moves: [], // this enemy phase: { enemy, kind: 'lunge' } or { enemy, kind: 'patrol', vx, vz, target }
@@ -375,7 +375,6 @@ export function createGame(container, levels, startIndex = 0) {
     nextMove();
     combat.beginShot();
     armBombs(); // bombs lit before this shot go off when it comes to rest
-    state.kicked = new Map(); // Elasticity: each bumper kicks up to elasticityKicksPerBumper times a shot
     // A new shot: the coin streak and the coin tick's pitch start over.
     state.shotCoins = 0;
     sfx.play('launch', 0.4 + 0.6 * shot.fill, { pitch: 0.9 + 0.2 * shot.fill });
@@ -460,6 +459,7 @@ export function createGame(container, levels, startIndex = 0) {
   /** A move starts (your shot or the enemy move): old ice puddles melt. */
   function nextMove() {
     state.move = (state.move ?? 0) + 1;
+    state.kicked = new Map(); // each bumper kicks each ball a few times per move
     meltIce(ice, state.move);
   }
 
@@ -1002,8 +1002,9 @@ export function createGame(container, levels, startIndex = 0) {
       // Rubber enemies: your ball comes off them at double speed.
       const R = CONFIG.enemy.types.rubber;
       applyRubberRebound(world, hero, R.rebound, R.maxRebound);
-      // Elasticity: barrels, chests and enemies kick your ball on like pinball bumpers.
-      if (card('elasticity')) applyBumperKick(world, hero, CONFIG.cards.elasticityKick, CONFIG.aim.maxLaunchSpeed, state.kicked, CONFIG.cards.elasticityKicksPerBumper);
+      // Barrels kick every ball on like pinball bumpers; with Elasticity,
+      // barrels, chests and enemies kick your ball, harder.
+      applyBumperKicks(world, state.kicked, CONFIG.aim.maxLaunchSpeed, card('elasticity') ? { ball: hero, kick: CONFIG.cards.elasticityKick, perBumper: CONFIG.cards.elasticityKicksPerBumper } : null);
       handleEvents(outcomes, objectOutcomes);
       checkPickups();
       checkDoors();

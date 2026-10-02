@@ -6,10 +6,16 @@ export const CONFIG = {
   physics: {
     step: 1 / 120, // fixed timestep, seconds
     maxStepsPerFrame: 12, // cap catch-up after a stall so we never spiral
-    friction: 1.75, // constant deceleration, tiles/s² (halved from the doc's 3.5 after playtesting)
+    friction: 1.3125, // constant deceleration, tiles/s² (the doc's 3.5 halved after playtesting, then cut by a quarter more: what the Athletic card used to give)
     stopThreshold: 0.25, // below this a ball counts as at rest
     wallRestitution: 0.9, // fraction of speed kept after a wall bounce
     bumperRestitution: 0.7, // barrels and chests (M5)
+    // Barrels are pinball bumpers for every ball: bouncing off one adds this
+    // speed (tiles/s, up to the max launch speed), up to barrelKicksPerBumper
+    // times per barrel per ball each move. (What the Elasticity card used to
+    // give, barrels only; the card now kicks harder, off more.)
+    barrelKick: 1.5,
+    barrelKicksPerBumper: 3,
     ballRestitution: 0.9, // equal-mass ball-to-ball
     // Failsafe against a ball caught bouncing forever (say, pinned between a
     // bumper and a wall): after this long in continuous motion, every ball
@@ -285,10 +291,10 @@ export const CONFIG = {
     vampirismHeal: 1, // HP per kill
     bullionaire: 1.5, // gold multiplier (fractions carry over, so it's exact)
     junkHunter: 2, // barrel weight multiplier for swords and shields
-    athleticFriction: 0.75, // the hero's friction scale
+    athleticFriction: 0.6, // the hero's friction scale (on top of the lower base friction)
     magnetRadius: 1.5, // tiles from the ball's centre
     magnetPull: 10, // how fast pulled coins close in, 1/s
-    elasticityKick: 1.5, // tiles/s added on bouncing off a barrel, chest or enemy
+    elasticityKick: 2.5, // tiles/s added on bouncing off a barrel, chest or enemy (instead of the barrels' own physics.barrelKick)
     elasticityKicksPerBumper: 3, // kicks each bumper gives per shot (so a ball pinned against one still runs down)
   },
 

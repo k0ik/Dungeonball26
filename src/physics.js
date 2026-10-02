@@ -77,12 +77,16 @@ export function stepWorld(world, dt = P.step) {
  * bumper to kicks given, fresh each shot) keeps count, so a ball caught
  * between a bumper and a wall can't be kicked forever.
  */
-export function applyBumperKick(world, ball, kick, maxSpeed, kicked = new Map(), perBumper = 1) {
+export function applyBumperKick(world, ball, kick, maxSpeed, kicked = new Map(), perBumper = 1, accepts = () => true) {
   let bumper = null;
   for (const ev of world.events) {
     if (ev.type === 'static' && ev.ball === ball) bumper = ev.obj;
     else if (ev.type === 'ball' && (ev.a === ball || ev.b === ball) && (ev.a.kind === 'enemy' || ev.b.kind === 'enemy')) bumper = ev.a === ball ? ev.b : ev.a;
     else continue;
+    if (!accepts(bumper)) {
+      bumper = null;
+      continue;
+    }
     if ((kicked.get(bumper) ?? 0) < perBumper) break;
     bumper = null;
   }
@@ -93,6 +97,21 @@ export function applyBumperKick(world, ball, kick, maxSpeed, kicked = new Map(),
   ball.vx *= k;
   ball.vz *= k;
   return true;
+}
+
+/**
+ * Bumper kicks for every ball this step: barrels kick any ball
+ * (physics.barrelKick); the ball holding Elasticity (`elastic`: { ball,
+ * kick, perBumper }) is kicked instead by barrels, chests and enemies, at
+ * the card's strength. `kicks` (Map ball -> Map bumper -> count, fresh each
+ * move) keeps the per-bumper counts.
+ */
+export function applyBumperKicks(world, kicks, maxSpeed, elastic = null) {
+  for (const b of world.balls) {
+    if (!kicks.has(b)) kicks.set(b, new Map());
+    if (elastic && b === elastic.ball) applyBumperKick(world, b, elastic.kick, maxSpeed, kicks.get(b), elastic.perBumper);
+    else applyBumperKick(world, b, P.barrelKick, maxSpeed, kicks.get(b), P.barrelKicksPerBumper, (o) => o.kind === 'barrel');
+  }
 }
 
 /**

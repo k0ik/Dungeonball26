@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { shotFromDrag, canGrab, previewPath } from '../src/aim.js';
 import { parseLevel } from '../src/level.js';
-import { createWorld, createBall, stepWorld, isAtRest, applyBumperKick } from '../src/physics.js';
+import { createWorld, createBall, stepWorld, isAtRest, applyBumperKick, applyBumperKicks } from '../src/physics.js';
 import { CONFIG } from '../src/config.js';
 
 const A = CONFIG.aim;
@@ -101,12 +101,13 @@ test('the preview matches the real shot, kills and barrels included', async () =
     hero.vx = Math.cos(a) * speed;
     hero.vz = Math.sin(a) * speed;
     const contacts = [{ x: hero.x, z: hero.z }];
+    const kicks = new Map();
     for (let s = 0; s < 2000 && contacts.length < prev.points.length; s++) {
       stepWorld(world);
       const touched = world.events.some((ev) => ev.ball === hero || ev.a === hero || ev.b === hero);
       combat.resolve(world, hero);
       resolveObjects(world, hero);
-      if (kick) applyBumperKick(world, hero, kick, CONFIG.aim.maxLaunchSpeed);
+      applyBumperKicks(world, kicks, CONFIG.aim.maxLaunchSpeed, kick ? { ball: hero, kick, perBumper: CONFIG.cards.elasticityKicksPerBumper } : null);
       world.events.length = 0;
       if (touched) contacts.push({ x: hero.x, z: hero.z });
       if (hero.vx === 0 && hero.vz === 0) contacts.push({ x: hero.x, z: hero.z });

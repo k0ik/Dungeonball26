@@ -57,7 +57,8 @@ Every value below is a starting point to tune by feel. Distances are in tiles.
 | Cancel radius | 0.6 tile | Releasing closer than this cancels; wide enough to read as its own space |
 | Full-power drag | 1.6 tiles | Drag distance that reaches max launch speed |
 | Max launch speed | 9 tiles/s | Reached at full drag |
-| Friction | 1.75 tiles/s² constant | About 5 s and 23 tiles to stop from full power (halved from 3.5 after playtesting) |
+| Friction | 1.3125 tiles/s² constant | About 7 s and 31 tiles to stop from full power. Halved from 3.5 after playtesting, then cut by another quarter (what the Athletic card used to give) to make play livelier and more chaotic |
+| Barrel kick | +1.5 tiles/s | Barrels are pinball bumpers for every ball (you, enemies, tool balls): bouncing off one adds 1.5 tiles/s along the bounce (`physics.barrelKick`, never above the 9 tiles/s max launch speed), up to 3 times per barrel per ball each move (`physics.barrelKicksPerBumper`). Chests and enemies don't kick unless you hold Elasticity. The aim preview includes it |
 | Stop threshold | 0.25 tiles/s | Below this a ball counts as at rest |
 | Wall bounce | keeps 90% of speed | High bounce, as requested |
 | Barrel and chest bounce | keeps 70% of speed | Loses some speed on impact |
@@ -155,9 +156,9 @@ Starting cards (numbers are defaults to tune):
 | Bullionaire | All gold you collect is worth 1.5× (rounded up) |
 | Barrel of Fun | Barrels break in one hit |
 | ~~Locksmith~~ | *Shelved for now (not offered or dealt): it's unclear that skipping doors pays off.* Doors open without keys, and keys don't appear |
-| Athletic | Your ball rolls faster and farther: 25% less friction on it (enemies unaffected; the aim preview includes it) |
+| Athletic | Your ball rolls faster and farther: 40% less friction on it, on top of the lower base friction every ball now has (the old Athletic, 25%, became the baseline). Enemies unaffected; the aim preview includes it |
 | Money Magnet | Gold on the floor (enemy coins, barrel gold and strip coins) is collected from farther away: within 1.5 tiles of your ball's centre instead of just on contact (about 0.6 tiles), drawn in to you as you roll past. Other loot still needs contact |
-| Elasticity | Barrels, chests and enemies act like pinball bumpers for you: when your ball bounces off one, it's kicked away with +1.5 tiles/s of extra speed along the bounce (never above the 9 tiles/s max launch speed). Each bumper kicks up to 3 times per shot (`cards.elasticityKicksPerBumper`), so a ball caught rattling between a chest and a wall (worst with Athletic) still runs down instead of bouncing forever. Walls bounce as normal. The aim preview includes the kick |
+| Elasticity | Barrels, chests and enemies act like pinball bumpers for you: when your ball bounces off one, it's kicked away with +2.5 tiles/s of extra speed (instead of the +1.5 every ball gets from barrels alone) along the bounce (never above the 9 tiles/s max launch speed). Each bumper kicks up to 3 times per shot (`cards.elasticityKicksPerBumper`), so a ball caught rattling between a chest and a wall (worst with Athletic) still runs down instead of bouncing forever. Walls bounce as normal. The aim preview includes the kick |
 
 Defaults assumed until you say otherwise: an offer never includes a card you already hold, and a card you replace goes back into the pool. Cards carry over between levels like HP and gold, and a game over restores the cards you entered the level with.
 
@@ -174,7 +175,7 @@ Defaults assumed until you say otherwise: an offer never includes a card you alr
 | Rogue | After you hit an enemy, a dagger flies at the nearest other enemy you can see, for 1 damage | Once per shot, or once per hit? Open |
 | Chainsmoker | Any kill earns a bonus turn, not just a combo kill | Toggle; doesn't stack |
 | Clairvoyance | The aim preview shows twice as far (two bounces instead of one) | For this to matter, the normal preview gets shorter when cards arrive (M7), so the default only hints at the path |
-| Fleet Feet | 10% less friction on your ball | Overlaps Athletic (25%); could be its smaller, stackable version |
+| Fleet Feet | 10% less friction on your ball | Overlaps Athletic (40%); could be its smaller, stackable version |
 | Bomb Squad | Explosions (red barrels, bomb enemies) don't hurt you | Toggle; doesn't stack |
 
 Medic, Warrior and Paladin overlap Junk Hunter (swords and shields twice as often); if they go in, Junk Hunter could be dropped, or kept as the all-in-one.
@@ -412,6 +413,18 @@ Changes agreed during development that aren't built yet. (Trait cards are schedu
 - **Coins expire:** coins that appear during play (out of a barrel, a kill, or knocked out of you) last only 2 more turns, then vanish. Placed coins (strips, `*`) don't expire. Their last turn needs a calm cue rather than blinking, which would be exhausting with many on the board: for example they dim, shrink a little and stop spinning on their last turn, or slowly fade out over it.
 - **Clear-the-level bonus:** killing every enemy before you exit pays +100 gold, with an immediate one-screen notification the moment the last one dies ("All enemies defeated! +100").
 - **Sound effects:** you have a collection of sound effects to swap in for the placeholders (see Audio).
+- **Card layouts:** a redesign of the card layouts is coming (details to follow).
+- **Cards light up when they act:** whenever a held card does something, its card in the HUD briefly enlarges (a quick pop and settle), so you learn what each one does: Vampirism when a kill heals you, Elasticity on a kick, Barrel of Fun when a barrel breaks in one hit, Money Magnet as it pulls coins, Bullionaire as gold is multiplied, Junk Hunter when a barrel drops gear, Athletic as your shot launches.
+- **Hit effects:** on every hit to an enemy, a short burst of lines or dots in that enemy's colour flies outward from the point of impact.
+- **Hit expression for enemies:** a struck enemy shows a pained face for a moment (like your ball's "ouch"), while still looking toward its attacker (see Faces look where they're going).
+- **New card: Charmer.** If there are at least 2 enemies on the level, the first enemy you hit (or that hits you) takes and deals no damage from that hit, and becomes your companion instead. It takes its own move right after your shot, going for the nearest enemy (a lunge if it can see one, otherwise a patrol toward one), and its hits damage enemies like yours do. It stays your companion until it dies; then the next enemy you hit (or that hits you) can be recruited. It needs a clear marker, such as a small flag, heart or crown over its head and a friendly tint, and it never hurts you. To settle: whether enemies target it, whether its kills pay gold and count as yours (combos, trick shots), and what happens to it at the level's end.
+- **Visual level editor** (major): replaces writing levels as text grids. A paint-program editor in the game itself:
+  - **Start:** pick a small, medium or large grid; it starts framed in wall tiles all round.
+  - **Paint:** choose a tile from a palette (wall, floor, start, exit, coin, barrel, red barrel, chest, enemy levels 1 to 5, keys, doors, Gold ball) and paint with taps and drags; an eraser paints floor. Drawn the way the game draws it (isometric or top-down; see the questions), so walls and coins look like themselves and rounding is visible.
+  - **Roundness:** a toggle for curviness that redraws the rounded walls live as you change it.
+  - **Save:** runs the level checks (closed border, one start, at least one exit, reachable exit, keys for every door, nothing stuck in a wall) and lists any problems by name and place, highlighting the tiles; with none, it asks for a name, saves, and lets you play it at once.
+  - **In play:** a key (E) or button switches the current level into the editor and back.
+  - The saved level is still the same text grid underneath, so it drops into `src/levels/` and the run like any other.
 - **Lives counter in the HUD:** lives (1-Ups) shown at all times alongside gold, HP and keys, not only on the death screen, so you always know how many retries you have left.
 - **Pause button and pause state:** a pause button in the HUD (and Esc / P on desktop). Pausing freezes the simulation, timers and animations mid-shot or mid-enemy-move, dims the board and shows a pause panel: resume, restart level, settings (volume, accessibility) and the reference cards for enemies and objects met so far. Switching away from the app or locking the phone pauses automatically.
 - **? Progressive reveal (idea, unsure it's desirable):** the level starts dark except for the tiles within a broad radius of the player; only by moving into an area do you see what it holds (enemies, loot, keys, doors). Revealed tiles stay revealed (perhaps dimmed when out of range, with enemies hidden there). Captured as an idea; it trades the current planning-from-a-full-view play for exploration, and would interact with the aim preview, enemy sight and the camera pan.
@@ -521,6 +534,6 @@ Open questions:
 - **Trait card pool:** offers exclude cards you hold, and a replaced card goes back into the pool (built that way in M7; stackable copies are still to explore).
 - **Doppleganger when replaced:** you keep the extra life it gave you (built that way).
 - **Locksmith and keys:** with Locksmith, keys don't appear at all, since doors open without them (built that way). The card is shelved for now; its effect stays in the code, so restoring it is one line in `cards.js`.
-- **Athletic:** just 25% less friction for now; should it also raise your launch speed?
+- **Athletic:** just 40% less friction for now; should it also raise your launch speed?
 - **Bullionaire:** the 1.5× applies to all gold (coins, chests, streak bonuses), with the fraction carried over, so it's exact over time; the labels show the gold actually added.
 - **Trick shots, "first time":** first time per run, or first time ever? "Ever" needs saved progress, which is out of scope for the MVP, so it's assumed per run for now.

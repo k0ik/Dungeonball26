@@ -86,7 +86,8 @@ export function createEditor({ getLevel, onPlay }) {
       <div class="ed-stage"><canvas></canvas></div>
     </div>
     <div class="ed-help">Click or drag to paint · click a tile with its own brush (or right-drag) to erase · the outer wall stays put · E to close (your edits are kept until you Play or start a New level)</div>
-    <div class="ed-modal" hidden><div><p>Level text (copied, if your browser allowed it):</p><textarea readonly></textarea><button class="ed-modal-close">Done</button></div></div>
+    <div class="ed-modal ed-ask" hidden><div><p></p><span class="ed-ask-buttons"><button class="ed-ask-yes primary"></button><button class="ed-ask-no"></button></span></div></div>
+    <div class="ed-modal ed-text" hidden><div><p>Level text (copied, if your browser allowed it):</p><textarea readonly></textarea><button class="ed-modal-close">Done</button></div></div>
   `;
   document.body.appendChild(root);
   const canvas = root.querySelector('canvas');
@@ -136,8 +137,8 @@ export function createEditor({ getLevel, onPlay }) {
     curves.appendChild(b);
   }
   for (const b of root.querySelectorAll('[data-new]')) {
-    b.onclick = () => {
-      if (dirty && !confirm(`Start a new level? Your changes to "${name}" haven't been played or saved, and will be lost.`)) return;
+    b.onclick = async () => {
+      if (dirty && !(await ask(`Start a new level? Your changes to "${name}" haven't been played or saved, and will be lost.`, 'Start a new level', 'Keep editing'))) return;
       dirty = false;
       grid = blankGrid(...SIZES[b.dataset.new]);
       curve = DEFAULT_CURVE;
@@ -154,7 +155,7 @@ export function createEditor({ getLevel, onPlay }) {
     onPlay({ id, name, text: toText(grid, curve) });
   };
   root.querySelector('.ed-close').onclick = () => close();
-  const modal = root.querySelector('.ed-modal');
+  const modal = root.querySelector('.ed-text');
   root.querySelector('.ed-copy').onclick = () => {
     const text = toText(grid, curve);
     navigator.clipboard?.writeText(text).catch(() => {});
@@ -163,6 +164,26 @@ export function createEditor({ getLevel, onPlay }) {
     modal.querySelector('textarea').select();
   };
   modal.querySelector('.ed-modal-close').onclick = () => (modal.hidden = true);
+
+  // A yes/no question in the editor itself: the page may be sandboxed so the
+  // browser's confirm() is blocked (it then answers no without asking).
+  const askBox = root.querySelector('.ed-ask');
+  function ask(message, yes, no) {
+    askBox.querySelector('p').textContent = message;
+    const yesBtn = askBox.querySelector('.ed-ask-yes');
+    const noBtn = askBox.querySelector('.ed-ask-no');
+    yesBtn.textContent = yes;
+    noBtn.textContent = no;
+    askBox.hidden = false;
+    return new Promise((resolve) => {
+      const done = (answer) => {
+        askBox.hidden = true;
+        resolve(answer);
+      };
+      yesBtn.onclick = () => done(true);
+      noBtn.onclick = () => done(false);
+    });
+  }
 
   // --- Painting ---------------------------------------------------------------
   const cellAt = (e) => {
@@ -422,27 +443,34 @@ export function createEditor({ getLevel, onPlay }) {
   }
   new ResizeObserver(() => !root.hidden && refresh()).observe(stage);
 
-  function open() {
+  function load(def) {
+    ({ grid, curve } = fromText(def.text));
+    name = def.name;
+    id = def.id;
+    dirty = false;
+  }
+  async function open() {
     // The editor opens the level the game is on. Unplayed edits to that same
     // level are kept (closing and reopening picks up where you left off);
     // unplayed edits to another level (the game has moved on, say) are only
     // kept if you choose to.
     const def = getLevel();
-    const keep = dirty && (def?.id === id || !confirm(`The game is on "${def?.name}", but you have unplayed edits to "${name}".\n\nOK: open "${def?.name}" (your edits to "${name}" are lost).\nCancel: keep editing "${name}".`));
-    if (def && !keep) {
-      ({ grid, curve } = fromText(def.text));
-      name = def.name;
-      id = def.id;
-      dirty = false;
-    }
-    elsewhere = def && def.id !== id ? def.name : null;
+    if (def && !dirty) load(def);
     root.hidden = false;
     document.body.classList.add('editing');
+    if (def && dirty && def.id !== id) {
+      elsewhere = def.name;
+      refresh();
+      const switchTo = await ask(`The game is on "${def.name}", but you have unplayed edits to "${name}".`, `Open "${def.name}" (lose the edits)`, `Keep editing "${name}"`);
+      if (switchTo) load(def);
+    }
+    elsewhere = def && def.id !== id ? def.name : null;
     refresh();
   }
   function close() {
     root.hidden = true;
     modal.hidden = true;
+    askBox.hidden = true;
     document.body.classList.remove('editing');
   }
 

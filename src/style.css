@@ -894,3 +894,11 @@ body {
 .ed-modal p {
   margin: 0;
 }
+
+.ed-ask p {
+  max-width: 420px;
+}
+.ed-ask-buttons {
+  display: flex;
+  gap: 8px;
+}

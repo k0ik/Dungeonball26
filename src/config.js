@@ -356,7 +356,7 @@ export const CONFIG = {
     // zooms out from there with power). During shots and enemy moves it
     // stays on you and widens to keep every moving ball in view (padding
     // followPadding), zooming out quickly and back in slowly.
-    restFill: 0.188, // your ball's share of the view's width at rest (0.2 felt a touch too close)
+    restFill: 0.157, // your ball's share of the view's width at rest (0.2, then 0.188, felt too close)
     restZoomRate: 2.2, // 1/s, easing in to the tight view
     followPadding: 1.6, // screen units around moving balls while the camera stays on you
     followZoomOutRate: 3.5, // 1/s: widen quickly when something heads off screen

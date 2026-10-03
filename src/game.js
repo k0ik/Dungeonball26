@@ -941,7 +941,7 @@ export function createGame(container, levels, startIndex = 0) {
         looks.blast(level, o.target.x, o.target.z, world.balls, hasFace);
         enemyViews.get(o.target)?.die();
         // It also sets off red barrels and cracks or breaks barrels in reach.
-        handleObjects(blastObjects(world, o.target.x, o.target.z, CONFIG.enemy.types.bomb.blastRadius, { barrelHits: card('barrelOfFun') ? 1 : CONFIG.objects.barrelHits }));
+        handleObjects(blastObjects(world, o.target.x, o.target.z, CONFIG.enemy.types.bomb.blastRadius));
       } else if (o.type === 'attack') {
         // A Jekyll's attack on another enemy: no "Combo!", it isn't yours.
         sfx.play('hit', 0.9, { pitch: 0.8 });
@@ -1099,7 +1099,7 @@ export function createGame(container, levels, startIndex = 0) {
       // Both read this step's events before handleEvents clears them.
       const outcomes = combat.resolve(world, hero);
       strikeGold();
-      const objectOutcomes = resolveObjects(world, hero, Math.random, { barrelHits: card('barrelOfFun') ? 1 : CONFIG.objects.barrelHits });
+      const objectOutcomes = resolveObjects(world, hero, Math.random, { heroBarrelHits: card('barrelOfFun') ? 1 : CONFIG.objects.barrelHits });
       // Rubber enemies: your ball comes off them at double speed.
       const R = CONFIG.enemy.types.rubber;
       applyRubberRebound(world, hero, R.rebound, R.maxRebound);

@@ -1,6 +1,6 @@
-// Trait cards (design doc: "Trait cards"). Always-on abilities that last the
-// rest of the run. You hold up to 3; after each level you're offered 3 and
-// take one (replacing one of yours when full), or skip.
+// Artifacts (design doc: "Artifacts"; "cards" in the code). Always-on powers
+// that last the rest of the run. You hold up to 3; each chest gives one, which
+// you place in a slot (replacing one of yours if you choose) or skip.
 //
 // Pure data and rules; the game and HUD ask `has(cards, id)` when an effect
 // applies. Numbers live in CONFIG.cards.
@@ -10,17 +10,17 @@ import { CONFIG } from './config.js';
 const K = CONFIG.cards;
 
 export const CARDS = [
-  { id: 'vampirism', name: "Vampire's Tooth", icon: '🦷', text: `Every kill heals you ${K.vampirismHeal} HP.` },
+  { id: 'vampirism', name: "Vampire's Tooth", icon: '🦇', text: `Defeating an enemy gives you +${K.vampirismHeal} HP.` },
   // Shelved for now. Its effect is still wired up in game.js.
   // { id: 'doppleganger', name: 'Doppleganger', icon: '👥', text: '+1 life, and +1 to the lives a game over restores.' },
-  { id: 'junkHunter', name: 'Metal Detector', icon: '📡', text: 'Swords and shields turn up twice as often in barrels.' },
-  { id: 'bullionaire', name: 'Magic Wallet', icon: '👛', text: `All gold you collect is worth ${K.bullionaire}×.` },
-  { id: 'barrelOfFun', name: 'Wood Axe', icon: '🪓', text: 'Barrels break in one hit.' },
+  { id: 'junkHunter', name: 'Junk Detector', icon: '🛡️', text: 'You find more swords and shields in barrels.' },
+  { id: 'bullionaire', name: 'Magic Wallet', icon: '💰', text: `The gold you collect is worth ${K.bullionaire}×.` },
+  { id: 'barrelOfFun', name: 'Wood Axe', icon: '🛢️', text: 'Break barrels with one hit.' },
   // Shelved for now: unclear that skipping doors pays off. Its effect is still wired up in game.js.
   // { id: 'locksmith', name: 'Locksmith', icon: '🗝️', text: 'Doors open without keys.' },
-  { id: 'athletic', name: 'Rollerskates', icon: '🛼', text: `Your ball rolls faster and farther: ${Math.round((1 - K.athleticFriction) * 100)}% less friction.` },
-  { id: 'moneyMagnet', name: 'Moola Magnet', icon: '🧲', text: `Coins within ${K.magnetRadius} tiles are pulled in to you.` },
-  { id: 'elasticity', name: 'Rubber Baby Buggy Bumpers', icon: '🛟', text: `Barrels, chests and enemies kick you away like pinball bumpers (+${K.elasticityKick} speed, up to ${K.elasticityKicksPerBumper}× each per shot).` },
+  { id: 'athletic', name: 'Rollerskates', icon: '👟', text: 'Travel faster and farther.' },
+  { id: 'moneyMagnet', name: 'Moola Magnet', icon: '🧲', text: 'Nearby coins are attracted to you.' },
+  { id: 'elasticity', name: 'Rubber Bumpers', icon: '🏀', text: 'Bounce off objects and enemies to go faster and farther.' },
 ];
 
 export const cardById = (id) => CARDS.find((c) => c.id === id);

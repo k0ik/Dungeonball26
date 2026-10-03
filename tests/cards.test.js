@@ -10,8 +10,8 @@ test('the seven starting artifacts (Locksmith and Doppleganger are shelved)', ()
   assert.deepEqual(
     CARDS.map((c) => c.name),
     [
-      "Vampire's Tooth", 'Metal Detector', 'Magic Wallet', 'Wood Axe', 'Rollerskates', 'Moola Magnet',
-      'Rubber Baby Buggy Bumpers',
+      "Vampire's Tooth", 'Junk Detector', 'Magic Wallet', 'Wood Axe', 'Rollerskates', 'Moola Magnet',
+      'Rubber Bumpers',
     ],
   );
 });

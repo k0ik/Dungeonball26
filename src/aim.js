@@ -36,7 +36,7 @@ export function canGrab(hero, pointer) {
  * second crack breaks and gets out of the way, and a red barrel goes off,
  * exactly as in the real shot. It keeps up to `previewBounces` bounces and
  * ends at the next contact. `hero` supplies position, ATK, HP and friction;
- * `kick` and `barrelHits` carry card effects (Elasticity, Barrel of Fun);
+ * `kick` and `barrelHits` carry card effects (Rubber Bumpers, Wood Axe: the hero's barrel hits);
  * `ice` (the board's puddles) and `move` (the shot's move number) make the
  * path speed up over ice, with Ice balls icing the floor as they go.
  * Returns { points: [start, ...bends, end], bends: count, stopped }.
@@ -76,7 +76,7 @@ export function previewPath(level, hero, dirX, dirZ, speed, others = [], statics
     stepIce(world, level, puddles, move);
     const hit = world.events.some(touchesGhost);
     combat.resolve(world, ghost);
-    resolveObjects(world, ghost, () => 0.5, { barrelHits });
+    resolveObjects(world, ghost, () => 0.5, { heroBarrelHits: barrelHits });
     applyRubberRebound(world, ghost, RUBBER.rebound, RUBBER.maxRebound); // Rubber enemies
     applyBumperKicks(world, kicked, CONFIG.aim.maxLaunchSpeed, kick ? { ball: ghost, kick, perBumper: CONFIG.cards.elasticityKicksPerBumper } : null); // barrels; the Elasticity card
     world.events.length = 0;

@@ -68,6 +68,19 @@ test('an enemy knocked into a barrel cracks and breaks it too', () => {
   assert.ok(!world.statics.includes(barrel));
 });
 
+test('Wood Axe breaks a barrel in one hit from your ball only', () => {
+  const { world, hero, get } = setup();
+  const barrel = get('barrel');
+  const enemy = createEnemy({ x: 3, z: 2.5, level: 1, id: 'e' });
+  touch(world, enemy, barrel);
+  assert.deepEqual(resolveObjects(world, hero, Math.random, { heroBarrelHits: 1 }).map((o) => o.type), ['crack'], 'an enemy still just cracks it');
+  world.events.length = 0;
+  barrel.hits = 0;
+  world.time += 0.2;
+  touch(world, hero, barrel);
+  assert.deepEqual(resolveObjects(world, hero, Math.random, { heroBarrelHits: 1 }).map((o) => o.type), ['break']);
+});
+
 test('a chest opens once, for 8 to 24 gold', () => {
   const { world, hero, get } = setup();
   const chest = get('chest');

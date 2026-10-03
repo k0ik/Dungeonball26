@@ -70,7 +70,7 @@ export function blastObjects(world, x, z, radius, { barrelHits = O.barrelHits } 
   return out;
 }
 
-export function resolveObjects(world, hero, rng = Math.random, { barrelHits = O.barrelHits } = {}) {
+export function resolveObjects(world, hero, rng = Math.random, { heroBarrelHits = O.barrelHits } = {}) {
   const out = [];
   const gone = new Set();
   for (const ev of world.events) {
@@ -84,7 +84,9 @@ export function resolveObjects(world, hero, rng = Math.random, { barrelHits = O.
       if (world.time - s.lastHit < O.barrelCooldown) continue;
       s.lastHit = world.time;
       s.hits++;
-      if (s.hits >= barrelHits) {
+      // Wood Axe (heroBarrelHits 1) is your ball's alone; other balls still
+      // take the usual hits.
+      if (s.hits >= (ev.ball === hero ? heroBarrelHits : O.barrelHits)) {
         gone.add(s);
         out.push({ type: 'break', obj: s });
       } else {

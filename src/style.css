@@ -554,10 +554,6 @@ body {
 }
 
 .turn-label {
-  position: absolute;
-  left: 50%;
-  top: calc(52px + env(safe-area-inset-top, 0px));
-  translate: -50% 0;
   padding: 4px 12px;
   border-radius: 999px;
   font: 800 13px/1.3 system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -637,7 +633,7 @@ body {
   100% {
     opacity: 1;
     scale: 0.382;
-    top: calc(64.5px + env(safe-area-inset-top, 0px));
+    top: var(--land-y, 70%);
     box-shadow: none;
   }
 }
@@ -903,14 +899,23 @@ body {
   gap: 8px;
 }
 
-/* A level's message (tutorials): a panel along the bottom, above the cards. */
-.level-message {
+/* The turn label over the level's message, along the bottom, above the cards. */
+.bottom-stack {
   position: absolute;
-  left: 50%;
+  left: 6%;
+  right: 6%;
   bottom: calc(46px + env(safe-area-inset-bottom, 0px));
-  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 3;
+}
+/* A level's message (tutorials). */
+.level-message {
   width: max-content;
-  max-width: 88%;
+  max-width: 100%;
   padding: 8px 14px;
   border-radius: 12px;
   background: rgba(24, 25, 28, 0.86);
@@ -1080,7 +1085,7 @@ body {
   font-size: 24px;
   line-height: 1;
 }
-/* The held row is taller now, so a level message sits above it when it shows. */
-.level-message:has(~ .card-hand:not([hidden])) {
+/* The held row is taller, so the stack sits above it while it shows. */
+.bottom-stack:has(~ .card-hand:not([hidden])) {
   bottom: calc(104px + env(safe-area-inset-bottom, 0px));
 }

@@ -22,13 +22,17 @@ export function createHud(container) {
   fader.className = 'screen-fade';
   container.appendChild(fader);
 
-  // A level's message (tutorials): a panel along the bottom, above the cards,
-  // for as long as you're on the level.
+  // Along the bottom, above the held artifacts: the turn label, then the
+  // level's message (tutorials) under it, stacked so they never overlap.
+  const bottom = document.createElement('div');
+  bottom.className = 'bottom-stack';
+  container.appendChild(bottom);
+  // A level's message stays for as long as you're on the level.
   const message = document.createElement('div');
   message.className = 'level-message';
   message.setAttribute('role', 'status');
   message.hidden = true;
-  container.appendChild(message);
+  bottom.appendChild(message);
 
   // Artifacts (cards in the code): the ones you hold, as a row of mini cards
   // at the bottom; and the chest pick, a full-screen panel that takes the input.
@@ -75,16 +79,16 @@ export function createHud(container) {
   container.appendChild(edge);
   let shownDanger = false;
 
-  // "Player Turn" / "Enemy Turn": a small pill under the bar, always shown,
-  // separate from the centre banner so the two never cover each other.
+  // "Player Turn" / "Enemy Turn": a small pill near the bottom, above the
+  // level's message, always shown, apart from the centre banner.
   const turn = document.createElement('div');
   turn.className = 'turn-label';
   turn.setAttribute('role', 'status');
-  container.appendChild(turn);
+  bottom.prepend(turn);
   let shownTurn = '';
 
   // Turn toast: at each change of turn the same words appear big in the
-  // upper third of the screen for a moment, then shrink and fly up to become
+  // upper third of the screen for a moment, then shrink and fly down to become
   // the label. The label itself stays hidden meanwhile, so it never doubles up.
   const toast = document.createElement('div');
   toast.className = 'turn-toast';
@@ -155,6 +159,10 @@ export function createHud(container) {
         turn.classList.add('landing'); // hidden until the toast lands on it
         toast.textContent = turn.textContent;
         toast.dataset.who = who;
+        // Land on the label's centre, wherever the bottom stack puts it.
+        const at = turn.getBoundingClientRect();
+        const box = container.getBoundingClientRect();
+        toast.style.setProperty('--land-y', `${at.top - box.top + at.height / 2}px`);
         toast.classList.remove('show');
         void toast.offsetWidth; // restart the animation
         toast.classList.add('show');

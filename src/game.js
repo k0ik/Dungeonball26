@@ -565,6 +565,18 @@ export function createGame(container, levels, startIndex = 0) {
     for (const b of world.balls) b.vx = b.vz = 0;
     state.aiming = false;
     aimView.hide();
+    // A level played from the level editor: no card pick and no next level;
+    // reset it and hand back to the editor.
+    if (levels[levelIndex].test) {
+      sfx.play('exit', 0.8);
+      state.phase = 'pick'; // input off while the banner shows
+      hud.banner('Test complete!', 'Back to the editor', 1.2);
+      setTimeout(() => {
+        loadLevel(levelIndex);
+        api.onTestComplete?.();
+      }, 1200);
+      return;
+    }
     if (levelIndex + 1 < levels.length) {
       sfx.play('exit', 0.8);
       // The card pick: offered 3, take 1 (replacing one when full) or skip.
@@ -1248,7 +1260,7 @@ export function createGame(container, levels, startIndex = 0) {
   requestAnimationFrame(frame);
 
   // Handy for poking at the game from the browser console.
-  return {
+  const api = {
     get level() {
       return level;
     },
@@ -1271,11 +1283,14 @@ export function createGame(container, levels, startIndex = 0) {
      * id (for this session only), or is slotted in at the current place.
      */
     playLevel(def) {
+      // Marked as a test: finishing it goes back to the editor, not on through the run.
       let i = levels.findIndex((l) => l.id === def.id);
-      if (i < 0) levels.splice((i = levelIndex), 0, { ...def });
-      else levels[i] = { ...levels[i], ...def };
+      if (i < 0) levels.splice((i = levelIndex), 0, { ...def, test: true });
+      else levels[i] = { ...levels[i], ...def, test: true };
       loadLevel(i);
       levelBanner();
     },
+    onTestComplete: null, // set by main.js: reopen the level editor
   };
+  return api;
 }

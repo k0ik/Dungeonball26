@@ -10,6 +10,7 @@ import roomies from './levels/roomies.txt?raw';
 import pinball from './levels/pinball.txt?raw';
 import gauntlet from './levels/gauntlet.txt?raw';
 import gauntlet02 from './levels/gauntlet02.txt?raw';
+import treasureTrove from './levels/treasure-trove.txt?raw';
 import barrelRun from './levels/barrel-run.txt?raw';
 import lineOfSight from './levels/line-of-sight.txt?raw';
 import tut02 from './levels/tut02.txt?raw';
@@ -26,6 +27,7 @@ const LEVELS = [
   { id: 'line-of-sight', name: 'Line of Sight', text: lineOfSight, message: 'Enemies only attack if they can see you.' },
   { id: 'tut02', name: 'Tutorial 02', text: tut02, message: "Attack enemies when it's your turn. Enemies attack on their turn if they see you." },
   { id: 'barrel-run', name: 'Barrel Run', text: barrelRun, message: 'Wooden barrels contain loot. Red barrels contain explosives.' },
+  { id: 'treasure-trove', name: 'Treasure Trove', text: treasureTrove },
   { id: 'bowls', name: 'Bowls', text: bowls },
   { id: 'long-hall', name: 'Long Hall', text: longHall },
   { id: 'breakables', name: 'Breakables', text: breakables },
@@ -45,4 +47,6 @@ const fromHash = LEVELS.findIndex((l) => `#${l.id}` === location.hash);
 window.game = createGame(document.getElementById('game'), LEVELS, Math.max(0, fromHash));
 
 // The level editor (desktop): E opens the current level in it.
-createEditor({ getLevel: () => window.game.levelDef, onPlay: (def) => window.game.playLevel(def) });
+const editor = createEditor({ getLevel: () => window.game.levelDef, onPlay: (def) => window.game.playLevel(def) });
+// Finishing a level played from the editor goes back to the editor.
+window.game.onTestComplete = () => editor.open();

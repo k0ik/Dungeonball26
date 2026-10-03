@@ -14,7 +14,7 @@ Design pillars:
 - **Every stop is a decision.** Ending a shot in an enemy's sightline costs HP.
 - **Risk against greed.** Gold is the score. Barrels and chests pay, but lingering near enemies is dangerous.
 - **No surprises.** Aim preview, "!" alerts and visible HP bars make every loss legible.
-- **Every run is a build.** The trait cards you choose between levels bend the rules in your favour, so two runs play differently.
+- **Every run is a build.** The trait cards you find in chests bend the rules in your favour, so two runs play differently.
 
 Target: a true orthographic 3D view at a fixed isometric angle, rendered with Three.js and tested in a desktop browser first. The simulation underneath stays a 2D grid; only the rendering is 3D.
 
@@ -140,11 +140,11 @@ Shots taken are tracked and shown on the level-complete screen but do not affect
 Trait cards are the roguelike layer. Each is an always-on ability that lasts for the rest of the run. (Built in M7 with the nine starting cards below.)
 
 - **Slots:** you hold up to 3 cards.
-- **The pick:** at the end of each level you're offered 3 cards and choose 1. If your 3 slots are full, you then pick one of your cards to replace. You can skip at any point, from the offer or the replace step, and keep what you have.
+- **The pick:** cards come out of chests. Every chest holds a card as well as its gold: about a second after a chest opens (`cards.chestPickDelay`, once its coins are out), the game freezes mid-roll and you're offered 3 cards and choose 1, then play resumes exactly where it was. So you can change strategy mid-level based on what you find. Two chests opened in one shot give two picks, one after the other. There's no pick at the end of a level any more (reaching the exit goes straight on to the next level after a short pause, `cards.levelEndPause`), and a level with no chests gives no cards. If your 3 slots are full, you then pick one of your cards to replace. You can skip at any point, from the offer or the replace step, and keep what you have.
 - **Always on:** cards have no activation and no cooldown; their effect simply applies while you hold them. The cards you hold sit as a small row of chips (icon and name) along the bottom of the screen. Tapping a chip pauses the game (everything holds still, mid-shot or mid-enemy-turn) and shows that card large, with its full effect; a tap anywhere closes it and play resumes.
-- **The pick screen:** reaching an exit (except the last level's) darkens the board and shows the 3 offered cards, each with its icon, name and effect. Tap one to take it. With 3 cards already held, a second step shows your cards ("Take Bullionaire: tap the card to give up for it"), with "Keep my cards" to back out. "Skip" is always there. The next level loads once you've chosen.
+- **The pick screen:** opening a chest darkens the board and shows the 3 offered cards, each with its icon, name and effect. Tap one to take it. With 3 cards already held, a second step shows your cards ("Take Bullionaire: tap the card to give up for it"), with "Keep my cards" to back out. "Skip" is always there. The next level loads once you've chosen.
 - **Carry-over:** cards carry between levels; a game over restores the cards you entered the level with; a new run starts with none.
-- **Starting hand:** a new game starts with no cards; you collect them one at a time from the picks between levels, filling your hand before you ever have to swap one. (Testing aid: `cards.startDealt` deals that many random cards at the start instead; it was 3 while the cards were being tuned, and is now 0.)
+- **Starting hand:** a new game starts with no cards; you collect them one at a time from chests, filling your hand before you ever have to swap one. (Testing aid: `cards.startDealt` deals that many random cards at the start instead; it was 3 while the cards were being tuned, and is now 0.)
 
 Starting cards (numbers are defaults to tune):
 
@@ -186,7 +186,7 @@ Medic, Warrior and Paladin overlap Junk Hunter (swords and shields twice as ofte
 
 ## End-of-level scorecard
 
-When you reach the exit, a scorecard sums up how you played the level before the next one (and the card pick, M7) starts. The scoring math comes later; for now, what it tracks:
+When you reach the exit, a scorecard sums up how you played the level before the next one starts. The scoring math comes later; for now, what it tracks:
 
 | Line | What it counts |
 | --- | --- |

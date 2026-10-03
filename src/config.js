@@ -288,6 +288,8 @@ export const CONFIG = {
     // Testing aid: every new game starts with this many random cards already
     // dealt (0 for the normal game, which starts with none).
     startDealt: 0,
+    chestPickDelay: 0.9, // seconds after a chest opens (its coins flying) before its card pick opens
+    levelEndPause: 0.7, // seconds at the exit before the next level loads
     vampirismHeal: 1, // HP per kill
     bullionaire: 1.5, // gold multiplier (fractions carry over, so it's exact)
     junkHunter: 2, // barrel weight multiplier for swords and shields

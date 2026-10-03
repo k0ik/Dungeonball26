@@ -97,6 +97,7 @@ export function createGame(container, levels, startIndex = 0) {
     lives: CONFIG.hero.lives,
     gold: 0, // the score
     goldFraction: 0, // Bullionaire's leftover fraction of a gold, carried to the next pickup
+    pendingPicks: [], // card picks waiting to open: seconds left for each (see updateCardPicks)
     cards: [], // trait cards held (ids), at most CONFIG.cards.slots
     returnBoost: 0, // seconds left of the camera's fast return to you
     shotCoins: 0, // coins taken this shot: the streak count (and the tick's pitch)
@@ -565,7 +566,7 @@ export function createGame(container, levels, startIndex = 0) {
     for (const b of world.balls) b.vx = b.vz = 0;
     state.aiming = false;
     aimView.hide();
-    // A level played from the level editor: no card pick and no next level;
+    // A level played from the level editor: no next level;
     // reset it and hand back to the editor.
     if (levels[levelIndex].test) {
       sfx.play('exit', 0.8);
@@ -578,23 +579,14 @@ export function createGame(container, levels, startIndex = 0) {
       return;
     }
     if (levelIndex + 1 < levels.length) {
+      // On to the next level (cards come from chests now, not here).
       sfx.play('exit', 0.8);
-      // The card pick: offered 3, take 1 (replacing one when full) or skip.
-      state.phase = 'pick';
+      state.phase = 'pick'; // input off for the moment before the next level
       const next = levelIndex + 1;
-      hud.showCardPick(offerCards(state.cards), state.cards, (id, replace) => {
-        if (id) {
-          const hand = takeCard(state.cards, id, replace);
-          if (hand) {
-            state.cards = hand;
-            if (id === 'doppleganger') state.lives += 1; // kept even if the card is later replaced
-            sfx.play('gear', 0.8);
-          }
-        }
-        applyCards();
+      setTimeout(() => {
         loadLevel(next);
         levelBanner();
-      });
+      }, CONFIG.cards.levelEndPause * 1000);
       return;
     }
     state.phase = 'won';
@@ -611,6 +603,7 @@ export function createGame(container, levels, startIndex = 0) {
     state.lives = CONFIG.hero.lives;
     state.gold = 0;
     state.goldFraction = 0;
+    state.pendingPicks = [];
     dealStartingCards();
     loadLevel(0);
     hud.hideScreen();
@@ -618,6 +611,27 @@ export function createGame(container, levels, startIndex = 0) {
   }
 
   // --- Cards -------------------------------------------------------------------
+  /**
+   * Cards come out of chests: each opened chest queues a pick that opens
+   * once its coins have flown (chestPickDelay seconds of play). The pick
+   * freezes the game mid-roll until you choose or skip; several queue up.
+   */
+  function updateCardPicks(dt) {
+    if (!state.pendingPicks.length || hud.paused) return;
+    state.pendingPicks[0] -= dt;
+    if (state.pendingPicks[0] > 0) return;
+    state.pendingPicks.shift();
+    hud.showCardPick(offerCards(state.cards), state.cards, (id, replace) => {
+      if (!id) return;
+      const hand = takeCard(state.cards, id, replace);
+      if (!hand) return;
+      state.cards = hand;
+      if (id === 'doppleganger') state.lives += 1; // kept even if the card is later replaced
+      sfx.play('gear', 0.8);
+      applyCards();
+    });
+  }
+
   const card = (id) => has(state.cards, id);
 
   /**
@@ -834,6 +848,8 @@ export function createGame(container, levels, startIndex = 0) {
         const gold = addGold(o.gold);
         // Over the ball (always on screen), not the chest, which may not be.
         overlay.float(`+${gold}`, hero.x, hero.z, hero.radius * 2 + 0.8, 'gold', heroFollow());
+        // Every chest also holds a card: once its coins are out, the pick (see updateCardPicks).
+        state.pendingPicks.push(CONFIG.cards.chestPickDelay);
       } else if (o.type === 'explode') {
         sfx.play('explode', 1);
         objectsView.remove(obj);
@@ -1146,6 +1162,7 @@ export function createGame(container, levels, startIndex = 0) {
     objectsView.fadeChests(hero, state.aiming, dt);
     itemsView.sync(world.items);
     updateFlyingCoins(dt);
+    updateCardPicks(dt);
     pullCoins(dt);
     itemsView.update(dt);
     for (const [enemy, view] of enemyViews) {

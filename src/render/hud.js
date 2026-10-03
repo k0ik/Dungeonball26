@@ -175,8 +175,10 @@ export function createHud(container) {
      * Calls done(id, replaceId) once, with id null for a skip.
      */
     showCardPick(offer, held, done) {
+      paused = true; // the game holds still while you choose
       const finish = (id, replace) => {
         pick.classList.remove('on');
+        paused = false;
         done(id, replace);
       };
       const cardButton = (id, onTap, extra = '') => {

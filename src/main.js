@@ -20,13 +20,14 @@ import bowls from './levels/bowls.txt?raw';
 
 // The run, in order (design doc: "Levels"). Levels 4 and 5 arrive in M8.
 const LEVELS = [
-  // The newest level goes first while it's being playtested (see CLAUDE.md).
+  // The tutorials first, in order (see CLAUDE.md); a level played from the
+  // level editor slots in at the current place instead.
   // `message` (optional): shown in a panel at the bottom while you're on the level.
-  { id: 'barrel-run', name: 'Barrel Run', text: barrelRun, message: 'Wooden barrels contain loot. Red barrels contain explosives.' },
-  { id: 'tut04', name: 'Tutorial 04', text: tut04 },
-  { id: 'tut03', name: 'Tutorial 03', text: tut03 },
+  { id: 'tut01', name: 'Tutorial 01', text: tut01, message: 'Press on the ball and drag to aim. Release to shoot.' },
   { id: 'tut02', name: 'Tutorial 02', text: tut02 },
-  { id: 'tut01', name: 'Tutorial 01', text: tut01 },
+  { id: 'tut03', name: 'Tutorial 03', text: tut03, message: 'Enemies attack when they see you. You can also attack them!' },
+  { id: 'tut04', name: 'Tutorial 04', text: tut04 },
+  { id: 'barrel-run', name: 'Barrel Run', text: barrelRun, message: 'Wooden barrels contain loot. Red barrels contain explosives.' },
   { id: 'bowls', name: 'Bowls', text: bowls },
   { id: 'long-hall', name: 'Long Hall', text: longHall },
   { id: 'breakables', name: 'Breakables', text: breakables },

@@ -31,7 +31,7 @@ export function createIceView(scene) {
   const views = new Map(); // puddle -> { g, materials, opacity, melting }
 
   function add(p) {
-    const base = new THREE.MeshBasicMaterial({ color: CONFIG.colors.ice, transparent: true, opacity: 0, depthWrite: false });
+    const base = new THREE.MeshBasicMaterial({ color: p.kind === 'goop' ? CONFIG.colors.goop : CONFIG.colors.ice, transparent: true, opacity: 0, depthWrite: false });
     const glint = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false });
     const g = new THREE.Group();
     const a = new THREE.Mesh(pool, base);
@@ -42,7 +42,7 @@ export function createIceView(scene) {
     g.add(a, b);
     g.position.set(p.col + 0.5, 0, p.row + 0.5);
     root.add(g);
-    views.set(p, { g, base, glint, opacity: 0, melting: false });
+    views.set(p, { g, base, glint, opacity: 0, melting: false, goop: p.kind === 'goop' });
   }
 
   return {
@@ -55,7 +55,7 @@ export function createIceView(scene) {
         const target = !live.has(p) ? 0 : p.move === move ? R.iceOpacity : R.iceOpacity * R.iceOldShare;
         v.opacity += (target - v.opacity) * k;
         v.base.opacity = v.opacity;
-        v.glint.opacity = v.opacity * 0.6;
+        v.glint.opacity = v.opacity * (v.goop ? 0.2 : 0.6); // goop is dull, ice glassy
         if (!live.has(p) && v.opacity < 0.01) {
           root.remove(v.g);
           v.base.dispose();

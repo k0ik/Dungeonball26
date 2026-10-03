@@ -59,3 +59,29 @@ test('puddles last out their move and the next, then melt', () => {
   meltIce(ice, 3);
   assert.equal(ice.size, 0);
 });
+
+test('goop from a Sticky Icky drags a ball rolling over it', () => {
+  const run = (withGoop) => {
+    const world = createWorld(room);
+    const b = createBall({ x: 1.5, z: 2.5, kind: 'hero', id: 'h' });
+    b.vx = 4;
+    world.balls.push(b);
+    const ice = createIce();
+    if (withGoop) for (let c = 2; c <= 6; c++) ice.set(`${c},2`, { col: c, row: 2, move: 1, kind: 'goop', boosted: new Set() });
+    roll(world, ice, 1, 120);
+    return b.x;
+  };
+  assert.ok(run(true) < run(false) - 1, 'it stops well short');
+});
+
+test('a moving Sticky Icky lays goop, replacing ice', () => {
+  const world = createWorld(room);
+  const e = createEnemy({ x: 1.5, z: 1.5, level: 1, id: 's', type: 'sticky' });
+  e.vx = 6;
+  world.balls.push(e);
+  const ice = createIce();
+  ice.set('2,1', { col: 2, row: 1, move: 1, kind: 'ice', boosted: new Set() });
+  roll(world, ice, 1);
+  assert.equal(ice.get('2,1').kind, 'goop');
+  assert.ok([...ice.values()].every((p) => p.kind === 'goop'));
+});

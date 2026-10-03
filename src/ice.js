@@ -11,6 +11,8 @@ import { speedOf } from './physics.js';
 import { isSolid } from './level.js';
 
 const ICE = CONFIG.enemy.types.ice;
+const STICKY = CONFIG.enemy.types.sticky;
+const LAYS = { ice: 'ice', sticky: 'goop' }; // which balls lay which puddles
 
 /** Puddles by tile: Map "col,row" -> { col, row, move, boosted: Set of balls }. */
 export function createIce() {
@@ -29,17 +31,20 @@ export function copyIce(ice) {
  */
 export function meltIce(ice, move) {
   for (const [k, p] of ice) {
-    if (move - p.move >= ICE.puddleMoves + 1) ice.delete(k);
+    const lasts = p.kind === 'goop' ? STICKY.puddleMoves : ICE.puddleMoves;
+    if (move - p.move >= lasts + 1) ice.delete(k);
     else p.boosted.clear();
   }
 }
 
 /**
- * After a physics step: kick any moving ball that has just rolled onto a
- * puddle, and lay puddles under moving Ice balls. Returns true if any
- * puddle was laid (so the view can redraw).
+ * After a physics step: kick any moving ball that has just rolled onto an
+ * ice puddle, drag any ball rolling over goop, and lay puddles under moving
+ * Ice balls (ice) and Sticky Ickies (goop); a fresh puddle replaces one of
+ * the other kind. `dt` is the step's length. Returns true if any puddle was
+ * laid (so the view can redraw).
  */
-export function stepIce(world, level, ice, move) {
+export function stepIce(world, level, ice, move, dt = CONFIG.physics.step) {
   let laid = false;
   for (const b of world.balls) {
     if (b.phased) continue;
@@ -49,19 +54,26 @@ export function stepIce(world, level, ice, move) {
     const row = Math.floor(b.z);
     const key = `${col},${row}`;
     let p = ice.get(key);
-    if (p && !p.boosted.has(b)) {
+    if (p?.kind === 'goop') {
+      // Goop: extra friction for as long as the ball is on it.
+      const next = speed - STICKY.goopDrag * dt;
+      const k = next <= CONFIG.physics.stopThreshold ? 0 : next / speed;
+      b.vx *= k;
+      b.vz *= k;
+    } else if (p && !p.boosted.has(b)) {
       p.boosted.add(b);
       const next = Math.min(Math.max(speed, CONFIG.aim.maxLaunchSpeed), speed + ICE.puddleKick);
       b.vx *= next / speed;
       b.vz *= next / speed;
     }
-    if (b.type === 'ice' && b.hp > 0 && !isSolid(level, col, row)) {
-      if (!p) {
-        p = { col, row, move, boosted: new Set() };
+    const kind = b.hp > 0 && LAYS[b.type];
+    if (kind && !isSolid(level, col, row)) {
+      if (!p || p.kind !== kind) {
+        p = { col, row, move, kind, boosted: new Set() };
         ice.set(key, p);
         laid = true;
       } else if (p.move !== move) {
-        p.move = move; // freshly iced: lasts from this move again
+        p.move = move; // freshly laid: lasts from this move again
         laid = true;
       }
       p.boosted.add(b); // its own trail doesn't push it along

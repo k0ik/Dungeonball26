@@ -104,6 +104,16 @@ export const CONFIG = {
         puddleKick: 1.5, // tiles/s added to a ball rolling onto a puddle (once per puddle per move; never past the max launch speed)
         puddleMoves: 1, // a puddle lasts the move it's laid in and this many more, then melts
       },
+      sticky: {
+        // Sticky Icky: the Ice ball's opposite. A slowish ball that leaves a
+        // trail of goop (src/ice.js, the same puddles with kind 'goop');
+        // anything rolling over goop drags as if through glue.
+        friction: 1.4, // of normal friction: it doesn't roll far itself
+        patrolRadius: 3,
+        color: 0x8fbf3a, // sickly green, with drips of goop as its shape cue
+        goopDrag: 6, // tiles/s² of extra deceleration while a ball is on goop (normal friction is ~1.3)
+        puddleMoves: 1, // goop lasts the move it's laid in and this many more, like ice
+      },
       rubber: {
         rebound: 2, // your ball comes off it at this times its rebound speed...
         maxRebound: 13.5, // ...up to this (tiles/s; 1.5× the max launch speed)
@@ -448,6 +458,7 @@ export const CONFIG = {
     explosion: 0xff9a2a,
     coin: 0xffc24a,
     ice: 0xbfe9ff, // ice puddles
+    goop: 0x7da832, // Sticky Icky's goop
     hurtCoin: 0xd8242c, // a coin knocked out of you, while it can't be taken yet
     potion: 0xe8336f,
     superPotion: 0x9b5cff,

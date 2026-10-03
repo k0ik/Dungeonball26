@@ -73,6 +73,18 @@ export function createEnemyView(ball, toCamera) {
       group.add(c);
     }
   }
+  // A Sticky Icky has blobs of goop stuck on it (its shape cue).
+  if (ball.type === 'sticky') {
+    const goop = toonMaterial(0x5a7d1e);
+    for (const [ang, h, s] of [[0.4, 0.55, 0.085], [2.3, 0.35, 0.07], [4.1, 0.7, 0.075], [5.4, 0.25, 0.06], [1.2, 0.9, 0.065]]) {
+      const blob = new THREE.Mesh(new THREE.SphereGeometry(r * s * 4, 10, 8), goop);
+      const y = r * (0.3 + h * 1.4);
+      const rr = Math.sqrt(Math.max(0, r * r - (y - r) ** 2)) * 0.97;
+      blob.position.set(Math.cos(ang) * rr, y, Math.sin(ang) * rr);
+      blob.scale.set(1, 1.3, 1); // a little drippy
+      group.add(blob);
+    }
+  }
   let ghostOpacity = ball.phased ? CONFIG.enemy.types.ghost.fadedOpacity : 1;
 
   let dying = -1;

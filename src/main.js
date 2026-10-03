@@ -11,8 +11,6 @@ import pinball from './levels/pinball.txt?raw';
 import gauntlet from './levels/gauntlet.txt?raw';
 import gauntlet02 from './levels/gauntlet02.txt?raw';
 import barrelRun from './levels/barrel-run.txt?raw';
-import tut04 from './levels/tut04.txt?raw';
-import tut03 from './levels/tut03.txt?raw';
 import tut02 from './levels/tut02.txt?raw';
 import tut01 from './levels/tut01.txt?raw';
 import enemytester01 from './levels/enemytester01.txt?raw';
@@ -23,10 +21,8 @@ const LEVELS = [
   // The tutorials first, in order (see CLAUDE.md); a level played from the
   // level editor slots in at the current place instead.
   // `message` (optional): shown in a panel at the bottom while you're on the level.
-  { id: 'tut01', name: 'Tutorial 01', text: tut01, message: 'Press on the ball and drag to aim. Release to shoot.' },
-  { id: 'tut02', name: 'Tutorial 02', text: tut02 },
-  { id: 'tut03', name: 'Tutorial 03', text: tut03, message: 'Enemies attack when they see you. You can also attack them!' },
-  { id: 'tut04', name: 'Tutorial 04', text: tut04 },
+  { id: 'tut01', name: 'Tutorial 01', text: tut01, message: 'Press on the ball and drag to aim. Release to shoot. Reach the exit.' },
+  { id: 'tut02', name: 'Tutorial 02', text: tut02, message: "Attack enemies when it's your turn. Enemies attack on their turn if they see you." },
   { id: 'barrel-run', name: 'Barrel Run', text: barrelRun, message: 'Wooden barrels contain loot. Red barrels contain explosives.' },
   { id: 'bowls', name: 'Bowls', text: bowls },
   { id: 'long-hall', name: 'Long Hall', text: longHall },

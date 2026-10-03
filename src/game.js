@@ -1011,7 +1011,7 @@ export function createGame(container, levels, startIndex = 0) {
     }
     // A close call: you and an enemy about to meet (whichever is moving).
     let best = null;
-    if (live && !hero.phased) {
+    if (C.closeCalls && live && !hero.phased) {
       for (const e of enemies()) {
         if (e.hp <= 0 || e.phased || isTool(e)) continue;
         const dx = e.x - hero.x;

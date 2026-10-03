@@ -364,6 +364,8 @@ export const CONFIG = {
     // Close calls: when your moving ball is about to reach an enemy (or an
     // enemy is rushing you), the camera swings in tight on the pair and time
     // eases to closeSlow, so you're there for the hit or the near miss.
+    // Off for now: the tight zoom is kept for the kill cam and your turn.
+    closeCalls: false,
     closeGap: 1.6, // tiles between their surfaces at most
     closeTime: 0.45, // seconds to contact at most, at the speed they're closing
     closeMinSpeed: 2, // tiles/s they must be closing at least

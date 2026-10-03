@@ -20,6 +20,18 @@ Full design spec: **[docs/design.md](docs/design.md)** — read it before implem
 - **Level order:** the run (`LEVELS` in `src/main.js`) starts with the tutorials in their teaching order (Tutorial 01, Line of Sight, Tutorial 02, Barrel Run), then the rest. Levels are now playtested from the level editor (E, then Play), which plays the edited level in place of the current one, so a newly added level no longer has to go first; put a new tutorial where it belongs in that order and other new levels after the tutorials unless told otherwise.
 - **Build order:** follow the M0–M8 milestones in the design doc in sequence — each is meant to be playable on its own before moving to the next.
 
+## Workflow
+
+How changes get made and shown in this project (the owner plays the game from a published page, not a local dev server):
+
+- **Branch and PR:** work on the session's designated branch and push to it; pushes update the open pull request. Don't open a new PR unless asked.
+- **Build the playable page:** `npm run build:page -- <path>.html` writes the whole game as one self-contained HTML file. Write it to the session's scratchpad directory, not the repo.
+- **Publish:** publish that HTML file to the game's existing artifact, https://claude.ai/artifact/J5MVTZ9XUHiT9hm5DKRxhS (pass it as the artifact `url` from a new session, so the link stays the same). Always finish the build before publishing; never run the two in parallel.
+- **Level grids pasted in chat:** save them under `src/levels/` (new levels also go in `LEVELS` in `src/main.js`, see Level order), describe the level in `docs/design.md` (Levels section), then commit, push, build and publish. For map-only changes, the quick level check is enough (`node --test tests/level.test.js`: it parses every map and catches a broken border, a missing start or exit, or a typo); skip the full suite and the browser check. If a grid breaks a rule (for example no start), make the smallest fix and say so.
+- **Code changes:** run the full suite (`npm test`), and check anything visual or interactive in headless Chromium (Playwright, with `executablePath: '/opt/pw-browsers/chromium'` and `--use-gl=swiftshader`), with throwaway scripts kept in the scratchpad.
+- **Design doc requests** ("design doc: ..." or "d'doc: ..."): write them into `docs/design.md` (usually the To-do section, or the relevant table such as cards or trick shots); they're not requests to build.
+- **Level editor:** press E in the game. It can't save yet, so finished levels reach the repo by the owner pasting the editor's "Copy text" into chat.
+
 ## Keeping the design doc in sync
 
 `docs/design.md` is a snapshot exported from a live, editable doc. If design decisions change during implementation, update `docs/design.md` directly (it becomes the canonical copy once a repo exists) rather than letting code and doc drift apart silently.

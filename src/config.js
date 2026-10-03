@@ -351,16 +351,13 @@ export const CONFIG = {
     // The enemies wait for the camera to arrive before they move (at most enemyTurnMaxWait).
     settleDistance: 0.6, // tiles from the framing goal that count as arrived
     settleZoom: 0.12, // fraction of the goal width that counts as arrived
-    // Closeness (design doc: "Camerawork"). At the start of your turn the
-    // camera pushes in on your ball until it fills introFill of the view's
-    // width, holds there introSeconds, then eases out to the planning width.
-    // During shots and enemy moves it stays on you and widens to keep every
-    // moving ball in view (padding followPadding), zooming out quickly and
-    // back in slowly.
-    introFill: 0.2,
-    introSeconds: 1.1,
-    planWidth: 6, // tiles across while you look and plan
-    introZoomRate: 2.2, // 1/s, easing in and out of the turn-start push-in
+    // Closeness (design doc: "Camerawork"). On your turn the camera sits
+    // tight on your ball, which fills restFill of the view's width (aiming
+    // zooms out from there with power). During shots and enemy moves it
+    // stays on you and widens to keep every moving ball in view (padding
+    // followPadding), zooming out quickly and back in slowly.
+    restFill: 0.2,
+    restZoomRate: 2.2, // 1/s, easing in to the tight view
     followPadding: 1.6, // screen units around moving balls while the camera stays on you
     followZoomOutRate: 3.5, // 1/s: widen quickly when something heads off screen
     followZoomInRate: 0.9, // 1/s: come back in slowly (a heavy lerp, so it never pumps)

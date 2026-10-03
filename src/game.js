@@ -268,7 +268,6 @@ export function createGame(container, levels, startIndex = 0) {
     state.entry = { hp: hero.hp, atk: hero.atk, shield: hero.shield, sword: hero.sword, gold: state.gold, cards: [...state.cards] };
     respawn();
     rig.snapTo(hero.x, hero.z);
-    state.intro = CONFIG.camera.introSeconds; // push in on you as the level starts
   }
 
   /** Put the hero back at the start. The board is left exactly as it is. */
@@ -337,7 +336,6 @@ export function createGame(container, levels, startIndex = 0) {
     aimCamera = rig.camera.clone();
     aimCamera.updateMatrixWorld();
     rig.beginAim(hero);
-    state.intro = 0; // you're aiming: the turn-start push-in is over
     pointerOn(groundPlane, e, state.pointer, aimCamera);
   });
 
@@ -470,7 +468,6 @@ export function createGame(container, levels, startIndex = 0) {
 
   /** Your turn comes round again: every Ghost switches between solid and faded. */
   function newRound() {
-    state.intro = CONFIG.camera.introSeconds; // the camera pushes in on you for the new turn
     for (const e of enemies()) {
       if (e.type !== 'ghost') continue;
       if (e.phased) e.solidifying = true; // turns solid once nothing overlaps it (settleGhosts)
@@ -1256,11 +1253,9 @@ export function createGame(container, levels, startIndex = 0) {
       const C = CONFIG.camera;
       const boost = state.returnBoost > 0 ? C.returnBoost : 1;
       if (state.phase === 'aim') {
-        // Your turn, at rest: push in tight on your ball (introFill of the
-        // view), hold once there, then ease out to the planning width.
-        if (state.intro > 0 && rig.settled) state.intro -= dt;
-        const width = state.intro > 0 ? CONFIG.ball.diameter / C.introFill : C.planWidth;
-        rig.focus(hero, width, dt, C.introZoomRate, boost);
+        // Your turn, at rest: tight on your ball (restFill of the view);
+        // aiming zooms out from here with power.
+        rig.focus(hero, CONFIG.ball.diameter / C.restFill, dt, C.restZoomRate, boost);
       } else {
         // Shots, enemy moves and the rest: centred on you, widening (fast)
         // to keep every moving ball in view, narrowing (slowly) after. In the
@@ -1274,7 +1269,8 @@ export function createGame(container, levels, startIndex = 0) {
           }
         }
         const fast = Math.min(1, speedOf(hero) / CONFIG.aim.maxLaunchSpeed);
-        rig.follow(hero, points, C.planWidth + (C.maxViewWidth - C.planWidth) * fast, C.maxFrameWidth, dt);
+        const tight = CONFIG.ball.diameter / C.restFill;
+        rig.follow(hero, points, tight + (C.maxViewWidth - tight) * fast, C.maxFrameWidth, dt);
       }
       if (state.returnBoost > 0) state.returnBoost = rig.settled ? 0 : state.returnBoost - dt;
     }

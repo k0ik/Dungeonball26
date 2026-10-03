@@ -11,6 +11,7 @@ import pinball from './levels/pinball.txt?raw';
 import gauntlet from './levels/gauntlet.txt?raw';
 import gauntlet02 from './levels/gauntlet02.txt?raw';
 import barrelRun from './levels/barrel-run.txt?raw';
+import lineOfSight from './levels/line-of-sight.txt?raw';
 import tut02 from './levels/tut02.txt?raw';
 import tut01 from './levels/tut01.txt?raw';
 import enemytester01 from './levels/enemytester01.txt?raw';
@@ -22,6 +23,7 @@ const LEVELS = [
   // level editor slots in at the current place instead.
   // `message` (optional): shown in a panel at the bottom while you're on the level.
   { id: 'tut01', name: 'Tutorial 01', text: tut01, message: 'Press on the ball and drag to aim. Release to shoot. Reach the exit.' },
+  { id: 'line-of-sight', name: 'Line of Sight', text: lineOfSight, message: 'Enemies only attack if they can see you.' },
   { id: 'tut02', name: 'Tutorial 02', text: tut02, message: "Attack enemies when it's your turn. Enemies attack on their turn if they see you." },
   { id: 'barrel-run', name: 'Barrel Run', text: barrelRun, message: 'Wooden barrels contain loot. Red barrels contain explosives.' },
   { id: 'bowls', name: 'Bowls', text: bowls },

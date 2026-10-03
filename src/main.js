@@ -10,6 +10,7 @@ import roomies from './levels/roomies.txt?raw';
 import pinball from './levels/pinball.txt?raw';
 import gauntlet from './levels/gauntlet.txt?raw';
 import gauntlet02 from './levels/gauntlet02.txt?raw';
+import billiards from './levels/billiards.txt?raw';
 import treasureTrove from './levels/treasure-trove.txt?raw';
 import barrelRun from './levels/barrel-run.txt?raw';
 import lineOfSight from './levels/line-of-sight.txt?raw';
@@ -28,6 +29,7 @@ const LEVELS = [
   { id: 'fight', name: 'Fight!', text: fight, message: "You're tougher than you think." },
   { id: 'barrel-run', name: 'Barrel Run', text: barrelRun, message: 'Wooden barrels contain loot. Red barrels contain explosives.' },
   { id: 'treasure-trove', name: 'Treasure Trove', text: treasureTrove },
+  { id: 'billiards', name: 'Billiards', text: billiards },
   { id: 'bowls', name: 'Bowls', text: bowls },
   { id: 'long-hall', name: 'Long Hall', text: longHall },
   { id: 'breakables', name: 'Breakables', text: breakables },

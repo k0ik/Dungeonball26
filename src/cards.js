@@ -47,7 +47,8 @@ export function offerCards(held, rng = Math.random, n = K.offer) {
  * the hand is full and nothing was chosen to replace.
  */
 export function takeCard(held, id, replace = null) {
+  // Chosen slot taken: the new card replaces that one (even with a slot free).
+  if (replace && held.includes(replace)) return held.map((c) => (c === replace ? id : c));
   if (held.length < K.slots) return [...held, id];
-  if (!replace || !held.includes(replace)) return null;
-  return held.map((c) => (c === replace ? id : c));
+  return null;
 }

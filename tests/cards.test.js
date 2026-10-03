@@ -73,3 +73,8 @@ test('Elasticity kicks a ball off a barrel, but not off a wall', () => {
     world.events.length = 0;
   }
 });
+
+test('a found card can replace a held one even with a slot free', () => {
+  assert.deepEqual(takeCard(['athletic'], 'elasticity', 'athletic'), ['elasticity']);
+  assert.deepEqual(takeCard(['athletic'], 'elasticity'), ['athletic', 'elasticity']);
+});

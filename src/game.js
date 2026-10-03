@@ -650,8 +650,10 @@ export function createGame(container, levels, startIndex = 0) {
     state.pendingPicks[0] -= dt;
     if (state.pendingPicks[0] > 0) return;
     state.pendingPicks.shift();
-    hud.showCardPick(offerCards(state.cards), state.cards, (id, replace) => {
-      if (!id) return;
+    const [id] = offerCards(state.cards, Math.random, 1); // one card, not yet held
+    if (!id) return;
+    hud.showCardFind(id, state.cards, (replace) => {
+      if (replace === false) return; // skipped
       const hand = takeCard(state.cards, id, replace);
       if (!hand) return;
       state.cards = hand;

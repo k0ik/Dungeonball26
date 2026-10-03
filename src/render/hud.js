@@ -179,54 +179,66 @@ export function createHud(container) {
      * full you then pick one of yours to replace. Skip is always there.
      * Calls done(id, replaceId) once, with id null for a skip.
      */
-    showCardPick(offer, held, done) {
+    /**
+     * A chest's card: "New skill" shows it, then your slots ("Choose a slot").
+     * Tap an empty slot to put it there; tap a held card to replace it (after
+     * a "Discard ...?" confirmation); or Skip. done(replace) gets null for an
+     * empty slot, the replaced card's id, or false for skip.
+     */
+    showCardFind(id, held, done) {
       paused = true; // the game holds still while you choose
-      const finish = (id, replace) => {
+      const finish = (answer) => {
         pick.classList.remove('on');
         paused = false;
-        done(id, replace);
+        done(answer);
       };
-      const cardButton = (id, onTap, extra = '') => {
-        const c = cardById(id);
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = `card ${extra}`;
-        b.innerHTML = `<span class="card-icon" aria-hidden="true"></span><span class="card-name"></span><span class="card-text"></span>`;
-        b.querySelector('.card-icon').textContent = c.icon;
-        b.querySelector('.card-name').textContent = c.name;
-        b.querySelector('.card-text').textContent = c.text;
-        b.addEventListener('click', onTap);
-        return b;
+      const cardFace = (cid, extra = '') => {
+        const c = cardById(cid);
+        const el = document.createElement('div');
+        el.className = `card ${extra}`;
+        el.innerHTML = `<span class="card-icon" aria-hidden="true"></span><span class="card-name"></span><span class="card-text"></span>`;
+        el.querySelector('.card-icon').textContent = c.icon;
+        el.querySelector('.card-name').textContent = c.name;
+        el.querySelector('.card-text').textContent = c.text;
+        return el;
       };
-      const render = (title, sub, buttons, skipLabel) => {
-        pick.innerHTML = '<h2></h2><p></p><div class="card-row"></div><button type="button" class="card-skip"></button>';
-        pick.querySelector('h2').textContent = title;
-        pick.querySelector('p').textContent = sub;
-        pick.querySelector('.card-row').append(...buttons);
-        const skip = pick.querySelector('.card-skip');
-        skip.textContent = skipLabel;
-        skip.addEventListener('click', () => finish(null));
+      const found = cardById(id);
+      const showSlots = () => {
+        pick.innerHTML = '<p class="pick-kicker">New skill</p><div class="pick-new"></div><h2>Choose a slot</h2><div class="slot-row"></div><button type="button" class="card-skip">Skip</button>';
+        pick.querySelector('.pick-new').append(cardFace(id, 'new'));
+        const row = pick.querySelector('.slot-row');
+        for (let i = 0; i < CONFIG.cards.slots; i++) {
+          const held_ = held[i];
+          const b = document.createElement('button');
+          b.type = 'button';
+          if (held_) {
+            const c = cardById(held_);
+            b.className = 'slot held';
+            b.innerHTML = '<span class="slot-icon" aria-hidden="true"></span><span class="slot-name"></span>';
+            b.querySelector('.slot-icon').textContent = c.icon;
+            b.querySelector('.slot-name').textContent = c.name;
+            b.addEventListener('click', () => confirmReplace(held_));
+          } else {
+            b.className = 'slot empty';
+            b.innerHTML = '<span class="slot-name">Empty</span>';
+            b.addEventListener('click', () => finish(null));
+          }
+          row.append(b);
+        }
+        pick.querySelector('.card-skip').addEventListener('click', () => finish(false));
         pick.classList.add('on');
-        pick.querySelector('.card')?.focus();
+        row.querySelector('.slot')?.focus();
       };
-      const slots = CONFIG.cards.slots;
-      render(
-        'Choose a card',
-        held.length < slots ? `${held.length} of ${slots} slots used` : `Your ${slots} slots are full: you'll swap one out`,
-        offer.map((id) =>
-          cardButton(id, () => {
-            if (held.length < slots) return finish(id);
-            // Full: which of yours goes?
-            render(
-              `Take ${cardById(id).name}`,
-              'Tap the card to give up for it',
-              held.map((h) => cardButton(h, () => finish(id, h), 'held')),
-              'Keep my cards',
-            );
-          }),
-        ),
-        'Skip',
-      );
+      const confirmReplace = (old) => {
+        pick.innerHTML = '<h2></h2><p></p><div class="pick-new"></div><div class="confirm-row"><button type="button" class="card-skip no">No</button><button type="button" class="card-skip yes">Yes</button></div>';
+        pick.querySelector('h2').textContent = `Discard ${cardById(old).name}?`;
+        pick.querySelector('p').textContent = `${found.name} will replace it.`;
+        pick.querySelector('.pick-new').append(cardFace(old, 'held'));
+        pick.querySelector('.no').addEventListener('click', showSlots);
+        pick.querySelector('.yes').addEventListener('click', () => finish(old));
+        pick.querySelector('.yes').focus();
+      };
+      showSlots();
     },
     /** The row of cards you hold. */
     setCards(ids) {

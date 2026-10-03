@@ -966,3 +966,68 @@ body {
   font: 11px/1.35 ui-monospace, Menlo, Consolas, monospace;
   color: #c9b7bb;
 }
+
+/* The chest card screen (hud.showCardFind): the new card, then your slots. */
+.pick-kicker {
+  color: #ffd23f !important;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.pick-new {
+  width: min(100%, 340px);
+}
+.pick-new .card {
+  cursor: default;
+}
+.pick-new .card.new {
+  box-shadow: 0 0 0 3px rgba(255, 210, 63, 0.35), 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+.card-pick h2 {
+  margin-top: 8px;
+}
+.slot-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: min(100%, 340px);
+}
+.slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 74px;
+  padding: 8px 6px;
+  border-radius: 12px;
+  font: 700 12px/1.2 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: #f2f2f4;
+  cursor: pointer;
+}
+.slot.held {
+  background: #2a2b30;
+  border: 2px solid #c8005f;
+}
+.slot.empty {
+  background: #1d1e22;
+  border: 2px dashed #6b6d72;
+  color: #9a9ca3;
+}
+.slot:hover,
+.slot:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 210, 63, 0.35);
+}
+.slot-icon {
+  font-size: 26px;
+}
+.confirm-row {
+  display: flex;
+  gap: 10px;
+}
+.confirm-row .yes {
+  background: #c8005f;
+  border-color: #c8005f;
+  color: #fff;
+}

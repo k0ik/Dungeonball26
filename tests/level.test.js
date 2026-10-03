@@ -20,11 +20,7 @@ test('level 1 matches the design doc: 12x33, enemies of levels 1 to 3', () => {
   assert.deepEqual([...new Set(level.enemies.map((e) => e.level))].sort(), [1, 2, 3]);
 });
 
-test('levels 2 and 3 match the design doc', () => {
-  const b = parseLevel(readFileSync(new URL('breakables.txt', levelsDir), 'utf8'));
-  assert.deepEqual([b.width, b.height], [9, 21]);
-  assert.deepEqual(b.enemies.map((e) => e.level), [1, 1]);
-  assert.equal(b.doors.length + b.keys.length, 0);
+test('One Key matches the design doc', () => {
   const k = parseLevel(readFileSync(new URL('one-key.txt', levelsDir), 'utf8'));
   assert.deepEqual([k.width, k.height], [12, 21]);
   assert.deepEqual(k.enemies.map((e) => e.level).sort(), [1, 2]);

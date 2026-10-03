@@ -1,6 +1,7 @@
-// Top HUD (design doc: "Camera, HUD and presentation"): no bar behind it,
-// just gold (the score) outlined on the left and the keys you hold on the
-// right. (Gear is shown beside the hero instead.) Also shows short centred
+// HUD (design doc: "Camera, HUD and presentation"): no bar behind it, just
+// gold (the score) outlined at the top left; along the bottom, the inventory:
+// your artifacts with the keys you hold stacked beside them. (Gear is shown
+// beside the hero instead.) Also shows short centred
 // banners and the full-screen death / run-complete screen.
 
 import { CONFIG } from '../config.js';
@@ -10,10 +11,13 @@ import { cardById } from '../cards.js';
 export function createHud(container) {
   const bar = document.createElement('div');
   bar.className = 'hud';
-  bar.innerHTML = `<div class="hud-left"><span class="coin"></span><span class="hud-gold">0</span></div><div class="hud-right"></div>`;
+  bar.innerHTML = `<div class="hud-left"><span class="coin"></span><span class="hud-gold">0</span></div>`;
   container.appendChild(bar);
   const gold = bar.querySelector('.hud-gold');
-  const keySlots = bar.querySelector('.hud-right');
+  // The keys you hold: a small column beside the artifacts (inventory below).
+  const keySlots = document.createElement('div');
+  keySlots.className = 'key-stack';
+  keySlots.hidden = true;
   const keyHex = (c) => `#${CONFIG.colors.keys[c].toString(16).padStart(6, '0')}`;
   let arriving = 0; // keys still flying into their slots
 
@@ -34,13 +38,20 @@ export function createHud(container) {
   message.hidden = true;
   bottom.appendChild(message);
 
-  // Artifacts (cards in the code): the ones you hold, as a row of mini cards
-  // at the bottom; and the chest pick, a full-screen panel that takes the input.
+  // The inventory, at the foot of the stack: the artifacts you hold (cards in
+  // the code) as a row of mini cards, and your keys stacked beside them.
+  const inventory = document.createElement('div');
+  inventory.className = 'inventory';
+  inventory.hidden = true;
+  bottom.appendChild(inventory);
+  const showInventory = () => (inventory.hidden = hand.hidden && keySlots.hidden);
+  // Artifacts: the held row, and the chest pick, a full-screen panel that
+  // takes the input.
   const hand = document.createElement('div');
   hand.className = 'card-hand';
   hand.setAttribute('aria-label', 'Your artifacts');
   hand.hidden = true;
-  container.appendChild(hand);
+  inventory.append(hand, keySlots);
   let shownCards = null;
   // Tapping a held card pauses the game and shows the card; a tap anywhere
   // closes it and play resumes.
@@ -267,11 +278,12 @@ export function createHud(container) {
         hand.appendChild(chip);
       }
       hand.hidden = ids.length === 0;
+      showInventory();
     },
     /**
      * A key you just picked up, at page point `from`: it flies to the middle
      * of the screen, growing and spinning, holds there a moment, then flies
-     * into its slot in the top-right (settling its spin), and the slot fills
+     * into its slot in the inventory (settling its spin), and the slot fills
      * as it lands. Call after the key is added to your keys (it flies to the
      * last slot).
      */
@@ -339,6 +351,8 @@ export function createHud(container) {
         .map((c, i) => `<span class="key-slot${i >= keys.length - arriving ? ' arriving' : ''}" title="${c} key">${keyIcon(keyHex(c))}</span>`)
         .join('');
       keySlots.setAttribute('aria-label', keys.length ? `Keys: ${keys.join(', ')}` : 'No keys');
+      keySlots.hidden = keys.length === 0;
+      showInventory();
     },
     /** Red screen edge on or off (low HP). */
     setDanger(on) {

@@ -11,7 +11,7 @@ test('the seven starting artifacts (Locksmith and Doppleganger are shelved)', ()
     CARDS.map((c) => c.name),
     [
       'Leech in a Jar', "Soldier's Nose", 'Sack of Plenty', "Cooper's Hammer", 'Boots of Rolling', 'Value Vacuum',
-      'Rubber Bumpers',
+      'Bouncy Britches',
     ],
   );
 });

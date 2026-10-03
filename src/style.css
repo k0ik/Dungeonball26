@@ -335,21 +335,22 @@ body {
   }
 }
 
-.hud-right {
+/* The inventory along the bottom: your artifacts (tap one to see it), then
+   your keys stacked in a small column beside them, aligned to their top. */
+.inventory {
   display: flex;
-  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 8px;
+  pointer-events: auto;
+}
+.card-hand {
+  display: flex;
   gap: 6px;
 }
-
-/* Trait cards you hold: a row of chips along the bottom. Tap one to see it. */
-.card-hand {
-  position: absolute;
-  left: 50%;
-  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-  translate: -50% 0;
+.key-stack {
   display: flex;
-  gap: 6px;
-  z-index: 2;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .card-chip {
@@ -501,7 +502,8 @@ body {
   cursor: pointer;
 }
 
-/* Keys you hold, top right. */
+/* Keys you hold, in the inventory: about 30% of an artifact's height, so
+   all three stack beside the row. */
 .key-slot.arriving {
   visibility: hidden;
 }
@@ -518,8 +520,8 @@ body {
 .key-fly svg,
 .key-slot svg {
   display: block;
-  width: 26px;
-  height: 26px;
+  width: 20px;
+  height: 20px;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
 }
 
@@ -904,7 +906,7 @@ body {
   position: absolute;
   left: 6%;
   right: 6%;
-  bottom: calc(46px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1084,8 +1086,4 @@ body {
 .card-chip span {
   font-size: 24px;
   line-height: 1;
-}
-/* The held row is taller, so the stack sits above it while it shows. */
-.bottom-stack:has(~ .card-hand:not([hidden])) {
-  bottom: calc(104px + env(safe-area-inset-bottom, 0px));
 }

@@ -452,7 +452,7 @@ export const CONFIG = {
     keyToCenterSeconds: 0.45,
     keyHoldSeconds: 0.45,
     keyToSlotSeconds: 0.5,
-    keyCenterScale: 3, // its size in the middle, relative to the HUD icon
+    keyCenterScale: 3.9, // its size in the middle, relative to the HUD icon (20px)
     keySpinTurns: 1.6, // turns per second while it spins
     itemXrayOpacity: 0.6, // floor pickups hidden behind a wall show through it as a silhouette this opaque
     // While you aim (dragged past the cancel ring), walls and doors between

@@ -36,7 +36,7 @@ export function canGrab(hero, pointer) {
  * second crack breaks and gets out of the way, and a red barrel goes off,
  * exactly as in the real shot. It keeps up to `previewBounces` bounces and
  * ends at the next contact. `hero` supplies position, ATK, HP and friction;
- * `kick` and `barrelHits` carry card effects (Rubber Bumpers, Cooper's Hammer: the hero's barrel hits);
+ * `kick` and `barrelHits` carry card effects (Bouncy Britches, Cooper's Hammer: the hero's barrel hits);
  * `ice` (the board's puddles) and `move` (the shot's move number) make the
  * path speed up over ice, with Ice balls icing the floor as they go.
  * Returns { points: [start, ...bends, end], bends: count, stopped }.

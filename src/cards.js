@@ -20,7 +20,7 @@ export const CARDS = [
   // { id: 'locksmith', name: 'Locksmith', icon: '🗝️', text: 'Doors open without keys.' },
   { id: 'athletic', name: 'Boots of Rolling', icon: '🥾', text: 'Travel faster and farther.' },
   { id: 'moneyMagnet', name: 'Value Vacuum', icon: '🌪️', text: 'Nearby coins are attracted to you.' },
-  { id: 'elasticity', name: 'Rubber Bumpers', icon: '🏀', text: 'Bounce off objects and enemies to go faster and farther.' },
+  { id: 'elasticity', name: 'Bouncy Britches', icon: '🩳', text: 'Bounce off objects and enemies to go faster and farther.' },
 ];
 
 export const cardById = (id) => CARDS.find((c) => c.id === id);

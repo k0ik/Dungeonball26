@@ -84,7 +84,7 @@ export function resolveObjects(world, hero, rng = Math.random, { heroBarrelHits 
       if (world.time - s.lastHit < O.barrelCooldown) continue;
       s.lastHit = world.time;
       s.hits++;
-      // Wood Axe (heroBarrelHits 1) is your ball's alone; other balls still
+      // Cooper's Hammer (heroBarrelHits 1) is your ball's alone; other balls still
       // take the usual hits.
       if (s.hits >= (ev.ball === hero ? heroBarrelHits : O.barrelHits)) {
         gone.add(s);

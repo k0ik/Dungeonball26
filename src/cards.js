@@ -10,16 +10,16 @@ import { CONFIG } from './config.js';
 const K = CONFIG.cards;
 
 export const CARDS = [
-  { id: 'vampirism', name: "Vampire's Tooth", icon: '🦇', text: `Defeating an enemy gives you +${K.vampirismHeal} HP.` },
+  { id: 'vampirism', name: 'Leech in a Jar', icon: '🫙', text: `Defeating an enemy gives you +${K.vampirismHeal} HP.` },
   // Shelved for now. Its effect is still wired up in game.js.
   // { id: 'doppleganger', name: 'Doppleganger', icon: '👥', text: '+1 life, and +1 to the lives a game over restores.' },
-  { id: 'junkHunter', name: 'Junk Detector', icon: '🛡️', text: 'You find more swords and shields in barrels.' },
-  { id: 'bullionaire', name: 'Magic Wallet', icon: '💰', text: `The gold you collect is worth ${K.bullionaire}×.` },
-  { id: 'barrelOfFun', name: 'Wood Axe', icon: '🛢️', text: 'Break barrels with one hit.' },
+  { id: 'junkHunter', name: "Soldier's Nose", icon: '👃', text: 'You find more swords and shields in barrels.' },
+  { id: 'bullionaire', name: 'Sack of Plenty', icon: '💰', text: `The gold you collect is worth ${K.bullionaire}×.` },
+  { id: 'barrelOfFun', name: "Cooper's Hammer", icon: '🔨', text: 'Break barrels with one hit.' },
   // Shelved for now: unclear that skipping doors pays off. Its effect is still wired up in game.js.
   // { id: 'locksmith', name: 'Locksmith', icon: '🗝️', text: 'Doors open without keys.' },
-  { id: 'athletic', name: 'Rollerskates', icon: '👟', text: 'Travel faster and farther.' },
-  { id: 'moneyMagnet', name: 'Moola Magnet', icon: '🧲', text: 'Nearby coins are attracted to you.' },
+  { id: 'athletic', name: 'Boots of Rolling', icon: '🥾', text: 'Travel faster and farther.' },
+  { id: 'moneyMagnet', name: 'Value Vacuum', icon: '🌪️', text: 'Nearby coins are attracted to you.' },
   { id: 'elasticity', name: 'Rubber Bumpers', icon: '🏀', text: 'Bounce off objects and enemies to go faster and farther.' },
 ];
 

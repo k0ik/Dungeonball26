@@ -68,7 +68,7 @@ test('an enemy knocked into a barrel cracks and breaks it too', () => {
   assert.ok(!world.statics.includes(barrel));
 });
 
-test('Wood Axe breaks a barrel in one hit from your ball only', () => {
+test("Cooper's Hammer breaks a barrel in one hit from your ball only", () => {
   const { world, hero, get } = setup();
   const barrel = get('barrel');
   const enemy = createEnemy({ x: 3, z: 2.5, level: 1, id: 'e' });

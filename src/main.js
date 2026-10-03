@@ -4,10 +4,6 @@ import longHall from './levels/long-hall.txt?raw';
 import oneKey from './levels/one-key.txt?raw';
 import warrens from './levels/warrens.txt?raw';
 import crawlspace from './levels/crawlspace.txt?raw';
-import caverns from './levels/caverns.txt?raw';
-import roomies from './levels/roomies.txt?raw';
-import pinball from './levels/pinball.txt?raw';
-import gauntlet from './levels/gauntlet.txt?raw';
 import gauntlet02 from './levels/gauntlet02.txt?raw';
 import billiards from './levels/billiards.txt?raw';
 import barrelRun from './levels/barrel-run.txt?raw';
@@ -32,10 +28,6 @@ const LEVELS = [
   { id: 'one-key', name: 'One Key', text: oneKey },
   { id: 'warrens', name: 'Warrens', text: warrens },
   { id: 'crawlspace', name: 'Crawlspace', text: crawlspace },
-  { id: 'caverns', name: 'Caverns', text: caverns },
-  { id: 'roomies', name: 'Roomies', text: roomies },
-  { id: 'pinball', name: 'Pinball', text: pinball },
-  { id: 'gauntlet', name: 'Gauntlet', text: gauntlet },
   { id: 'gauntlet02', name: 'Gauntlet 02', text: gauntlet02 },
   { id: 'enemytester01', name: 'Enemy Tester 01', text: enemytester01 },
 ];

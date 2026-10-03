@@ -356,11 +356,29 @@ export const CONFIG = {
     // zooms out from there with power). During shots and enemy moves it
     // stays on you and widens to keep every moving ball in view (padding
     // followPadding), zooming out quickly and back in slowly.
-    restFill: 0.2,
+    restFill: 0.188, // your ball's share of the view's width at rest (0.2 felt a touch too close)
     restZoomRate: 2.2, // 1/s, easing in to the tight view
     followPadding: 1.6, // screen units around moving balls while the camera stays on you
     followZoomOutRate: 3.5, // 1/s: widen quickly when something heads off screen
     followZoomInRate: 0.9, // 1/s: come back in slowly (a heavy lerp, so it never pumps)
+    // Close calls: when your moving ball is about to reach an enemy (or an
+    // enemy is rushing you), the camera swings in tight on the pair and time
+    // eases to closeSlow, so you're there for the hit or the near miss.
+    closeGap: 1.6, // tiles between their surfaces at most
+    closeTime: 0.45, // seconds to contact at most, at the speed they're closing
+    closeMinSpeed: 2, // tiles/s they must be closing at least
+    closeHold: 0.35, // real seconds it lingers after the moment passes
+    closeWidth: 3.2, // tiles across at the tightest
+    closeSlow: 0.55, // time scale during a close call
+    closeZoomRate: 5, // 1/s
+    // Kill cam: a kill (during a shot or the enemy move) drops time to
+    // killSlow and holds tight on it for killSeconds of real time; a combo
+    // kill (2+ in one shot) holds comboSeconds.
+    killSeconds: 0.7,
+    comboSeconds: 1.1,
+    killSlow: 0.3,
+    killWidth: 2.8,
+    timeEaseRate: 9, // 1/s: how quickly time slows and comes back
     // Camera shake when you're hurt: a short, decaying rattle of the view
     // (never of aiming). Off with shake: false or the device's reduce-motion
     // setting (a Settings switch to come).

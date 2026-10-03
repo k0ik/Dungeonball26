@@ -179,9 +179,13 @@ export function createOverlay(container, camera) {
         const c = toScreen(b.x, b.radius, b.z);
         side.setFromMatrixColumn(camera.matrixWorld, 0).multiplyScalar(b.radius);
         const e = toScreen(b.x + side.x, b.radius + side.y, b.z + side.z);
-        const gap = Math.abs(e.left - c.left) + 13;
-        gear.sword.style.transform = `translate(${(c.left + gap).toFixed(1)}px, ${c.top.toFixed(1)}px) translate(-50%, -50%)`;
-        gear.shield.style.transform = `translate(${(c.left - gap).toFixed(1)}px, ${c.top.toFixed(1)}px) translate(-50%, -50%)`;
+        // They scale with the zoom: sized for a ball about 14 px across in
+        // radius (the old resting view), bigger as the camera closes in.
+        const radius = Math.abs(e.left - c.left);
+        const k = Math.min(3, Math.max(0.8, radius / 14));
+        const gap = radius + 13 * k;
+        gear.sword.style.transform = `translate(${(c.left + gap).toFixed(1)}px, ${c.top.toFixed(1)}px) translate(-50%, -50%) scale(${k.toFixed(3)})`;
+        gear.shield.style.transform = `translate(${(c.left - gap).toFixed(1)}px, ${c.top.toFixed(1)}px) translate(-50%, -50%) scale(${k.toFixed(3)})`;
       }
       for (const [ball, bar] of bars) {
         place(bar.el, ball.x, ball.radius * 2 + BAR_HEIGHT, ball.z);

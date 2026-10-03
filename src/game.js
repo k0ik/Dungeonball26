@@ -950,6 +950,11 @@ export function createGame(container, levels, startIndex = 0) {
         if (o.amount) floatAt(o.target, `-${o.amount}`, 'hurt');
       } else if (o.type === 'kill') {
         sfx.play('kill', 0.9);
+        // Kill cam: hold tight on it in slow motion (longer for a combo).
+        if (state.phase === 'shot' || state.phase === 'enemyMove') {
+          const K = CONFIG.camera;
+          state.killCam = { x: o.target.x, z: o.target.z, left: (o.shotKills ?? 1) >= 2 ? K.comboSeconds : K.killSeconds };
+        }
         enemyViews.get(o.target)?.die();
         overlay.removeBar(o.target);
         // A kill drops coins worth the enemy's level where it died.
@@ -992,6 +997,43 @@ export function createGame(container, levels, startIndex = 0) {
   }
 
   // --- Camera ------------------------------------------------------------------
+  /**
+   * Drama (design doc: "Close calls and the kill cam"): spot close calls,
+   * count down the kill cam, and ease the time scale toward slow motion while
+   * either is on. Runs on real time; returns the time scale for this frame.
+   */
+  function updateDrama(realDt) {
+    const C = CONFIG.camera;
+    const live = state.phase === 'shot' || state.phase === 'enemyMove';
+    if (state.killCam) {
+      state.killCam.left -= realDt;
+      if (state.killCam.left <= 0 || !live) state.killCam = null;
+    }
+    // A close call: you and an enemy about to meet (whichever is moving).
+    let best = null;
+    if (live && !hero.phased) {
+      for (const e of enemies()) {
+        if (e.hp <= 0 || e.phased || isTool(e)) continue;
+        const dx = e.x - hero.x;
+        const dz = e.z - hero.z;
+        const d = Math.hypot(dx, dz);
+        const gap = d - hero.radius - e.radius;
+        const closing = ((hero.vx - e.vx) * dx + (hero.vz - e.vz) * dz) / (d || 1);
+        if (gap > C.closeGap || closing < C.closeMinSpeed || gap / closing > C.closeTime) continue;
+        if (!best || gap / closing < best.t) best = { enemy: e, t: gap / closing };
+      }
+    }
+    if (best) state.closeCall = { enemy: best.enemy, left: C.closeHold };
+    else if (state.closeCall) {
+      state.closeCall.left -= realDt;
+      if (state.closeCall.left <= 0 || !live) state.closeCall = null;
+    }
+    const target = state.killCam ? C.killSlow : state.closeCall ? C.closeSlow : 1;
+    state.timeScale = (state.timeScale ?? 1) + (target - (state.timeScale ?? 1)) * (1 - Math.exp(-C.timeEaseRate * realDt));
+    if (Math.abs(state.timeScale - 1) < 0.01 && target === 1) state.timeScale = 1;
+    return state.timeScale;
+  }
+
   // --- Debug overlay -----------------------------------------------------------
   const debug = document.createElement('pre');
   debug.className = 'debug';
@@ -1030,9 +1072,12 @@ export function createGame(container, levels, startIndex = 0) {
 
   function frame(now) {
     // Paused (a card is open): time stands still, but the scene keeps drawing.
-    const dt = hud.paused ? 0 : Math.min(0.25, (now - last) / 1000);
+    const realDt = hud.paused ? 0 : Math.min(0.25, (now - last) / 1000);
     last = now;
-    fps += (1 / Math.max(dt, 1e-3) - fps) * 0.05;
+    fps += (1 / Math.max(realDt, 1e-3) - fps) * 0.05;
+    // Slow motion (close calls and the kill cam): game time runs at
+    // state.timeScale; the camera keeps real time so it stays smooth.
+    const dt = realDt * updateDrama(realDt);
 
     const step = CONFIG.physics.step;
     acc += dt;
@@ -1243,7 +1288,7 @@ export function createGame(container, levels, startIndex = 0) {
       // Aiming: zoom out with shot power, anchored on the ball.
       const fill = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z }).fill;
       const from = rig.aimStartWidth;
-      rig.aimZoom(hero, from + (Math.max(from, CONFIG.camera.aimMaxWidth) - from) * fill, dt);
+      rig.aimZoom(hero, from + (Math.max(from, CONFIG.camera.aimMaxWidth) - from) * fill, realDt);
     } else if (state.panned && state.phase !== 'aim') {
       state.panned = false; // you shot (or the turn moved on): follow the play again
     } else if (state.panned) {
@@ -1255,7 +1300,7 @@ export function createGame(container, levels, startIndex = 0) {
       if (state.phase === 'aim') {
         // Your turn, at rest: tight on your ball (restFill of the view);
         // aiming zooms out from here with power.
-        rig.focus(hero, CONFIG.ball.diameter / C.restFill, dt, C.restZoomRate, boost);
+        rig.focus(hero, CONFIG.ball.diameter / C.restFill, realDt, C.restZoomRate, boost);
       } else {
         // Shots, enemy moves and the rest: centred on you, widening (fast)
         // to keep every moving ball in view, narrowing (slowly) after. In the
@@ -1270,11 +1315,24 @@ export function createGame(container, levels, startIndex = 0) {
         }
         const fast = Math.min(1, speedOf(hero) / CONFIG.aim.maxLaunchSpeed);
         const tight = CONFIG.ball.diameter / C.restFill;
-        rig.follow(hero, points, tight + (C.maxViewWidth - tight) * fast, C.maxFrameWidth, dt);
+        if (state.killCam) {
+          // Kill cam: tight on the kill (and you, if you're close by).
+          const k = state.killCam;
+          const d = Math.hypot(hero.x - k.x, hero.z - k.z);
+          const near = d < C.killWidth * 1.2;
+          rig.focus(near ? { x: (hero.x + k.x) / 2, z: (hero.z + k.z) / 2 } : k, Math.max(C.killWidth, near ? d * 1.3 + 1.2 : 0), realDt, C.closeZoomRate);
+        } else if (state.closeCall) {
+          // Close call: tight on you and the enemy you're closing on.
+          const e = state.closeCall.enemy;
+          const d = Math.hypot(hero.x - e.x, hero.z - e.z);
+          rig.focus({ x: (hero.x + e.x) / 2, z: (hero.z + e.z) / 2 }, Math.max(C.closeWidth, d * 1.3 + 1.2), realDt, C.closeZoomRate);
+        } else {
+          rig.follow(hero, points, tight + (C.maxViewWidth - tight) * fast, C.maxFrameWidth, realDt);
+        }
       }
       if (state.returnBoost > 0) state.returnBoost = rig.settled ? 0 : state.returnBoost - dt;
     }
-    rig.updateShake(dt);
+    rig.updateShake(realDt);
     renderer.render(scene, rig.camera);
     overlay.update();
     hud.setGold(state.gold);

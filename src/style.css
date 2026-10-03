@@ -902,3 +902,22 @@ body {
   display: flex;
   gap: 8px;
 }
+
+/* A level's message (tutorials): a panel along the bottom, above the cards. */
+.level-message {
+  position: absolute;
+  left: 50%;
+  bottom: calc(46px + env(safe-area-inset-bottom, 0px));
+  translate: -50% 0;
+  width: max-content;
+  max-width: 88%;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: rgba(24, 25, 28, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f2f2f4;
+  font: 600 14px/1.35 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  text-align: center;
+  pointer-events: none;
+  z-index: 2;
+}

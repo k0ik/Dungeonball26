@@ -17,6 +17,14 @@ export function createHud(container) {
   const keyHex = (c) => `#${CONFIG.colors.keys[c].toString(16).padStart(6, '0')}`;
   let arriving = 0; // keys still flying into their slots
 
+  // A level's message (tutorials): a panel along the bottom, above the cards,
+  // for as long as you're on the level.
+  const message = document.createElement('div');
+  message.className = 'level-message';
+  message.setAttribute('role', 'status');
+  message.hidden = true;
+  container.appendChild(message);
+
   // Trait cards: the ones you hold, as a row of chips at the bottom; and the
   // end-of-level pick, a full-screen panel that takes the input.
   const hand = document.createElement('div');
@@ -312,6 +320,11 @@ export function createHud(container) {
       edge.classList.toggle('on', on);
     },
     /** Centred message for `seconds`; a second line is optional. */
+    /** Show a level's message at the bottom of the screen, or hide it (null). */
+    setMessage(text) {
+      message.textContent = text ?? '';
+      message.hidden = !text;
+    },
     banner(title, sub = '', seconds = 1.6) {
       banner.innerHTML = `<strong></strong><span></span>`;
       banner.querySelector('strong').textContent = title;

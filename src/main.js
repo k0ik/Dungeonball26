@@ -10,7 +10,6 @@ import roomies from './levels/roomies.txt?raw';
 import pinball from './levels/pinball.txt?raw';
 import gauntlet from './levels/gauntlet.txt?raw';
 import gauntlet02 from './levels/gauntlet02.txt?raw';
-import barrelRun02 from './levels/barrel-run02.txt?raw';
 import barrelRun from './levels/barrel-run.txt?raw';
 import tut04 from './levels/tut04.txt?raw';
 import tut03 from './levels/tut03.txt?raw';
@@ -22,8 +21,8 @@ import bowls from './levels/bowls.txt?raw';
 // The run, in order (design doc: "Levels"). Levels 4 and 5 arrive in M8.
 const LEVELS = [
   // The newest level goes first while it's being playtested (see CLAUDE.md).
-  { id: 'barrel-run02', name: 'Barrel Run 02', text: barrelRun02 },
-  { id: 'barrel-run', name: 'Barrel Run', text: barrelRun },
+  // `message` (optional): shown in a panel at the bottom while you're on the level.
+  { id: 'barrel-run', name: 'Barrel Run', text: barrelRun, message: 'Wooden barrels contain loot. Red barrels contain explosives.' },
   { id: 'tut04', name: 'Tutorial 04', text: tut04 },
   { id: 'tut03', name: 'Tutorial 03', text: tut03 },
   { id: 'tut02', name: 'Tutorial 02', text: tut02 },

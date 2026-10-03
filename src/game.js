@@ -215,6 +215,7 @@ export function createGame(container, levels, startIndex = 0) {
   function loadLevel(i) {
     levelIndex = (i + levels.length) % levels.length;
     const def = levels[levelIndex];
+    hud.setMessage(def.message ?? null);
     level = parseLevel(def.text, def.name);
     if (levelView) scene.remove(levelView);
     levelView = buildLevelView(level);

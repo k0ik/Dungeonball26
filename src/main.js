@@ -46,7 +46,30 @@ const LEVELS = [
 
 // Start on a level with the URL hash, e.g. #one-key.
 const fromHash = LEVELS.findIndex((l) => `#${l.id}` === location.hash);
-window.game = createGame(document.getElementById('game'), LEVELS, Math.max(0, fromHash));
+// If anything breaks (above all, the browser refusing to start WebGL), say so
+// on screen instead of leaving a blank page, so it can be reported.
+function showFatal(err) {
+  if (document.querySelector('.fatal')) return;
+  const box = document.createElement('div');
+  box.className = 'fatal';
+  const webgl = /webgl|context/i.test(String(err?.message ?? err));
+  box.innerHTML = '<strong></strong><p></p><code></code>';
+  box.querySelector('strong').textContent = webgl ? "The game couldn't start its 3D graphics" : 'Something went wrong';
+  box.querySelector('p').textContent = webgl
+    ? 'Your browser refused to create a WebGL context (this can happen after many reloads). Try reloading the page, or opening it in a new tab.'
+    : 'Reload the page to try again. If it keeps happening, send a screenshot of this message.';
+  box.querySelector('code').textContent = String(err?.stack ?? err?.message ?? err).split('\n').slice(0, 4).join('\n');
+  document.body.appendChild(box);
+}
+window.addEventListener('error', (e) => showFatal(e.error ?? e.message));
+window.addEventListener('unhandledrejection', (e) => showFatal(e.reason));
+
+try {
+  window.game = createGame(document.getElementById('game'), LEVELS, Math.max(0, fromHash));
+} catch (err) {
+  showFatal(err);
+  throw err;
+}
 
 // The level editor (desktop): E opens the current level in it.
 const editor = createEditor({ getLevel: () => window.game.levelDef, onPlay: (def) => window.game.playLevel(def) });

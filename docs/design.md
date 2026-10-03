@@ -135,30 +135,31 @@ Gold is the score, and it is where the risk against greed tension lives. Kills s
 
 Shots taken are tracked and shown on the level-complete screen but do not affect the score in the MVP.
 
-## Trait cards
+## Artifacts
 
-Trait cards are the roguelike layer. Each is an always-on ability that lasts for the rest of the run. (Built in M7 with the nine starting cards below.)
+Artifacts are the roguelike layer: magic objects found in chests, each conferring an always-on power that lasts for the rest of the run. (Built in M7 as "trait cards" and renamed to artifacts, with object names, afterwards; the code still calls them cards, `src/cards.js`, and the ids are unchanged.)
 
-- **Slots:** you hold up to 3 cards.
-- **Finding a card:** cards come out of chests, one card per chest (a random card you don't already hold). About a second after a chest opens (`cards.chestPickDelay`, once its coins are out), the game freezes mid-roll and shows it: "New skill" with the card, then "Choose a slot" with your 3 slots side by side (each held card's icon and name, or Empty) and Skip. Tap an empty slot and the card goes there; tap a held card and a confirmation asks "Discard Elasticity? Money Magnet will replace it." with No (back to the slots) and Yes; tap Skip to leave it. Then play resumes exactly where it was, so you can change strategy mid-level based on what you find. Two chests opened in one shot give two cards, one after the other. There's no card at the end of a level, and a level with no chests gives no cards.
-- **Always on:** cards have no activation and no cooldown; their effect simply applies while you hold them. The cards you hold sit as a small row of chips (icon and name) along the bottom of the screen. Tapping a chip pauses the game (everything holds still, mid-shot or mid-enemy-turn) and shows that card large, with its full effect; a tap anywhere closes it and play resumes.
-- **The card screen:** dark and centred over the frozen board, the found card on top in full (icon, name, effect) with a gold glow, the slots below as a row of three tiles (held: magenta border; empty: dashed), Skip under them. (It replaced an earlier offer-of-three pick with a separate replace step.)
+- **Slots:** you hold up to 3 artifacts.
+- **Finding an artifact:** artifacts come out of chests, one per chest (a random one you don't already hold). About a second after a chest opens (`cards.chestPickDelay`, once its coins are out), the game freezes mid-roll and shows it: "New artifact" with the card, then "Choose a slot" with your 3 slots side by side (each held card's icon and name, or Empty) and Skip. Tap an empty slot and the card goes there; tap a held card and a confirmation asks "Discard Rubber Baby Buggy Bumpers? Moola Magnet will replace it." with No (back to the slots) and Yes; tap Skip to leave it. Then play resumes exactly where it was, so you can change strategy mid-level based on what you find. Two chests opened in one shot give two cards, one after the other. There's no card at the end of a level, and a level with no chests gives no cards.
+- **Always on:** cards have no activation and no cooldown; their effect simply applies while you hold them. The artifacts you hold sit as a small row of mini cards (icon over name) along the bottom of the screen. Tapping a chip pauses the game (everything holds still, mid-shot or mid-enemy-turn) and shows that card large, with its full effect; a tap anywhere closes it and play resumes.
+- **The card screen:** dark and centred over the frozen board, the found artifact on top as a full card with a gold glow, the slots below as a row of three tiles (held: magenta border; empty: dashed), Skip under them. (It replaced an earlier offer-of-three pick with a separate replace step.)
+- **The card:** each artifact shows as an upright card, not a horizontal strip: its name at the top, a large icon in the middle, then its effect. Icons are emoji for now (so they depend on the device's emoji font); simple custom SVG icons, in the style of the sword and shield, are to come.
 - **Carry-over:** cards carry between levels; a game over restores the cards you entered the level with; a new run starts with none.
 - **Starting hand:** a new game starts with no cards; you collect them one at a time from chests, filling your hand before you ever have to swap one. (Testing aid: `cards.startDealt` deals that many random cards at the start instead; it was 3 while the cards were being tuned, and is now 0.)
 
-Starting cards (numbers are defaults to tune):
+Starting artifacts (numbers are defaults to tune):
 
-| Card | Effect |
+| Artifact | Effect |
 | --- | --- |
-| Vampirism | Each kill heals you 1 HP, capped at max |
+| 🦷 Vampire's Tooth (was Vampirism) | Each kill heals you 1 HP, capped at max |
 | ~~Doppleganger~~ | *Shelved for now (not offered or dealt).* +1 life, and +1 to the lives you're restored to on a game over |
-| Junk Hunter | Swords and shields turn up twice as often in barrels |
-| Bullionaire | All gold you collect is worth 1.5× (rounded up) |
-| Barrel of Fun | Barrels break in one hit |
+| 📡 Metal Detector (was Junk Hunter) | Swords and shields turn up twice as often in barrels |
+| 👛 Magic Wallet (was Bullionaire) | All gold you collect is worth 1.5× (rounded up) |
+| 🪓 Wood Axe (was Barrel of Fun) | Barrels break in one hit |
 | ~~Locksmith~~ | *Shelved for now (not offered or dealt): it's unclear that skipping doors pays off.* Doors open without keys, and keys don't appear |
-| Athletic | Your ball rolls faster and farther: 40% less friction on it, on top of the lower base friction every ball now has (the old Athletic, 25%, became the baseline). Enemies unaffected; the aim preview includes it |
-| Money Magnet | Gold on the floor (enemy coins, barrel gold and strip coins) is collected from farther away: within 1.5 tiles of your ball's centre instead of just on contact (about 0.6 tiles), drawn in to you as you roll past. Other loot still needs contact |
-| Elasticity | Barrels, chests and enemies act like pinball bumpers for you: when your ball bounces off one, it's kicked away with +2.5 tiles/s of extra speed (instead of the +1.5 every ball gets from barrels alone) along the bounce (never above the 9 tiles/s max launch speed). Each bumper kicks up to 3 times per shot (`cards.elasticityKicksPerBumper`), so a ball caught rattling between a chest and a wall (worst with Athletic) still runs down instead of bouncing forever. Walls bounce as normal. The aim preview includes the kick |
+| 🛼 Rollerskates (was Athletic) | Your ball rolls faster and farther: 40% less friction on it, on top of the lower base friction every ball now has (the old Athletic, 25%, became the baseline). Enemies unaffected; the aim preview includes it |
+| 🧲 Moola Magnet (was Money Magnet) | Gold on the floor (enemy coins, barrel gold and strip coins) is collected from farther away: within 1.5 tiles of your ball's centre instead of just on contact (about 0.6 tiles), drawn in to you as you roll past. Other loot still needs contact |
+| 🛟 Rubber Baby Buggy Bumpers (was Elasticity) | Barrels, chests and enemies act like pinball bumpers for you: when your ball bounces off one, it's kicked away with +2.5 tiles/s of extra speed (instead of the +1.5 every ball gets from barrels alone) along the bounce (never above the 9 tiles/s max launch speed). Each bumper kicks up to 3 times per shot (`cards.elasticityKicksPerBumper`), so a ball caught rattling between a chest and a wall (worst with Athletic) still runs down instead of bouncing forever. Walls bounce as normal. The aim preview includes the kick |
 
 Defaults assumed until you say otherwise: an offer never includes a card you already hold, and a card you replace goes back into the pool. Cards carry over between levels like HP and gold, and a game over restores the cards you entered the level with.
 
@@ -431,7 +432,6 @@ Changes agreed during development that aren't built yet. (Trait cards are schedu
 - **Aim cancel mark on top:** the "X" that shows while your drag is inside the cancel ring (let go to cancel) moves from on the ball to above it on screen, so the finger dragging back from the bottom never covers it.
 - **Shield blinks out:** when your shield is used up (it took a hit or a blast for you), it blinks 3 times before it disappears, so you notice it's gone. (The sword doesn't need this.)
 - **Sound effects:** you have a collection of sound effects to swap in for the placeholders (see Audio).
-- **Card layouts:** a redesign of the card layouts is coming (details to follow).
 - **Cards light up when they act:** whenever a held card does something, its card in the HUD briefly enlarges (a quick pop and settle), so you learn what each one does: Vampirism when a kill heals you, Elasticity on a kick, Barrel of Fun when a barrel breaks in one hit, Money Magnet as it pulls coins, Bullionaire as gold is multiplied, Junk Hunter when a barrel drops gear, Athletic as your shot launches.
 - **Hit effects:** on every hit to an enemy, a short burst of lines or dots in that enemy's colour flies outward from the point of impact.
 - **Hit expression for enemies:** a struck enemy shows a pained face for a moment (like your ball's "ouch"), while still looking toward its attacker (see Faces look where they're going).

@@ -10,17 +10,17 @@ import { CONFIG } from './config.js';
 const K = CONFIG.cards;
 
 export const CARDS = [
-  { id: 'vampirism', name: 'Vampirism', icon: '🦇', text: `Every kill heals you ${K.vampirismHeal} HP.` },
+  { id: 'vampirism', name: "Vampire's Tooth", icon: '🦷', text: `Every kill heals you ${K.vampirismHeal} HP.` },
   // Shelved for now. Its effect is still wired up in game.js.
   // { id: 'doppleganger', name: 'Doppleganger', icon: '👥', text: '+1 life, and +1 to the lives a game over restores.' },
-  { id: 'junkHunter', name: 'Junk Hunter', icon: '🛡️', text: 'Swords and shields turn up twice as often in barrels.' },
-  { id: 'bullionaire', name: 'Bullionaire', icon: '💰', text: `All gold you collect is worth ${K.bullionaire}×.` },
-  { id: 'barrelOfFun', name: 'Barrel of Fun', icon: '🛢️', text: 'Barrels break in one hit.' },
+  { id: 'junkHunter', name: 'Metal Detector', icon: '📡', text: 'Swords and shields turn up twice as often in barrels.' },
+  { id: 'bullionaire', name: 'Magic Wallet', icon: '👛', text: `All gold you collect is worth ${K.bullionaire}×.` },
+  { id: 'barrelOfFun', name: 'Wood Axe', icon: '🪓', text: 'Barrels break in one hit.' },
   // Shelved for now: unclear that skipping doors pays off. Its effect is still wired up in game.js.
   // { id: 'locksmith', name: 'Locksmith', icon: '🗝️', text: 'Doors open without keys.' },
-  { id: 'athletic', name: 'Athletic', icon: '👟', text: `Your ball rolls faster and farther: ${Math.round((1 - K.athleticFriction) * 100)}% less friction.` },
-  { id: 'moneyMagnet', name: 'Money Magnet', icon: '🧲', text: `Coins within ${K.magnetRadius} tiles are pulled in to you.` },
-  { id: 'elasticity', name: 'Elasticity', icon: '🏀', text: `Barrels, chests and enemies kick you away like pinball bumpers (+${K.elasticityKick} speed, up to ${K.elasticityKicksPerBumper}× each per shot).` },
+  { id: 'athletic', name: 'Rollerskates', icon: '🛼', text: `Your ball rolls faster and farther: ${Math.round((1 - K.athleticFriction) * 100)}% less friction.` },
+  { id: 'moneyMagnet', name: 'Moola Magnet', icon: '🧲', text: `Coins within ${K.magnetRadius} tiles are pulled in to you.` },
+  { id: 'elasticity', name: 'Rubber Baby Buggy Bumpers', icon: '🛟', text: `Barrels, chests and enemies kick you away like pinball bumpers (+${K.elasticityKick} speed, up to ${K.elasticityKicksPerBumper}× each per shot).` },
 ];
 
 export const cardById = (id) => CARDS.find((c) => c.id === id);

@@ -6,10 +6,13 @@ import { createWorld, createBall, createStaticCircle, stepWorld, applyBumperKick
 import { parseLevel } from '../src/level.js';
 import { CONFIG } from '../src/config.js';
 
-test('the seven starting cards (Locksmith and Doppleganger are shelved)', () => {
+test('the seven starting artifacts (Locksmith and Doppleganger are shelved)', () => {
   assert.deepEqual(
     CARDS.map((c) => c.name),
-    ['Vampirism', 'Junk Hunter', 'Bullionaire', 'Barrel of Fun', 'Athletic', 'Money Magnet', 'Elasticity'],
+    [
+      "Vampire's Tooth", 'Metal Detector', 'Magic Wallet', 'Wood Axe', 'Rollerskates', 'Moola Magnet',
+      'Rubber Baby Buggy Bumpers',
+    ],
   );
 });
 

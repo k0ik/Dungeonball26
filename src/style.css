@@ -1031,3 +1031,56 @@ body {
   border-color: #c8005f;
   color: #fff;
 }
+
+/* Artifacts (the cards) are vertical: title, then a big icon, then what it
+   does. These rules restyle the earlier horizontal layout. */
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 16px 16px;
+  text-align: center;
+}
+.card .card-name {
+  order: 0;
+  font-size: 17px;
+  line-height: 1.15;
+}
+.card .card-icon {
+  order: 1;
+  font-size: 52px;
+  line-height: 1.1;
+  margin: 4px 0;
+}
+.card .card-text {
+  order: 2;
+}
+.pick-new,
+.card.big {
+  width: min(100%, 230px);
+}
+/* Held artifacts along the bottom: mini vertical cards, icon over name. */
+.card-hand {
+  align-items: flex-end;
+}
+.card-chip {
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  width: 72px;
+  min-height: 58px;
+  padding: 6px 4px;
+  border-radius: 10px;
+  white-space: normal;
+  text-align: center;
+  font: 700 10px/1.15 system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+.card-chip span {
+  font-size: 24px;
+  line-height: 1;
+}
+/* The held row is taller now, so a level message sits above it when it shows. */
+.level-message:has(~ .card-hand:not([hidden])) {
+  bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+}

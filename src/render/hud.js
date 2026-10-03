@@ -30,11 +30,11 @@ export function createHud(container) {
   message.hidden = true;
   container.appendChild(message);
 
-  // Trait cards: the ones you hold, as a row of chips at the bottom; and the
-  // end-of-level pick, a full-screen panel that takes the input.
+  // Artifacts (cards in the code): the ones you hold, as a row of mini cards
+  // at the bottom; and the chest pick, a full-screen panel that takes the input.
   const hand = document.createElement('div');
   hand.className = 'card-hand';
-  hand.setAttribute('aria-label', 'Your cards');
+  hand.setAttribute('aria-label', 'Your artifacts');
   hand.hidden = true;
   container.appendChild(hand);
   let shownCards = null;
@@ -47,7 +47,7 @@ export function createHud(container) {
   let paused = false;
   function showCardView(id) {
     const c = cardById(id);
-    view.innerHTML = '<div class="card big"><span class="card-icon" aria-hidden="true"></span><span class="card-name"></span><span class="card-text"></span></div><p class="card-view-hint">Paused · tap anywhere to continue</p>';
+    view.innerHTML = '<div class="card big"><span class="card-name"></span><span class="card-icon" aria-hidden="true"></span><span class="card-text"></span></div><p class="card-view-hint">Paused · tap anywhere to continue</p>';
     view.querySelector('.card-icon').textContent = c.icon;
     view.querySelector('.card-name').textContent = c.name;
     view.querySelector('.card-text').textContent = c.text;
@@ -63,7 +63,7 @@ export function createHud(container) {
   const pick = document.createElement('div');
   pick.className = 'card-pick';
   pick.setAttribute('role', 'dialog');
-  pick.setAttribute('aria-label', 'Choose a card');
+  pick.setAttribute('aria-label', 'A new artifact');
   container.appendChild(pick);
   let shownKeys = null;
   let shownGold = -1;
@@ -180,7 +180,7 @@ export function createHud(container) {
      * Calls done(id, replaceId) once, with id null for a skip.
      */
     /**
-     * A chest's card: "New skill" shows it, then your slots ("Choose a slot").
+     * A chest's card: "New artifact" shows it, then your slots ("Choose a slot").
      * Tap an empty slot to put it there; tap a held card to replace it (after
      * a "Discard ...?" confirmation); or Skip. done(replace) gets null for an
      * empty slot, the replaced card's id, or false for skip.
@@ -196,7 +196,7 @@ export function createHud(container) {
         const c = cardById(cid);
         const el = document.createElement('div');
         el.className = `card ${extra}`;
-        el.innerHTML = `<span class="card-icon" aria-hidden="true"></span><span class="card-name"></span><span class="card-text"></span>`;
+        el.innerHTML = `<span class="card-name"></span><span class="card-icon" aria-hidden="true"></span><span class="card-text"></span>`;
         el.querySelector('.card-icon').textContent = c.icon;
         el.querySelector('.card-name').textContent = c.name;
         el.querySelector('.card-text').textContent = c.text;
@@ -204,7 +204,7 @@ export function createHud(container) {
       };
       const found = cardById(id);
       const showSlots = () => {
-        pick.innerHTML = '<p class="pick-kicker">New skill</p><div class="pick-new"></div><h2>Choose a slot</h2><div class="slot-row"></div><button type="button" class="card-skip">Skip</button>';
+        pick.innerHTML = '<p class="pick-kicker">New artifact</p><div class="pick-new"></div><h2>Choose a slot</h2><div class="slot-row"></div><button type="button" class="card-skip">Skip</button>';
         pick.querySelector('.pick-new').append(cardFace(id, 'new'));
         const row = pick.querySelector('.slot-row');
         for (let i = 0; i < CONFIG.cards.slots; i++) {
@@ -252,7 +252,7 @@ export function createHud(container) {
         chip.type = 'button';
         chip.className = 'card-chip';
         chip.setAttribute('aria-label', `${c.name}: ${c.text}`);
-        chip.innerHTML = '<span aria-hidden="true"></span><b></b>';
+        chip.innerHTML = '<span aria-hidden="true"></span><b></b>'; // a mini artifact card: icon over name
         chip.firstChild.textContent = c.icon;
         chip.lastChild.textContent = c.name;
         chip.addEventListener('click', () => showCardView(id));

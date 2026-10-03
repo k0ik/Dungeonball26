@@ -561,38 +561,66 @@ export function createGame(container, levels, startIndex = 0) {
   // Reaching the exit ends the level at once, even mid-roll, and loads the
   // next one. HP, gear, lives and gold carry over. After the last level the
   // run is complete: a screen shows your gold, then the run starts over.
+  /**
+   * Reaching the exit: no sudden stop. Your ball leaves the physics (other
+   * balls roll on) and carries its momentum into the middle of the exit
+   * tile, easing to a stop there (a damped spring); then it beams out in a
+   * column of light, the screen fades, and the next level comes in
+   * (updateExit, finishExit).
+   */
   function reachExit() {
     state.clears++;
-    for (const b of world.balls) b.vx = b.vz = 0;
     state.aiming = false;
     aimView.hide();
-    // A level played from the level editor: no next level;
-    // reset it and hand back to the editor.
+    const col = Math.floor(hero.x);
+    const row = Math.floor(hero.z);
+    state.exit = { t: 0, vx: hero.vx, vz: hero.vz, cx: col + 0.5, cz: row + 0.5, beaming: false, fading: false };
+    hero.vx = hero.vz = 0;
+    hero.phased = true; // nothing bumps it now
+    state.phase = 'exiting';
+    sfx.play('exit', 0.8);
+  }
+
+  function updateExit(dt) {
+    const X = CONFIG.render;
+    const e = state.exit;
+    e.t += dt;
+    // Glide into the middle of the tile: momentum fades as a spring pulls it in.
+    const damp = Math.exp(-X.exitGlideDamping * dt);
+    e.vx = e.vx * damp + (e.cx - hero.x) * X.exitGlidePull * dt;
+    e.vz = e.vz * damp + (e.cz - hero.z) * X.exitGlidePull * dt;
+    hero.x += e.vx * dt;
+    hero.z += e.vz * dt;
+    if (!e.beaming && e.t >= X.exitGlideSeconds) {
+      e.beaming = true;
+      heroView.beamOut();
+    }
+    const beamEnd = X.exitGlideSeconds + X.exitBeamSeconds;
+    if (!e.fading && e.t >= beamEnd - X.exitFadeSeconds * 0.5) {
+      e.fading = true;
+      hud.fade(true, X.exitFadeSeconds);
+    }
+    if (e.t >= beamEnd + X.exitFadeSeconds * 0.5) finishExit();
+  }
+
+  function finishExit() {
+    state.exit = null;
+    hero.phased = false;
+    hud.fade(false, CONFIG.render.exitFadeSeconds);
+    // A level played from the level editor: no next level; reset it and hand back to the editor.
     if (levels[levelIndex].test) {
-      sfx.play('exit', 0.8);
-      state.phase = 'pick'; // input off while the banner shows
+      loadLevel(levelIndex);
       hud.banner('Test complete!', 'Back to the editor', 1.2);
-      setTimeout(() => {
-        loadLevel(levelIndex);
-        api.onTestComplete?.();
-      }, 1200);
+      api.onTestComplete?.();
       return;
     }
     if (levelIndex + 1 < levels.length) {
-      // On to the next level (cards come from chests now, not here).
-      sfx.play('exit', 0.8);
-      state.phase = 'pick'; // input off for the moment before the next level
-      const next = levelIndex + 1;
-      setTimeout(() => {
-        loadLevel(next);
-        levelBanner();
-      }, CONFIG.cards.levelEndPause * 1000);
+      loadLevel(levelIndex + 1); // cards come from chests now, not here
+      levelBanner();
       return;
     }
     state.phase = 'won';
     state.timer = CONFIG.hero.runCompleteSeconds;
-    state.aiming = false;
-    aimView.hide();
     sfx.play('win', 0.9);
     hud.showScreen('Run Complete!', `${state.gold} gold`, 'win');
   }
@@ -983,7 +1011,7 @@ export function createGame(container, levels, startIndex = 0) {
     if (document.body.classList.contains('editing')) return; // the level editor has the keyboard
     if (e.key === 'd' || e.key === '`') debug.hidden = !debug.hidden;
     if (e.key === 'r' && state.phase === 'aim') respawn();
-    if (e.key === 'n' && state.phase !== 'won' && state.phase !== 'pick') {
+    if (e.key === 'n' && state.phase !== 'won' && state.phase !== 'pick' && state.phase !== 'exiting') {
       loadLevel(levelIndex + 1);
       levelBanner();
     }
@@ -1025,6 +1053,13 @@ export function createGame(container, levels, startIndex = 0) {
       rollGold(step);
       settleGhosts();
       dampStalls(step);
+      if (state.phase === 'exiting') {
+        // Beaming out: the other balls roll on, but nothing happens to you.
+        world.events.length = 0;
+        acc -= step;
+        steps++;
+        continue;
+      }
       // Both read this step's events before handleEvents clears them.
       const outcomes = combat.resolve(world, hero);
       strikeGold();
@@ -1038,7 +1073,7 @@ export function createGame(container, levels, startIndex = 0) {
       handleEvents(outcomes, objectOutcomes);
       checkPickups();
       checkDoors();
-      if (state.phase !== 'down' && state.phase !== 'won' && state.phase !== 'pick' && tileAt(level, Math.floor(hero.x), Math.floor(hero.z)) === 'exit') {
+      if (state.phase !== 'down' && state.phase !== 'won' && state.phase !== 'pick' && state.phase !== 'exiting' && tileAt(level, Math.floor(hero.x), Math.floor(hero.z)) === 'exit') {
         reachExit();
         break;
       }
@@ -1047,6 +1082,7 @@ export function createGame(container, levels, startIndex = 0) {
     }
     if (steps === CONFIG.physics.maxStepsPerFrame) acc = 0;
 
+    if (state.phase === 'exiting') updateExit(dt);
     switch (state.phase) {
       case 'shot':
         // Your shot came to rest: armed bombs go off first, and the shot

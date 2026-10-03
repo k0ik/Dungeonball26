@@ -17,6 +17,11 @@ export function createHud(container) {
   const keyHex = (c) => `#${CONFIG.colors.keys[c].toString(16).padStart(6, '0')}`;
   let arriving = 0; // keys still flying into their slots
 
+  // A full-screen fade (to dark and back) for level changes.
+  const fader = document.createElement('div');
+  fader.className = 'screen-fade';
+  container.appendChild(fader);
+
   // A level's message (tutorials): a panel along the bottom, above the cards,
   // for as long as you're on the level.
   const message = document.createElement('div');
@@ -322,6 +327,11 @@ export function createHud(container) {
       edge.classList.toggle('on', on);
     },
     /** Centred message for `seconds`; a second line is optional. */
+    /** Fade the screen to dark (on) or back (off) over `seconds`. */
+    fade(on, seconds = 0.3) {
+      fader.style.transitionDuration = `${seconds}s`;
+      fader.classList.toggle('on', on);
+    },
     /** Show a level's message at the bottom of the screen, or hide it (null). */
     setMessage(text) {
       message.textContent = text ?? '';

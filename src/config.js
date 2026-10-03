@@ -289,7 +289,6 @@ export const CONFIG = {
     // dealt (0 for the normal game, which starts with none).
     startDealt: 0,
     chestPickDelay: 0.9, // seconds after a chest opens (its coins flying) before its card pick opens
-    levelEndPause: 0.7, // seconds at the exit before the next level loads
     vampirismHeal: 1, // HP per kill
     bullionaire: 1.5, // gold multiplier (fractions carry over, so it's exact)
     junkHunter: 2, // barrel weight multiplier for swords and shields
@@ -363,6 +362,16 @@ export const CONFIG = {
   },
 
   render: {
+    // Reaching the exit (game.js reachExit): your ball glides into the middle
+    // of the exit tile (momentum damped by exitGlideDamping, pulled in by
+    // exitGlidePull, 1/s and 1/s²), is drawn up in a golden glow and swirl of
+    // sparkles after exitGlideSeconds over exitBeamSeconds, and the screen
+    // fades out and back in over exitFadeSeconds.
+    exitGlideSeconds: 0.45,
+    exitGlideDamping: 7,
+    exitGlidePull: 45,
+    exitBeamSeconds: 0.6,
+    exitFadeSeconds: 0.3,
     // Ice puddles (iceView): size and corner rounding in tiles, opacity when
     // fresh, the share of it left in the move after, and how fast they ease.
     icePuddleSize: 0.92,
@@ -418,6 +427,8 @@ export const CONFIG = {
     wallBack: 0x6e7075, // faces pointing away from the camera
     outline: 0x1e1f21,
     exit: 0x5fd08a,
+    exitBeam: 0xffd27a, // the golden glow your ball is drawn up into at the exit
+    exitSpark: 0xfff1b8, // the sparkles swirling up around it
     enemy: 0xc8005f, // mockup magenta
     enemyFace: 0x111111,
     hpFill: 0xe8336f,

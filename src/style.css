@@ -921,3 +921,17 @@ body {
   pointer-events: none;
   z-index: 2;
 }
+
+/* Level change fade (hud.fade). */
+.screen-fade {
+  position: absolute;
+  inset: 0;
+  background: #0c0a10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 8;
+}
+.screen-fade.on {
+  opacity: 1;
+}

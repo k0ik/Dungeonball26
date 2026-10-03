@@ -1192,10 +1192,13 @@ export function createGame(container, levels, startIndex = 0) {
         enemyViews.get(enemy)?.setAngry(on);
         continue;
       }
+      // An enemy that has already hit you this enemy move is spent: no "!"
+      // until everything rests (so the balls still rolling at you stand
+      // out), but it stays angry for the rest of its turn, even knocked back.
       if (enemyMove && combat.hasHitHero(enemy)) {
-        enemy.watching = null;
+        enemy.watching = hero;
         overlay.setAlert(enemy, false, false);
-        enemyViews.get(enemy)?.setAngry(false);
+        enemyViews.get(enemy)?.setAngry(true);
         continue;
       }
       const lunging = lungers.has(enemy);

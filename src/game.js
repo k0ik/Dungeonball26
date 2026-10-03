@@ -374,6 +374,7 @@ export function createGame(container, levels, startIndex = 0) {
     hero.vz = shot.dirZ * shot.speed;
     state.phase = 'shot';
     state.shots++;
+    state.contacts = [{ x: hero.x, z: hero.z }]; // debugging: where the real shot touched things
     nextMove();
     combat.beginShot();
     armBombs(); // bombs lit before this shot go off when it comes to rest
@@ -1070,6 +1071,7 @@ export function createGame(container, levels, startIndex = 0) {
       // Barrels kick every ball on like pinball bumpers; with Elasticity,
       // barrels, chests and enemies kick your ball, harder.
       applyBumperKicks(world, state.kicked, CONFIG.aim.maxLaunchSpeed, card('elasticity') ? { ball: hero, kick: CONFIG.cards.elasticityKick, perBumper: CONFIG.cards.elasticityKicksPerBumper } : null);
+      if (state.phase === 'shot' && world.events.some((ev) => ev.ball === hero || ev.a === hero || ev.b === hero)) state.contacts?.push({ x: hero.x, z: hero.z });
       handleEvents(outcomes, objectOutcomes);
       checkPickups();
       checkDoors();
@@ -1150,6 +1152,7 @@ export function createGame(container, levels, startIndex = 0) {
             move: (state.move ?? 0) + 1,
           });
       aimView.show(hero, shot, preview, rig.viewWidth / rig.aimStartWidth);
+      state.shownPreview = preview; // debugging: the path the preview showed
       seePath = preview?.points ?? null;
     } else if (state.phase === 'aim') {
       aimView.showTurn(hero, dt);

@@ -268,6 +268,7 @@ export function createGame(container, levels, startIndex = 0) {
     state.entry = { hp: hero.hp, atk: hero.atk, shield: hero.shield, sword: hero.sword, gold: state.gold, cards: [...state.cards] };
     respawn();
     rig.snapTo(hero.x, hero.z);
+    state.intro = CONFIG.camera.introSeconds; // push in on you as the level starts
   }
 
   /** Put the hero back at the start. The board is left exactly as it is. */
@@ -336,6 +337,7 @@ export function createGame(container, levels, startIndex = 0) {
     aimCamera = rig.camera.clone();
     aimCamera.updateMatrixWorld();
     rig.beginAim(hero);
+    state.intro = 0; // you're aiming: the turn-start push-in is over
     pointerOn(groundPlane, e, state.pointer, aimCamera);
   });
 
@@ -468,6 +470,7 @@ export function createGame(container, levels, startIndex = 0) {
 
   /** Your turn comes round again: every Ghost switches between solid and faded. */
   function newRound() {
+    state.intro = CONFIG.camera.introSeconds; // the camera pushes in on you for the new turn
     for (const e of enemies()) {
       if (e.type !== 'ghost') continue;
       if (e.phased) e.solidifying = true; // turns solid once nothing overlaps it (settleGhosts)
@@ -968,6 +971,9 @@ export function createGame(container, levels, startIndex = 0) {
         }
       } else if (o.type === 'hurt') {
         sfx.play('hurt', 1);
+        // Rattle the view: blasts hard, enemy hits by how hard they landed.
+        const K = CONFIG.camera;
+        rig.shake(o.event ? Math.min(1, K.shakeHit * (0.6 + (o.event.speed ?? 0) / 8)) : K.shakeBlast);
         heroView.flash();
         state.ouch = CONFIG.render.heroOuchSeconds;
         floatAt(hero, `-${o.amount}`, 'hurt');
@@ -989,21 +995,6 @@ export function createGame(container, levels, startIndex = 0) {
   }
 
   // --- Camera ------------------------------------------------------------------
-  /**
-   * What the camera should keep in view right now: during your shot, every
-   * moving ball, so no collision or combo happens off screen; otherwise you
-   * (the enemy phase included: it just pulls out a bit, see the frame call).
-   */
-  function framingPoints() {
-    const moving = world.balls.filter((b) => b.vx !== 0 || b.vz !== 0);
-    switch (state.phase) {
-      case 'shot':
-        return moving.length ? moving : [hero];
-      default:
-        return [hero];
-    }
-  }
-
   // --- Debug overlay -----------------------------------------------------------
   const debug = document.createElement('pre');
   debug.className = 'debug';
@@ -1261,31 +1252,33 @@ export function createGame(container, levels, startIndex = 0) {
     } else if (state.panned) {
       // Looking around the map (a drag off the ball): hold the view where you left it.
     } else {
-      // Enemy phase: stay centred on you, pulled out only as far as it takes
-      // to show where the moving enemies stood when the phase began, up to
-      // enemyPhaseWidth; whatever else lands in view is a bonus.
-      const enemyPhase = state.phase === 'enemyWait' || state.phase === 'enemyMove';
-      let width = rig.speedWidth(speedOf(hero));
-      let points = framingPoints();
-      if (enemyPhase) {
-        // Stay centred on you, pulled out to show where the movers started
-        // (up to enemyPhaseWidth)...
-        const cap = CONFIG.camera.enemyPhaseWidth;
-        width = rig.widthAround(hero, state.moves.map((m) => m.from), width, cap);
-        // ...but never miss an attack: every lunging enemy (where it started
-        // and where it is) and whatever it's going for (a Jekyll may go for
-        // another enemy). If those don't fit with you in the middle, frame
-        // you and them together, off-centre, as wide as it takes.
-        const attacks = state.moves
-          .filter((m) => m.kind === 'lunge')
-          .flatMap((m) => [m.from, ...(m.enemy.hp > 0 ? [m.enemy] : []), ...(m.target && m.target !== hero ? [m.target] : [])]);
-        if (attacks.length && rig.widthAround(hero, attacks, width, Infinity) > cap) points = [hero, ...attacks];
+      // Closeness (design doc: "Camerawork"): the camera stays on you.
+      const C = CONFIG.camera;
+      const boost = state.returnBoost > 0 ? C.returnBoost : 1;
+      if (state.phase === 'aim') {
+        // Your turn, at rest: push in tight on your ball (introFill of the
+        // view), hold once there, then ease out to the planning width.
+        if (state.intro > 0 && rig.settled) state.intro -= dt;
+        const width = state.intro > 0 ? CONFIG.ball.diameter / C.introFill : C.planWidth;
+        rig.focus(hero, width, dt, C.introZoomRate, boost);
+      } else {
+        // Shots, enemy moves and the rest: centred on you, widening (fast)
+        // to keep every moving ball in view, narrowing (slowly) after. In the
+        // enemy phase also where the movers started and whatever a lunge is
+        // going for. Speed pulls it out a little too, as before.
+        const points = world.balls.filter((b) => b !== hero && (b.vx !== 0 || b.vz !== 0));
+        if (state.phase === 'enemyWait' || state.phase === 'enemyMove') {
+          for (const m of state.moves) {
+            points.push(m.from);
+            if (m.target && m.target !== hero) points.push(m.target);
+          }
+        }
+        const fast = Math.min(1, speedOf(hero) / CONFIG.aim.maxLaunchSpeed);
+        rig.follow(hero, points, C.planWidth + (C.maxViewWidth - C.planWidth) * fast, C.maxFrameWidth, dt);
       }
-      // Returning to your turn: faster until the camera has arrived (checked
-      // after framing, so it's measured against the new goal, not the old one).
-      rig.frame(points, width, dt, state.returnBoost > 0 ? CONFIG.camera.returnBoost : 1);
       if (state.returnBoost > 0) state.returnBoost = rig.settled ? 0 : state.returnBoost - dt;
     }
+    rig.updateShake(dt);
     renderer.render(scene, rig.camera);
     overlay.update();
     hud.setGold(state.gold);

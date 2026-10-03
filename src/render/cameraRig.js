@@ -115,9 +115,27 @@ export function createCameraRig() {
     Object.assign(goal, clampFraming(goal, box, { yaw, elevation, aspect }));
   }
 
+  // Shake: "trauma" (0..1) that decays; the view jitters by trauma² so a
+  // light knock barely moves it and a blast rattles it.
+  let trauma = 0;
+  let shakeT = 0;
+  const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const screenRight = new THREE.Vector3();
+  const screenUp = new THREE.Vector3();
+
   function place() {
     camera.position.copy(target).add(offset);
     camera.lookAt(target);
+    if (trauma > 0) {
+      // A smooth-ish random wobble (a few sines at odd rates), in screen space.
+      const a = trauma * trauma * K.shakeMax;
+      const ox = Math.sin(shakeT * 47) * 0.6 + Math.sin(shakeT * 83 + 1.3) * 0.4;
+      const oy = Math.sin(shakeT * 59 + 2.1) * 0.6 + Math.sin(shakeT * 97 + 0.4) * 0.4;
+      screenRight.setFromMatrixColumn(camera.matrix, 0);
+      screenUp.setFromMatrixColumn(camera.matrix, 1);
+      camera.position.addScaledVector(screenRight, ox * a).addScaledVector(screenUp, oy * a);
+      camera.updateMatrixWorld();
+    }
   }
 
   applyFrustum();
@@ -175,6 +193,50 @@ export function createCameraRig() {
       target.z = goal.z;
       viewWidth = goal.width;
       applyFrustum();
+      place();
+    },
+    /**
+     * Ease toward centring `center` at exactly `width` (kept inside the level),
+     * with `zoomRate` (1/s) for the zoom: the turn-start push-in and the plan view.
+     */
+    focus(center, width, dt, zoomRate, boost = 1) {
+      Object.assign(goal, { x: center.x, z: center.z, width });
+      clampGoal();
+      const k = 1 - Math.exp(-K.followRate * boost * dt);
+      target.x += (goal.x - target.x) * k;
+      target.z += (goal.z - target.z) * k;
+      viewWidth += (goal.width - viewWidth) * (1 - Math.exp(-zoomRate * boost * dt));
+      applyFrustum();
+      place();
+    },
+    /**
+     * Stay centred on `center` and widen (quickly) to keep every point in
+     * view with followPadding, from minWidth up to maxWidth; narrow back
+     * (slowly) when they come in.
+     */
+    follow(center, points, minWidth, maxWidth, dt) {
+      const all = [center, ...points.flatMap((p) => [p, { x: 2 * center.x - p.x, z: 2 * center.z - p.z }])];
+      const width = computeFraming(all, { yaw, elevation, aspect, minWidth, maxWidth, padding: K.followPadding }).width;
+      Object.assign(goal, { x: center.x, z: center.z, width });
+      clampGoal();
+      const k = 1 - Math.exp(-K.followRate * dt);
+      target.x += (goal.x - target.x) * k;
+      target.z += (goal.z - target.z) * k;
+      const rate = goal.width > viewWidth ? K.followZoomOutRate : K.followZoomInRate;
+      viewWidth += (goal.width - viewWidth) * (1 - Math.exp(-rate * dt));
+      applyFrustum();
+      place();
+    },
+    /** Rattle the view: `amount` 0..1 adds to the shake (see config shake*). */
+    shake(amount) {
+      if (!K.shake || reduceMotion) return;
+      trauma = Math.min(1, trauma + amount);
+    },
+    /** Advance the shake; call once a frame after the camera has moved. */
+    updateShake(dt) {
+      if (trauma <= 0) return;
+      shakeT += dt;
+      trauma = Math.max(0, trauma - dt / K.shakeSeconds);
       place();
     },
     /**

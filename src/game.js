@@ -1547,13 +1547,16 @@ export function createGame(container, levels, startIndex = 0) {
         let points = world.balls.filter((b) => b !== hero && (b.vx !== 0 || b.vz !== 0));
         if (state.phase === 'enemyWait' || state.phase === 'enemyMove') {
           // The enemy turn: still on you, out only as far as the enemies
-          // coming at you (where they start and where they are now), so the
-          // action stays central; patrols elsewhere aren't chased.
+          // coming at you (where they start and where they are now), and any
+          // other enemy moving within enemyNearRadius of you, so the action
+          // stays central; far-off patrols aren't chased.
           points = [];
+          const near = (p) => Math.hypot(p.x - hero.x, p.z - hero.z) <= C.enemyNearRadius;
           for (const m of state.moves) {
-            if (m.kind !== 'lunge' || (m.target && m.target !== hero)) continue;
-            points.push(m.from);
-            if (m.enemy.hp > 0) points.push(m.enemy);
+            const attacking = m.kind === 'lunge' && (!m.target || m.target === hero);
+            if (!attacking && !near(m.from) && !near(m.enemy)) continue;
+            if (attacking || near(m.from)) points.push(m.from);
+            if (m.enemy.hp > 0 && (attacking || near(m.enemy))) points.push(m.enemy);
           }
         }
         const fast = Math.min(1, speedOf(hero) / CONFIG.aim.maxLaunchSpeed);

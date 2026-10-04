@@ -1,5 +1,6 @@
 // Builds the static level geometry: the floor, short extruded walls and exit
-// tiles. Colours are baked per face (flat, like the mockup) rather than lit.
+// tiles. Colours are baked per face (flat, like the mockup), then lit only by
+// the light pools (lighting.js).
 // Doors aren't part of it: doorsView draws them, so they can open.
 
 import * as THREE from 'three';
@@ -7,6 +8,7 @@ import { CONFIG } from '../config.js';
 import { tileAt } from '../level.js';
 import { loopPolygons } from '../wallGeometry.js';
 import { outlineLineMaterial, markOccluder, seeThrough } from './materials.js';
+import { litByPools } from './lighting.js';
 
 const C = CONFIG.colors;
 const W = CONFIG.walls;
@@ -17,11 +19,11 @@ function pushQuad(pos, col, a, b, c, d, color) {
   for (let i = 0; i < 6; i++) col.push(color.r, color.g, color.b);
 }
 
-const flatMaterial = new THREE.MeshBasicMaterial({ vertexColors: true });
+const flatMaterial = litByPools(new THREE.MeshBasicMaterial({ vertexColors: true })); // lit by the light pools
 // See-through where it hides the hero or the aim path. Walls then draw in the
 // transparent pass: after the ground marks (aim path, rings) so those show
 // through, before the pickup x-ray (renderOrder 10), which needs their depth.
-const wallMaterial = seeThrough(markOccluder(new THREE.MeshBasicMaterial({ vertexColors: true })));
+const wallMaterial = litByPools(seeThrough(markOccluder(new THREE.MeshBasicMaterial({ vertexColors: true }))));
 const WALL_ORDER = 5;
 
 function meshFrom(pos, col, material = flatMaterial) {

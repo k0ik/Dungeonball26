@@ -465,8 +465,36 @@ export const CONFIG = {
   },
 
   // Flat greys from the mockup.
+  // Lighting (src/render/lighting.js): light pools on the flat floor and
+  // walls, plus a few real lights for the round objects.
+  lighting: {
+    ambient: 0.6, // the floor and walls away from any pool (1 = their full colour)
+    maxPools: 24, // pools drawn at once: flashes, your torch, then the nearest
+    torchColor: 0xffb46a, // warm
+    torchPool: 1.6, // added light at your ball's centre
+    torchPoolRadius: 2.6, // tiles
+    torchLight: 4, // the real point light's intensity, for nearby objects
+    torchRadius: 5, // tiles it reaches
+    torchHeight: 1.4,
+    enemyPool: 1.3, // tinted by the enemy's colour
+    enemyPoolRadius: 1.6,
+    chestPool: 1.1, // gold, while it's closed
+    chestPoolRadius: 1.3,
+    explosivePool: 0.8, // a low red glow
+    explosivePoolRadius: 1.2,
+    flashColor: 0xffb04a, // an explosion's flash
+    flashPool: 5,
+    flashPoolRadius: 5,
+    flashLight: 14,
+    flashRadius: 7,
+    flashSeconds: 0.45,
+    ambientLight: 1.2, // the scene's lights, for the round objects
+    sunLight: 2.0,
+    vignette: 0.45, // darkness at the screen's corners (0 = none)
+  },
+
   colors: {
-    background: 0x3b3c3f,
+    background: 0x2e2b2a, // warm dark
     floorA: 0x55575a,
     floorB: 0x55575a, // same as floorA: the mockup floor has no checker
     wallTop: 0xb5b8be,

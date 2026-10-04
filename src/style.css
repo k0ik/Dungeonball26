@@ -1087,3 +1087,11 @@ body {
   font-size: 24px;
   line-height: 1;
 }
+/* A soft dark frame around the board (lighting.vignette). */
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 75% 70% at 50% 50%, transparent 55%, rgba(12, 8, 6, var(--vignette, 0.45)) 100%);
+  pointer-events: none;
+  z-index: 1;
+}

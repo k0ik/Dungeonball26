@@ -41,6 +41,7 @@ import { createIceView } from './render/iceView.js';
 import { createIce, meltIce, stepIce } from './ice.js';
 import { createLooks } from './look.js';
 import { createItemsView } from './render/itemsView.js';
+import { createLighting } from './render/lighting.js';
 import { createDoorsView } from './render/doorsView.js';
 import { openDoors } from './doors.js';
 import { has, offerCards, takeCard } from './cards.js';
@@ -54,10 +55,7 @@ export function createGame(container, levels, startIndex = 0) {
   container.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
-  scene.add(new THREE.AmbientLight(0xffffff, 1.4));
-  const sun = new THREE.DirectionalLight(0xffffff, 2.2);
-  sun.position.set(-4, 10, 6);
-  scene.add(sun);
+  const lighting = createLighting(scene);
 
   const rig = createCameraRig();
   const overlay = createOverlay(container, rig.camera);
@@ -885,6 +883,7 @@ export function createGame(container, levels, startIndex = 0) {
         sfx.play('explode', 1);
         objectsView.remove(obj);
         objectsView.blast(obj.x, obj.z);
+        lighting.flash(obj.x, obj.z);
         looks.blast(level, obj.x, obj.z, world.balls, hasFace);
         if (o.victim) handleOutcomes(combat.explosion(world, o.victim, hero)); // none when a bomb's blast set it off
       }
@@ -938,6 +937,7 @@ export function createGame(container, levels, startIndex = 0) {
       } else if (o.type === 'boom') {
         sfx.play('explode', 1);
         objectsView.blast(o.target.x, o.target.z, CONFIG.enemy.types.bomb.blastRadius / 1.4);
+        lighting.flash(o.target.x, o.target.z);
         looks.blast(level, o.target.x, o.target.z, world.balls, hasFace);
         enemyViews.get(o.target)?.die();
         // It also sets off red barrels and cracks or breaks barrels in reach.
@@ -1333,6 +1333,7 @@ export function createGame(container, levels, startIndex = 0) {
       if (state.returnBoost > 0) state.returnBoost = rig.settled ? 0 : state.returnBoost - dt;
     }
     rig.updateShake(realDt);
+    lighting.update(realDt, hero, world.balls, world.statics);
     renderer.render(scene, rig.camera);
     overlay.update();
     hud.setGold(state.gold);
@@ -1378,6 +1379,7 @@ export function createGame(container, levels, startIndex = 0) {
     hero,
     heroView,
     objectsView,
+    lighting,
     state,
     rig,
     respawn,

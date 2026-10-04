@@ -21,6 +21,12 @@ export function createHud(container) {
   const keyHex = (c) => `#${CONFIG.colors.keys[c].toString(16).padStart(6, '0')}`;
   let arriving = 0; // keys still flying into their slots
 
+  // A soft vignette framing the board (lighting.vignette), under the HUD.
+  const vignette = document.createElement('div');
+  vignette.className = 'vignette';
+  vignette.style.setProperty('--vignette', CONFIG.lighting.vignette);
+  container.appendChild(vignette);
+
   // A full-screen fade (to dark and back) for level changes.
   const fader = document.createElement('div');
   fader.className = 'screen-fade';

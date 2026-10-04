@@ -564,9 +564,11 @@ export function createGame(container, levels, startIndex = 0) {
     // everything but touching nothing: no hits, no barrels, chests or pickups.
     hero.inert = true;
     heroView.setSkull(true);
-    // You lose any gear you held (a game over too).
+    // You lose all your gear and artifacts (a game over too).
     hero.sword = 0;
     hero.shield = false;
+    state.cards = [];
+    applyCards();
     // Smaller and slippery (restored on respawn).
     const H = CONFIG.hero;
     hero.radius = (CONFIG.ball.diameter / 2) * H.skullScale;
@@ -577,7 +579,7 @@ export function createGame(container, levels, startIndex = 0) {
     const launch = Math.min(H.skullLaunchMax, Math.max(H.skullLaunch, v * 1.2));
     hero.vx = Math.cos(a) * launch;
     hero.vz = Math.sin(a) * launch;
-    // Kill cam on you: slow motion, tight on the skull as it's flung away;
+    // Kill cam on you: tight on the skull as it's flung away (no slow motion);
     // then the skull camera follows it (see the framing).
     state.killCam = { x: hero.x, z: hero.z, left: CONFIG.camera.deathCamSeconds, hero: true };
     hitStop(CONFIG.effects.hitStopKill);
@@ -629,9 +631,9 @@ export function createGame(container, levels, startIndex = 0) {
       respawn({ heal: true });
     } else {
       // Game over: the level starts from scratch, with the HP and gold you
-      // entered it with, but no gear (the knockout took it).
-      const { hp, atk, gold, cards } = state.entry;
-      state.cards = [...cards];
+      // entered it with, but no gear or artifacts (the knockout took them).
+      const { hp, atk, gold } = state.entry;
+      state.cards = [];
       applyCards();
       // Doppleganger: +1 to the lives a game over restores.
       state.lives = CONFIG.hero.lives + (has(state.cards, 'doppleganger') ? 1 : 0);
@@ -1162,7 +1164,8 @@ export function createGame(container, levels, startIndex = 0) {
       state.closeCall.left -= realDt;
       if (state.closeCall.left <= 0 || !live) state.closeCall = null;
     }
-    const target = state.killCam ? C.killSlow : state.closeCall ? C.closeSlow : 1;
+    // (Your own kill cam at a knockout runs at full speed.)
+    const target = state.killCam && !state.killCam.hero ? C.killSlow : state.closeCall ? C.closeSlow : 1;
     state.timeScale = (state.timeScale ?? 1) + (target - (state.timeScale ?? 1)) * (1 - Math.exp(-C.timeEaseRate * realDt));
     if (Math.abs(state.timeScale - 1) < 0.01 && target === 1) state.timeScale = 1;
     if (state.hitStop > 0) {

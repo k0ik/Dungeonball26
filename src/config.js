@@ -322,7 +322,7 @@ export const CONFIG = {
     // Death screen: the screen darkens with "You Died!" and the lives left
     // (or "Game Over") and input is blocked for this long, then it lightens
     // and play resumes from the start.
-    deathScreenSeconds: 3,
+    deathScreenSeconds: 1.5,
     skullRollMaxSeconds: 8, // the death screen waits for your skull to stop rolling, at most this long
     // Your skull (knocked out): smaller and slippery, so it skitters on.
     skullScale: 0.8, // its size (and collision radius) against your ball's
@@ -349,7 +349,7 @@ export const CONFIG = {
     skullFill: 0.5,
     skullSpeedWidth: 1,
     skullZoomRate: 2.5,
-    deathCamSeconds: 1.1, // your own kill cam at a knockout (real seconds, in slow motion)
+    deathCamSeconds: 1.1, // your own kill cam at a knockout: tight on the skull, at full speed
     // Matched to the mockup: the grid is turned so level columns run gently
     // down-right and rows run steeply down-left, seen from ~37° above the ground.
     elevationDeg: 37, // camera angle above the ground plane

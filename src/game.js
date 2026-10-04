@@ -1511,7 +1511,9 @@ export function createGame(container, levels, startIndex = 0) {
       // Aiming: zoom out with shot power, anchored on the ball.
       const fill = aimShot().fill;
       const from = rig.aimStartWidth;
-      rig.aimZoom(hero, from + (Math.max(from, CONFIG.camera.aimMaxWidth) - from) * fill, realDt);
+      // Out with shot power, and always far enough to show the whole path.
+      const byPower = from + (Math.max(from, CONFIG.camera.aimMaxWidth) - from) * fill;
+      rig.aimZoom(hero, Math.max(byPower, seePath ? rig.aimFitWidth(hero, seePath) : 0), realDt);
     } else if (state.panned && state.phase !== 'aim') {
       state.panned = false; // you shot (or the turn moved on): follow the play again
     } else if (state.panned) {
@@ -1536,11 +1538,16 @@ export function createGame(container, levels, startIndex = 0) {
         // to keep every moving ball in view, narrowing (slowly) after. In the
         // enemy phase also where the movers started and whatever a lunge is
         // going for. Speed pulls it out a little too, as before.
-        const points = world.balls.filter((b) => b !== hero && (b.vx !== 0 || b.vz !== 0));
+        let points = world.balls.filter((b) => b !== hero && (b.vx !== 0 || b.vz !== 0));
         if (state.phase === 'enemyWait' || state.phase === 'enemyMove') {
+          // The enemy turn: still on you, out only as far as the enemies
+          // coming at you (where they start and where they are now), so the
+          // action stays central; patrols elsewhere aren't chased.
+          points = [];
           for (const m of state.moves) {
+            if (m.kind !== 'lunge' || (m.target && m.target !== hero)) continue;
             points.push(m.from);
-            if (m.target && m.target !== hero) points.push(m.target);
+            if (m.enemy.hp > 0) points.push(m.enemy);
           }
         }
         const fast = Math.min(1, speedOf(hero) / CONFIG.aim.maxLaunchSpeed);

@@ -269,6 +269,30 @@ export function createCameraRig() {
       const cy = c.sy - target.y * Math.cos(elevation);
       Object.assign(aim, { width: viewWidth, fx: (b.sx - c.sx) / viewWidth, fy: (b.sy - cy) / viewWidth });
     },
+    /**
+     * While aiming: the narrowest view (zoomed around the ball, which stays
+     * put on screen) that still shows every one of `points` (the aim path),
+     * clear of the HUD at the top and bottom (camera.aimFit* margins, as
+     * shares of the view). 0 when they already fit any view.
+     */
+    aimFitWidth(ball, points) {
+      const ax = axes(yaw);
+      const squash = Math.sin(elevation);
+      const b = toScreen(ball, ax, squash);
+      const side = 0.5 - K.aimFitSide;
+      const top = (0.5 - K.aimFitTop) / aspect;
+      const bottom = (0.5 - K.aimFitBottom) / aspect;
+      let need = 0;
+      const fit = (d, room) => (room > 0.01 ? d / room : K.aimFitMax);
+      for (const q of points) {
+        const p = toScreen(q, ax, squash);
+        const dx = p.sx - b.sx;
+        const dy = p.sy - b.sy; // screen down
+        need = Math.max(need, dx > 0 ? fit(dx, side - aim.fx) : fit(-dx, side + aim.fx));
+        need = Math.max(need, dy > 0 ? fit(dy, bottom - aim.fy) : fit(-dy, top + aim.fy));
+      }
+      return Math.min(K.aimFitMax, need);
+    },
     /** Width at the press, for scaling on-screen aim guides. */
     get aimStartWidth() {
       return aim.width;

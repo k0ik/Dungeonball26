@@ -362,6 +362,13 @@ export const CONFIG = {
     // to aimMaxWidth at full power, anchored on the ball (no panning).
     aimMaxWidth: 13,
     aimZoomRate: 6, // how quickly the zoom tracks the drag, 1/s
+    // ...and it always zooms out far enough to show the whole aim path, clear
+    // of the HUD: margins as shares of the view's width (sides) and height
+    // (top: the gold; bottom: the turn label, message and inventory).
+    aimFitSide: 0.06,
+    aimFitTop: 0.08,
+    aimFitBottom: 0.26,
+    aimFitMax: 30, // tiles across at most
     // Framing: the camera fits every ball in play (plus the acting enemy)
     // with this much padding, zooming out as far as maxFrameWidth.
     framePadding: 2.2, // screen units around the framed balls

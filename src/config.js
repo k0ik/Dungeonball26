@@ -500,7 +500,8 @@ export const CONFIG = {
     grout: 0.5, // grout lines' tone (0.8 = the baked colour)
     groutPx: 3,
     stoneTone: 0.07, // each stone's tone varies this much either side
-    wallCourses: 3, // rows of blocks up a wall's side
+    bigStones: 0.25, // share of floor stones that span a whole tile (2×2 half-tile cells)
+    wallCourses: 2, // rows of near-square blocks up a wall's side
     shadePxPerTile: 12, // corner-shade map resolution
     shadeBlurTiles: 0.35, // how far the floor darkens out from a wall
     shadeDepth: 0.45, // how dark the floor gets right at the wall (0 = off)

@@ -48,8 +48,9 @@ function toTexture(c, { repeat = true, color = false } = {}) {
 }
 
 /**
- * Flagstones: rows of stones of random widths, each its own tone, with dark
- * grout and a little speckle. Covers `T.floorTiles` tiles each way, tiling.
+ * Flagstones: a grid of square half-tile stones, some merged into big
+ * one-tile squares, each its own tone, with dark grout and a little speckle.
+ * Covers `T.floorTiles` tiles each way, tiling.
  */
 let stoneTex = null;
 export function stoneTexture() {
@@ -59,30 +60,30 @@ export function stoneTexture() {
   const rand = rng(7);
   g.fillStyle = grey(T.grout);
   g.fillRect(0, 0, px, px);
-  const rows = T.floorTiles * 2; // half-tile courses
-  const rowH = px / rows;
+  const n = T.floorTiles * 2; // half-tile cells
+  const cell = px / n;
   const gap = T.groutPx;
-  for (let r = 0; r < rows; r++) {
-    let x = -rand() * rowH * 2;
-    while (x < px) {
-      const w = rowH * (1 + rand() * 1.4);
+  const used = Array.from({ length: n }, () => new Array(n).fill(false));
+  for (let r = 0; r < n; r++) {
+    for (let col = 0; col < n; col++) {
+      if (used[r][col]) continue;
+      // Some stones span 2×2 cells (a whole tile), when the room is free.
+      const big = r + 1 < n && col + 1 < n && !used[r][col + 1] && !used[r + 1][col] && !used[r + 1][col + 1] && rand() < T.bigStones;
+      const k = big ? 2 : 1;
+      for (let i = 0; i < k; i++) for (let j = 0; j < k; j++) used[r + i][col + j] = true;
+      const x = col * cell;
+      const y = r * cell;
+      const size = cell * k;
       const tone = 0.8 + (rand() - 0.5) * T.stoneTone * 2;
       g.fillStyle = grey(tone);
-      // Drawn twice across the seam so the texture wraps cleanly.
-      for (const dx of [0, px]) {
-        const x0 = x - dx;
-        if (x0 + w < 0 || x0 > px) continue;
-        g.beginPath();
-        g.roundRect(x0 + gap / 2, r * rowH + gap / 2, w - gap, rowH - gap, gap);
-        g.fill();
-        // A faint lighter top edge and darker bottom edge: worn, slightly domed.
-        g.fillStyle = `rgba(255,255,255,0.06)`;
-        g.fillRect(x0 + gap, r * rowH + gap, w - gap * 2, rowH * 0.18);
-        g.fillStyle = `rgba(0,0,0,0.07)`;
-        g.fillRect(x0 + gap, r * rowH + rowH * 0.78, w - gap * 2, rowH * 0.18 - gap / 2);
-        g.fillStyle = grey(tone);
-      }
-      x += w;
+      g.beginPath();
+      g.roundRect(x + gap / 2, y + gap / 2, size - gap, size - gap, gap);
+      g.fill();
+      // A faint lighter top edge and darker bottom edge: worn, slightly domed.
+      g.fillStyle = 'rgba(255,255,255,0.06)';
+      g.fillRect(x + gap, y + gap, size - gap * 2, size * 0.14);
+      g.fillStyle = 'rgba(0,0,0,0.07)';
+      g.fillRect(x + gap, y + size * 0.84, size - gap * 2, size * 0.16 - gap);
     }
   }
   speckle(g, px, px, rand, 0.12);
@@ -91,7 +92,7 @@ export function stoneTexture() {
 }
 
 /**
- * Wall sides: courses of stone blocks, `T.wallCourses` rows up the wall's
+ * Wall sides: courses of near-square stone blocks, `T.wallCourses` rows up the wall's
  * height, joints staggered, two tiles wide (u) by the wall's height (v).
  */
 let courseTex = null;
@@ -109,7 +110,7 @@ export function courseTexture() {
   for (let r = 0; r < rows; r++) {
     let x = r % 2 ? -rowH * 0.9 : 0;
     while (x < w) {
-      const bw = rowH * (1.4 + rand() * 0.9);
+      const bw = rowH * (1 + rand() * 0.3); // near-square blocks, not bricks
       const right = Math.min(x + bw, w + rowH * 2);
       const tone = 0.8 + (rand() - 0.5) * T.stoneTone * 2.2;
       for (const dx of [0, w]) {

@@ -1110,3 +1110,10 @@ body {
   pointer-events: none;
   z-index: 30;
 }
+/* The death scene never darkens the board: just the words, shadowed so they read. */
+.death[data-variant='death'] {
+  background: transparent;
+}
+.death[data-variant='death'] span {
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85), 0 0 2px rgba(0, 0, 0, 0.9);
+}

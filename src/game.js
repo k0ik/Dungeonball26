@@ -554,9 +554,9 @@ export function createGame(container, levels, startIndex = 0) {
     nextMove();
   }
 
-  // Death screen: once your skull has rolled to a stop (at most
-  // skullRollMaxSeconds), the screen darkens for deathScreenSeconds; input is
-  // blocked throughout. The respawn (or game-over restart) happens under it,
+  // Death scene: "You Died!" comes up over the board (it never darkens)
+  // about halfway through your skull's roll, for at least deathScreenSeconds
+  // and until the skull stops; input is blocked throughout. The respawn (or game-over restart) happens under it,
   // just before it lightens, and play carries on.
   function knockedOut() {
     state.phase = 'down';
@@ -564,15 +564,14 @@ export function createGame(container, levels, startIndex = 0) {
     // everything but touching nothing: no hits, no barrels, chests or pickups.
     hero.inert = true;
     heroView.setSkull(true);
-    // You lose all your gear and artifacts (a game over too).
+    // You lose your gear now; your artifacts stay on show while the skull
+    // rolls and go when you come back (afterKnockout).
     hero.sword = 0;
     hero.shield = false;
-    state.cards = [];
-    applyCards();
     // Smaller and slippery (restored on respawn).
     const H = CONFIG.hero;
     hero.radius = (CONFIG.ball.diameter / 2) * H.skullScale;
-    hero.friction = (hero.friction ?? 1) * H.skullFriction;
+    hero.friction = H.skullFriction;
     // Flung on hard, the way it was going (any way at all if it was still).
     const v = speedOf(hero);
     const a = v > 0.05 ? Math.atan2(hero.vz, hero.vx) : Math.random() * Math.PI * 2;
@@ -583,8 +582,14 @@ export function createGame(container, levels, startIndex = 0) {
     // then the skull camera follows it (see the framing).
     state.killCam = { x: hero.x, z: hero.z, left: CONFIG.camera.deathCamSeconds, hero: true };
     hitStop(CONFIG.effects.hitStopKill);
+    // "You Died!" comes up about halfway through the roll: half the time a
+    // ball at this speed takes to stop on this friction (bounces only make
+    // it sooner), and at most halfway through the longest roll allowed.
+    const stopIn = launch / (CONFIG.physics.friction * H.skullFriction);
     state.deathShown = false;
-    state.timer = CONFIG.hero.skullRollMaxSeconds;
+    state.downTime = 0;
+    state.deathAt = Math.min(stopIn, H.skullRollMaxSeconds) * 0.4; // a bit under half: bounces cut rolls short
+    state.timer = 0;
     state.aiming = false;
     aimView.hide();
     sfx.play(state.lives - 1 > 0 ? 'down' : 'gameover', 0.9);
@@ -625,7 +630,10 @@ export function createGame(container, levels, startIndex = 0) {
   }
 
   function afterKnockout() {
-    for (const b of world.balls) b.vx = b.vz = 0; // anything still rolling stops under the dark screen
+    for (const b of world.balls) b.vx = b.vz = 0; // anything still rolling stops as you come back
+    // Dying loses your artifacts (kept on show while the skull rolled).
+    state.cards = [];
+    applyCards();
     state.lives--;
     if (state.lives > 0) {
       respawn({ heal: true });
@@ -1358,13 +1366,17 @@ export function createGame(container, levels, startIndex = 0) {
           state.returnBoost = CONFIG.camera.returnBoostSeconds; // snap back to you quickly
         }
         break;
-      case 'down':
-        state.timer -= dt;
+      case 'down': {
+        // "You Died!" about halfway through the roll; you come back once it
+        // has been up for deathScreenSeconds and the skull has stopped (or
+        // the longest roll allowed is over).
+        state.downTime += dt;
+        const stopped = speedOf(hero) <= CONFIG.physics.stopThreshold || state.downTime >= CONFIG.hero.skullRollMaxSeconds;
         if (!state.deathShown) {
-          // Let the skull roll to a stop before the screen darkens.
-          if (speedOf(hero) <= CONFIG.physics.stopThreshold || state.timer <= 0) showDeathScreen();
-        } else if (state.timer <= 0) afterKnockout();
+          if (state.downTime >= state.deathAt || stopped) showDeathScreen();
+        } else if ((state.timer -= dt) <= 0 && stopped) afterKnockout();
         break;
+      }
       case 'won':
         state.timer -= dt;
         if (state.timer <= 0) newRun();

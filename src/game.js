@@ -51,7 +51,10 @@ import { has, offerCards, takeCard } from './cards.js';
 export function createGame(container, levels, startIndex = 0) {
   // --- Rendering -----------------------------------------------------------
   const renderer = new THREE.WebGLRenderer({ antialias: true, stencil: true }); // stencil: the pickup x-ray mask
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, CONFIG.render.maxPixelRatio));
+  // Adaptive resolution (render.adaptive*): start sharp, step the pixel ratio
+  // down while the frame rate stays low, so slower phones stay smooth.
+  const perf = { ratio: Math.min(window.devicePixelRatio, CONFIG.render.maxPixelRatio), frames: 0, time: 0, js: 0, worst: 0, settle: 1, shown: '' };
+  renderer.setPixelRatio(perf.ratio);
   renderer.setClearColor(CONFIG.colors.background);
   container.appendChild(renderer.domElement);
 
@@ -271,6 +274,10 @@ export function createGame(container, levels, startIndex = 0) {
     state.entry = { hp: hero.hp, atk: hero.atk, shield: hero.shield, sword: hero.sword, gold: state.gold, cards: [...state.cards] };
     respawn();
     rig.snapTo(hero.x, hero.z);
+    // Compile every shader the level needs now, not on first sight mid-shot
+    // (a compile can stall a phone for a good fraction of a second).
+    renderer.compile(scene, rig.camera);
+    perf.settle = 1; // let the first second after a load pass before judging the frame rate
   }
 
   /** Put the hero back at the start. The board is left exactly as it is. */
@@ -1081,6 +1088,21 @@ export function createGame(container, levels, startIndex = 0) {
   }
 
   // --- Debug overlay -----------------------------------------------------------
+  // Performance readout: tap the gold counter three times quickly (or press p).
+  const perfView = document.createElement('pre');
+  perfView.className = 'perf';
+  perfView.hidden = true;
+  container.appendChild(perfView);
+  let goldTaps = [];
+  container.querySelector('.hud-left').addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+    goldTaps = [...goldTaps.filter((t) => e.timeStamp - t < 800), e.timeStamp];
+    if (goldTaps.length >= 3) {
+      perfView.hidden = !perfView.hidden;
+      goldTaps = [];
+    }
+  });
+
   const debug = document.createElement('pre');
   debug.className = 'debug';
   debug.hidden = !new URLSearchParams(location.search).has('debug');
@@ -1089,6 +1111,7 @@ export function createGame(container, levels, startIndex = 0) {
   window.addEventListener('keydown', (e) => {
     if (document.body.classList.contains('editing')) return; // the level editor has the keyboard
     if (e.key === 'd' || e.key === '`') debug.hidden = !debug.hidden;
+    if (e.key === 'p') perfView.hidden = !perfView.hidden;
     if (e.key === 'r' && state.phase === 'aim') respawn();
     if (e.key === 'n' && state.phase !== 'won' && state.phase !== 'pick' && state.phase !== 'exiting') {
       loadLevel(levelIndex + 1);
@@ -1116,9 +1139,41 @@ export function createGame(container, levels, startIndex = 0) {
   let last = performance.now();
   let fps = 60;
 
+  /** Frame-rate bookkeeping, the adaptive resolution, and the perf readout. */
+  function trackPerf(realDt, jsMs) {
+    const R = CONFIG.render;
+    perf.frames++;
+    perf.time += realDt;
+    perf.js += jsMs;
+    perf.worst = Math.max(perf.worst, realDt);
+    if (perf.time < R.adaptiveSeconds) return;
+    const rate = perf.frames / perf.time;
+    if (perf.settle > 0) perf.settle--;
+    else if (R.adaptive && rate < R.adaptiveMinFps && perf.ratio > R.minPixelRatio && !document.hidden) {
+      perf.ratio = Math.max(R.minPixelRatio, perf.ratio - R.adaptiveStep);
+      renderer.setPixelRatio(perf.ratio);
+      resize();
+    }
+    if (!perfView.hidden) {
+      const c = renderer.domElement;
+      perfView.textContent = [
+        `${rate.toFixed(0)} fps  worst ${(perf.worst * 1000).toFixed(0)} ms`,
+        `script ${(perf.js / perf.frames).toFixed(1)} ms/frame`,
+        `res ×${perf.ratio.toFixed(2)}  ${c.width}×${c.height}`,
+        `draws ${renderer.info.render.calls}  tris ${(renderer.info.render.triangles / 1000).toFixed(0)}k`,
+      ].join('\n');
+    }
+    perf.frames = 0;
+    perf.time = 0;
+    perf.js = 0;
+    perf.worst = 0;
+  }
+
   function frame(now) {
+    const frameStart = performance.now();
     // Paused (a card is open): time stands still, but the scene keeps drawing.
-    const realDt = hud.paused ? 0 : Math.min(0.25, (now - last) / 1000);
+    const realDtRaw = (now - last) / 1000;
+    const realDt = hud.paused ? 0 : Math.min(0.25, realDtRaw);
     last = now;
     fps += (1 / Math.max(realDt, 1e-3) - fps) * 0.05;
     // Slow motion (close calls and the kill cam): game time runs at
@@ -1384,6 +1439,7 @@ export function createGame(container, levels, startIndex = 0) {
     lighting.update(realDt, hero, world.balls, world.statics, level.exits);
     renderer.render(scene, rig.camera);
     overlay.update();
+    trackPerf(Math.min(0.25, realDtRaw), performance.now() - frameStart);
     hud.setGold(state.gold);
     hud.setKeys(state.keys);
     hud.setCards(state.cards);

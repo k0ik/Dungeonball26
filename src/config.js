@@ -432,6 +432,14 @@ export const CONFIG = {
     iceFadeRate: 4,
     maxAspect: 9 / 16, // desktop browsers get a portrait column like a phone
     maxPixelRatio: 2,
+    // Adaptive resolution: every adaptiveSeconds, if the frame rate was under
+    // adaptiveMinFps, the pixel ratio steps down by adaptiveStep (to no less
+    // than minPixelRatio), trading sharpness for smoothness on slower phones.
+    adaptive: true,
+    adaptiveSeconds: 1.5,
+    adaptiveMinFps: 50,
+    adaptiveStep: 0.25,
+    minPixelRatio: 1,
     // The mockup's walls stand a bit taller than the ball; kept lower here so a
     // ball just behind a wall stays visible. Raise toward 0.8 for the mockup look.
     wallHeight: 0.55,

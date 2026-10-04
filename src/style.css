@@ -302,6 +302,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  pointer-events: auto; /* three quick taps show the performance readout */
 }
 
 /* The mockup's gold coin, with the score beside it. */
@@ -1094,4 +1095,18 @@ body {
   background: radial-gradient(ellipse 75% 70% at 50% 50%, transparent 55%, rgba(12, 8, 6, var(--vignette, 0.45)) 100%);
   pointer-events: none;
   z-index: 1;
+}
+/* Performance readout (three taps on the gold, or p). */
+.perf {
+  position: absolute;
+  right: 8px;
+  top: calc(8px + env(safe-area-inset-top, 0px));
+  margin: 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #9fef9f;
+  font: 11px/1.35 ui-monospace, Menlo, monospace;
+  pointer-events: none;
+  z-index: 30;
 }

@@ -9,6 +9,7 @@ import { tileAt } from '../level.js';
 import { loopPolygons } from '../wallGeometry.js';
 import { outlineLineMaterial, markOccluder, seeThrough } from './materials.js';
 import { litByPools } from './lighting.js';
+import { stoneSurface, cornerShade, setCornerShade } from './textures.js';
 
 const C = CONFIG.colors;
 const W = CONFIG.walls;
@@ -19,11 +20,12 @@ function pushQuad(pos, col, a, b, c, d, color) {
   for (let i = 0; i < 6; i++) col.push(color.r, color.g, color.b);
 }
 
-const flatMaterial = litByPools(new THREE.MeshBasicMaterial({ vertexColors: true })); // lit by the light pools
+// Flagstones and corner shading (textures.js), lit by the light pools.
+const flatMaterial = litByPools(stoneSurface(new THREE.MeshBasicMaterial({ vertexColors: true }), 'floor'));
 // See-through where it hides the hero or the aim path. Walls then draw in the
 // transparent pass: after the ground marks (aim path, rings) so those show
 // through, before the pickup x-ray (renderOrder 10), which needs their depth.
-const wallMaterial = litByPools(seeThrough(markOccluder(new THREE.MeshBasicMaterial({ vertexColors: true }))));
+const wallMaterial = litByPools(stoneSurface(seeThrough(markOccluder(new THREE.MeshBasicMaterial({ vertexColors: true }))), 'wall'));
 const WALL_ORDER = 5;
 
 function meshFrom(pos, col, material = flatMaterial) {
@@ -82,9 +84,11 @@ export function buildLevelView(level) {
   group.add(meshFrom(floorPos, floorCol));
 
   if (level.geometry) {
-    addOutlineWalls(group, level, h);
+    const polys = addOutlineWalls(group, level, h);
+    setCornerShade(cornerShade(level, polys));
     return group;
   }
+  setCornerShade(cornerShade(level));
 
   // Walls: top face per wall tile, side faces only where the neighbour is open,
   // so the merged outline traces the wall mass instead of every tile.
@@ -227,4 +231,5 @@ function addOutlineWalls(group, level, h) {
   if (CONFIG.render.wallOutlines) {
     group.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo, 30), outlineLineMaterial));
   }
+  return polys;
 }

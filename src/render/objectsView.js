@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { toonMaterial, outlineHullMaterial, outlineLineMaterial } from './materials.js';
+import { barrelTexture, chestTexture } from './textures.js';
 
 const C = CONFIG.colors;
 const O = CONFIG.objects;
@@ -27,7 +28,8 @@ function barrelGeometry(stage) {
 function barrelMesh(side, top) {
   const group = new THREE.Group();
   const geo = barrelGeometry(0);
-  const body = new THREE.Mesh(geo, [toonMaterial(side), toonMaterial(top), toonMaterial(side)]);
+  // Staves and iron hoops round the side, planks on the lid (textures.js).
+  const body = new THREE.Mesh(geo, [toonMaterial(side, { map: barrelTexture() }), toonMaterial(top, { map: chestTexture() }), toonMaterial(side)]);
   body.position.y = BARREL_HEIGHT / 2;
   const hull = new THREE.Mesh(geo, outlineHullMaterial);
   hull.scale.setScalar(1.06);
@@ -40,7 +42,7 @@ function chestMesh() {
   const group = new THREE.Group();
   const w = O.chestHalfX * 2;
   const d = O.chestHalfZ * 2;
-  const mat = toonMaterial(C.chest);
+  const mat = toonMaterial(C.chest, { map: chestTexture() }); // planks
   const band = toonMaterial(C.chestBand);
   // Its own outline material, so the whole chest can fade on its own.
   const lines = outlineLineMaterial.clone();

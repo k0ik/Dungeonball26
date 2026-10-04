@@ -493,6 +493,19 @@ export const CONFIG = {
     vignette: 0.45, // darkness at the screen's corners (0 = none)
   },
 
+  // Procedural textures (src/render/textures.js), drawn at load.
+  textures: {
+    pxPerTile: 128, // texture resolution
+    floorTiles: 4, // the flagstone texture covers this many tiles each way
+    grout: 0.5, // grout lines' tone (0.8 = the baked colour)
+    groutPx: 3,
+    stoneTone: 0.07, // each stone's tone varies this much either side
+    wallCourses: 3, // rows of blocks up a wall's side
+    shadePxPerTile: 12, // corner-shade map resolution
+    shadeBlurTiles: 0.35, // how far the floor darkens out from a wall
+    shadeDepth: 0.45, // how dark the floor gets right at the wall (0 = off)
+  },
+
   colors: {
     background: 0x2e2b2a, // warm dark
     floorA: 0x55575a,

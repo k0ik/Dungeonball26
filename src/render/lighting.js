@@ -105,8 +105,10 @@ export function createLighting(scene) {
         add(f.x, f.z, L.flashPoolRadius, flashCol, L.flashPool * k * k);
       }
       flashLight.intensity = Math.max(0, flashLight.intensity - (L.flashLight * dt) / L.flashSeconds);
-      add(hero.x, hero.z, L.torchPoolRadius, torchCol, L.torchPool);
+      // Your torch, out while you're a skull (knocked out).
+      add(hero.x, hero.z, L.torchPoolRadius, torchCol, hero.inert ? 0 : L.torchPool);
       torch.position.set(hero.x, L.torchHeight, hero.z);
+      torch.intensity = hero.inert ? 0 : L.torchLight;
       for (const b of balls) {
         if (b.kind !== 'enemy' || b.dead) continue;
         const type = b.type && CONFIG.enemy.types[b.type];

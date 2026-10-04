@@ -290,7 +290,6 @@ export function createGame(container, levels, startIndex = 0) {
     hero.wobble = 0;
     heroView.setSkull(false);
     hero.radius = CONFIG.ball.diameter / 2;
-    hero.mass = undefined;
     applyCards(); // its friction (Rollerskates)
     state.ouch = 0;
     heroView.snap();
@@ -567,15 +566,14 @@ export function createGame(container, levels, startIndex = 0) {
     // You lose any gear you held (a game over too).
     hero.sword = 0;
     hero.shield = false;
-    // Smaller, light and slippery (restored on respawn).
+    // Smaller and slippery (restored on respawn).
     const H = CONFIG.hero;
     hero.radius = (CONFIG.ball.diameter / 2) * H.skullScale;
-    hero.mass = H.skullMass;
     hero.friction = (hero.friction ?? 1) * H.skullFriction;
     // Flung on hard, the way it was going (any way at all if it was still).
     const v = speedOf(hero);
     const a = v > 0.05 ? Math.atan2(hero.vz, hero.vx) : Math.random() * Math.PI * 2;
-    const launch = Math.min(H.skullLaunchMax, Math.max(H.skullLaunch, v * 1.5));
+    const launch = Math.min(H.skullLaunchMax, Math.max(H.skullLaunch, v * 1.2));
     hero.vx = Math.cos(a) * launch;
     hero.vz = Math.sin(a) * launch;
     // Kill cam on you: slow motion, tight on the skull as it's flung away;

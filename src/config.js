@@ -324,18 +324,17 @@ export const CONFIG = {
     // and play resumes from the start.
     deathScreenSeconds: 3,
     skullRollMaxSeconds: 8, // the death screen waits for your skull to stop rolling, at most this long
-    // Your skull (knocked out): smaller, light and slippery, so it skitters on.
+    // Your skull (knocked out): smaller and slippery, so it skitters on.
     skullScale: 0.8, // its size (and collision radius) against your ball's
-    skullMass: 0.5,
     skullFriction: 0.6, // a scale on the floor's friction
     // At the knockout the skull is flung on at least this speed (tiles/s), the
     // way it was going, so you watch it careen round the room.
-    skullLaunch: 6.5,
-    skullLaunchMax: 9,
+    skullLaunch: 4.5,
+    skullLaunchMax: 5.5,
     // It's lumpy: its heading wobbles as it rolls (a random walk in its turn
     // rate, radians/s, kicked each physics step and damped).
     skullJiggleKick: 2,
-    skullJiggleDamping: 4,
+    skullJiggleDamping: 12, // high: small, quick wobbles
     deathFadeSeconds: 0.4, // darken / lighten time, inside the 3 s
     runCompleteSeconds: 4, // the "Run Complete!" screen after the last level, before a new run
     maxHp: 1, // TESTING: 1 HP, to try the knockout quickly (normally 10)

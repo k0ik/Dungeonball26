@@ -186,6 +186,7 @@ export function createEffects(scene) {
     return m;
   });
   let bloodNext = 0;
+  const trailLight = new THREE.Color(E.bloodColorLight);
 
   const rand = (a, b) => a + Math.random() * (b - a);
   const colorOf = (hex) => tmp.set(hex);
@@ -328,6 +329,8 @@ export function createEffects(scene) {
       m.rotation.y = Math.random() * Math.PI * 2;
       m.scale.set(size * (0.7 + Math.random() * 0.6), 1, size);
       m.material.opacity = E.bloodOpacity;
+      // Each smear its own grey, from light to dark metal.
+      m.material.color.set(E.bloodColorDark).lerp(trailLight, Math.random());
       m.visible = true;
       m.userData.t = 0;
     },

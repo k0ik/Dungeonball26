@@ -558,6 +558,8 @@ export const CONFIG = {
     metalDarkColor: 0x6e7279,
     maxBlood: 160,
     bloodColor: 0x6c7078, // the trail: grey, the ball's metal skin
+    bloodColorLight: 0xc4c7cd, // each smear a random grey between these
+    bloodColorDark: 0x4a4d53,
     bloodOpacity: 0.75,
     bloodSeconds: 6, // each dab fades away over this
     bloodSpacing: 0.18, // tiles rolled between dabs

@@ -578,6 +578,8 @@ export function createGame(container, levels, startIndex = 0) {
     const launch = Math.min(H.skullLaunchMax, Math.max(H.skullLaunch, v * 1.2));
     hero.vx = Math.cos(a) * launch;
     hero.vz = Math.sin(a) * launch;
+    // It sheds its metal skin: a big spray of silver flakes.
+    effects.shed(hero.x, hero.z, Math.cos(a), Math.sin(a));
     // Kill cam on you: tight on the skull as it's flung away (no slow motion);
     // then the skull camera follows it (see the framing).
     state.killCam = { x: hero.x, z: hero.z, left: CONFIG.camera.deathCamSeconds, hero: true };
@@ -610,7 +612,7 @@ export function createGame(container, levels, startIndex = 0) {
     [hero.vx, hero.vz] = [hero.vx * c - hero.vz * s, hero.vx * s + hero.vz * c];
   }
 
-  /** The skull leaves a trail of blood dabs on the floor as it rolls. */
+  /** The skull leaves a trail of its shed metal skin on the floor as it rolls. */
   function bleedSkull() {
     const E = CONFIG.effects;
     const last = hero.bledAt ?? (hero.bledAt = { x: hero.x, z: hero.z });

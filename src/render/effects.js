@@ -308,7 +308,17 @@ export function createEffects(scene) {
       scorches.push({ mesh: scorch, t: 0 });
     },
     /**
-     * Your skull rolling: a dab of blood on the floor at (x, z), `size`
+     * Your knockout at (x, z), flung along (nx, nz): a big spray of the
+     * ball's metal skin, flakes of silver bursting off (mostly along its way),
+     * with a few bright glints among them.
+     */
+    shed(x, z, nx, nz) {
+      fan(soft, x, 0.3, z, nx, nz, E.shedFlakes, { color: E.metalColor, speed: [1.5, 7.5], up: [1, 4.5], life: [0.7, 1.5], size: [0.07, 0.16], gravity: 9, drag: 1.5, cone: 1.6 });
+      burst(soft, x, 0.3, z, Math.round(E.shedFlakes / 2), { color: E.metalDarkColor, speed: [1, 5], up: [1, 4], life: [0.7, 1.4], size: [0.05, 0.12], gravity: 9, drag: 1.5 });
+      burst(glow, x, 0.35, z, Math.round(E.shedFlakes / 3), { color: 0xffffff, speed: [2, 6], up: [1, 3], life: [0.2, 0.5], size: [0.03, 0.06], gravity: 6 });
+    },
+    /**
+     * Your skull rolling: a dab of the shed metal skin on the floor at (x, z), `size`
      * across, that soaks in and fades over effects.bloodSeconds.
      */
     blood(x, z, size) {

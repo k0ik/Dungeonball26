@@ -551,9 +551,13 @@ export const CONFIG = {
     ringRadius: 2.2, // tiles a blast's shockwave ring grows to
     ringSeconds: 0.45,
     scorchSize: 1.8, // tiles across; scorch marks stay for the level
-    // Your skull leaves a trail of blood dabs as it rolls.
+    // Your knockout: the ball sheds its metal skin in a big spray of silver
+    // flakes, and the skull leaves a trail of grey metal smears as it rolls.
+    shedFlakes: 120,
+    metalColor: 0xc9ccd2,
+    metalDarkColor: 0x6e7279,
     maxBlood: 160,
-    bloodColor: 0x7a0c10,
+    bloodColor: 0x6c7078, // the trail: grey, the ball's metal skin
     bloodOpacity: 0.75,
     bloodSeconds: 6, // each dab fades away over this
     bloodSpacing: 0.18, // tiles rolled between dabs

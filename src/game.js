@@ -560,7 +560,7 @@ export function createGame(container, levels, startIndex = 0) {
     // everything but touching nothing: no hits, no barrels, chests or pickups.
     hero.inert = true;
     heroView.setSkull(true);
-    // You lose any gear you held (a game over still restores what you entered the level with).
+    // You lose any gear you held (a game over too).
     hero.sword = 0;
     hero.shield = false;
     state.deathShown = false;
@@ -583,14 +583,14 @@ export function createGame(container, levels, startIndex = 0) {
     if (state.lives > 0) {
       respawn({ heal: true });
     } else {
-      // Game over: the level starts from scratch, with the HP, gear and gold
-      // you entered it with.
-      const { hp, atk, shield, sword, gold, cards } = state.entry;
+      // Game over: the level starts from scratch, with the HP and gold you
+      // entered it with, but no gear (the knockout took it).
+      const { hp, atk, gold, cards } = state.entry;
       state.cards = [...cards];
       applyCards();
       // Doppleganger: +1 to the lives a game over restores.
       state.lives = CONFIG.hero.lives + (has(state.cards, 'doppleganger') ? 1 : 0);
-      Object.assign(hero, { hp, atk, shield, sword });
+      Object.assign(hero, { hp, atk, shield: false, sword: 0 });
       state.gold = gold;
       loadLevel(levelIndex);
     }

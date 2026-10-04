@@ -203,10 +203,10 @@ export function skullTexture() {
   g.fillStyle = g.strokeStyle = `#${CONFIG.colors.enemyFace.toString(16).padStart(6, '0')}`;
   g.lineCap = 'round';
   g.lineJoin = 'round';
-  // The 128-unit face drawing, centred at u = 0.75 and enlarged so it fills
-  // most of the side of the ball facing you.
+  // The 128-unit face drawing, centred at u = 0.75, scaled to match the
+  // living face's size on the ball.
   g.translate(384, 128);
-  g.scale(1.7, 1.7);
+  g.scale(1.06, 1.06);
   g.translate(-64, -64);
   drawDead(g);
   skullTex = new THREE.CanvasTexture(canvas);

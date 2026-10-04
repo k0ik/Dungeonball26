@@ -123,13 +123,13 @@ Every enemy that currently sees the hero shows a "!" above it, updated live even
 
 You have 3 lives. Reaching 0 HP costs one life and puts you back at the level start with full HP, while the board stays exactly as you left it.
 
-- **Your skull:** at 0 HP your ball turns bone white with XX eyes and a toothy grin (a skull) and rolls on as before, but it no longer touches the game: it bounces off enemies, barrels and chests as if they were fixed, without moving, hurting, cracking, opening or setting off anything, and picks nothing up. Its face is painted on the ball (not turned to the camera like the living face), so it tumbles helplessly as the skull rolls. The death screen waits until the skull has rolled to a stop (at most 6 s, `hero.skullRollMaxSeconds`). You lose any sword and shield you held (a game over still restarts the level with the gear you entered it with). It's itself again when you respawn.
+- **Your skull:** at 0 HP your ball turns bone white with XX eyes and a toothy grin (a skull) and rolls on as before, but it no longer touches the game: it bounces off enemies, barrels and chests as if they were fixed, without moving, hurting, cracking, opening or setting off anything, and picks nothing up. Its face is painted on the ball (not turned to the camera like the living face), so it tumbles helplessly as the skull rolls. The death screen waits until the skull has rolled to a stop (at most 6 s, `hero.skullRollMaxSeconds`). You lose any sword and shield you held, a game over included. It's itself again when you respawn.
 - **Death screen:** at 0 HP, input is blocked and the screen darkens for 3 seconds with "You Died!" and, on a second line, the lives left ("2 lives remain", "1 life remains") or "Game Over". Anything still rolling stops under it, you're put back at the start (or the level restarts on a game over), and the screen lightens again with your move. Lives aren't shown in the HUD otherwise.
 
 - **Board state persists:** dead enemies stay dead, damaged enemies stay damaged, broken barrels stay broken, opened chests and doors stay open, and keys you hold stay with you.
 - **Respawn is safe:** enemies only act after your shot, so you always get the first move after respawning.
 - **Extra lives** come only from a rare barrel drop (a 1-up).
-- **Game over** at 0 lives restarts the current level from scratch with 3 lives, and the HP and gear you entered it with.
+- **Game over** at 0 lives restarts the current level from scratch with 3 lives and the HP you entered it with, but no sword or shield.
 - **Between levels:** reaching the exit loads the next level at once (even mid-roll), with a short banner naming it ("One Key, Level 3 of 3"). HP, gear bonuses, lives and score carry over. Unused keys do not.
 - **Run complete:** the exit of the last level darkens the screen with "Run Complete!" and your gold for 4 seconds, then a fresh run starts at level 1 (full HP, no gear, 3 lives, no gold).
 

@@ -42,6 +42,7 @@ import { createIce, meltIce, stepIce } from './ice.js';
 import { createLooks } from './look.js';
 import { createItemsView } from './render/itemsView.js';
 import { createLighting } from './render/lighting.js';
+import { createEffects } from './render/effects.js';
 import { createDoorsView } from './render/doorsView.js';
 import { openDoors } from './doors.js';
 import { has, offerCards, takeCard } from './cards.js';
@@ -76,6 +77,8 @@ export function createGame(container, levels, startIndex = 0) {
 
   const combat = createCombat();
   const objectsView = createObjectsView(scene);
+  const effects = createEffects(scene);
+  const enemyColor = (b) => (b.type && CONFIG.enemy.types[b.type]?.color) ?? CONFIG.colors.enemy;
   const iceView = createIceView(scene);
   let ice = createIce(); // Ice balls' puddles (src/ice.js)
   const looks = createLooks(); // where faces look (src/look.js)
@@ -115,6 +118,7 @@ export function createGame(container, levels, startIndex = 0) {
   let start = null;
   let levelView = null;
   const viewDir = new THREE.Vector3(); // scratch for the see-through walls
+  const bufSize = new THREE.Vector2(); // scratch for the particle sizes
 
   const enemies = () => world.balls.filter((b) => b.kind === 'enemy');
   /** Tool balls (Bomb, Gold ball) share the enemies' list but have no will. */
@@ -231,6 +235,7 @@ export function createGame(container, levels, startIndex = 0) {
     state.shotCoins = 0;
     state.keys = []; // unused keys don't carry over (and a game over takes them back)
     objectsView.build(world.statics);
+    effects.clear();
     doorsView.build(level);
     applyCards(); // hero-side card effects (Athletic)
 
@@ -834,6 +839,7 @@ export function createGame(container, levels, startIndex = 0) {
    */
   function pickUpStripCoin(item) {
     addGold(item.value);
+    effects.glint(item.x, item.z);
     itemsView.popCoin(item.x, item.z);
     if (state.phase !== 'shot') {
       sfx.play('coin', 0.45); // outside your shot (knocked about on the enemy turn): no streak
@@ -869,6 +875,7 @@ export function createGame(container, levels, startIndex = 0) {
       } else if (o.type === 'break') {
         sfx.play('break', 0.9);
         objectsView.remove(obj);
+        effects.barrelBreak(obj.x, obj.z, CONFIG.colors.barrel);
         dropLoot(obj.x, obj.z);
       } else if (o.type === 'open') {
         sfx.play('chest', 0.9);
@@ -884,6 +891,8 @@ export function createGame(container, levels, startIndex = 0) {
         objectsView.remove(obj);
         objectsView.blast(obj.x, obj.z);
         lighting.flash(obj.x, obj.z);
+        effects.explosion(obj.x, obj.z);
+        hitStop(CONFIG.effects.hitStopBlast);
         looks.blast(level, obj.x, obj.z, world.balls, hasFace);
         if (o.victim) handleOutcomes(combat.explosion(world, o.victim, hero)); // none when a bomb's blast set it off
       }
@@ -896,6 +905,7 @@ export function createGame(container, levels, startIndex = 0) {
     const objectHits = new Set(objectOutcomes.map((o) => o.obj));
     for (const ev of world.events) {
       const loud = Math.min(1, ev.speed / CONFIG.aim.maxLaunchSpeed);
+      hitEffect(ev, damaging.has(ev));
       const bump = ev.type === 'wall' || (ev.type === 'static' && !objectHits.has(ev.obj));
       if (bump && ev.speed >= A.minWallSoundSpeed) {
         sfx.play('wall', 0.25 + 0.75 * loud, { pitch: 0.9 + Math.random() * 0.2, minInterval: A.minWallSoundInterval });
@@ -906,6 +916,29 @@ export function createGame(container, levels, startIndex = 0) {
     world.events.length = 0;
     handleOutcomes(outcomes);
     handleObjects(objectOutcomes);
+  }
+
+  /** Dust off walls and bumpers, sparks where balls meet (tinted on a hit). */
+  function hitEffect(ev, damaging) {
+    if (ev.type === 'wall') {
+      // The nearest point of the wall tile it hit, and the way it bounced off.
+      const b = ev.ball;
+      const cx = Math.max(ev.col, Math.min(ev.col + 1, b.x));
+      const cz = Math.max(ev.row, Math.min(ev.row + 1, b.z));
+      const d = Math.hypot(b.x - cx, b.z - cz) || 1;
+      effects.wallHit(cx, cz, (b.x - cx) / d, (b.z - cz) / d, ev.speed);
+    } else if (ev.type === 'static') {
+      const b = ev.ball;
+      const d = Math.hypot(b.x - ev.obj.x, b.z - ev.obj.z) || 1;
+      const nx = (b.x - ev.obj.x) / d;
+      const nz = (b.z - ev.obj.z) / d;
+      effects.wallHit(b.x - nx * b.radius, b.z - nz * b.radius, nx, nz, ev.speed);
+    } else if (ev.type === 'ball') {
+      const { a, b, nx, nz } = ev;
+      const other = a === hero ? b : b === hero ? a : null;
+      const tint = damaging ? enemyColor(other ?? b) : null;
+      effects.ballHit(a.x + nx * a.radius, a.z + nz * a.radius, nx, nz, ev.speed, tint);
+    }
   }
 
   function handleOutcomes(outcomes) {
@@ -938,6 +971,8 @@ export function createGame(container, levels, startIndex = 0) {
         sfx.play('explode', 1);
         objectsView.blast(o.target.x, o.target.z, CONFIG.enemy.types.bomb.blastRadius / 1.4);
         lighting.flash(o.target.x, o.target.z);
+        effects.explosion(o.target.x, o.target.z, 1.4);
+        hitStop(CONFIG.effects.hitStopBlast);
         looks.blast(level, o.target.x, o.target.z, world.balls, hasFace);
         enemyViews.get(o.target)?.die();
         // It also sets off red barrels and cracks or breaks barrels in reach.
@@ -956,6 +991,8 @@ export function createGame(container, levels, startIndex = 0) {
           state.killCam = { x: o.target.x, z: o.target.z, left: (o.shotKills ?? 1) >= 2 ? K.comboSeconds : K.killSeconds };
         }
         enemyViews.get(o.target)?.die();
+        effects.kill(o.target.x, o.target.z, enemyColor(o.target));
+        hitStop(CONFIG.effects.hitStopKill);
         overlay.removeBar(o.target);
         // A kill drops coins worth the enemy's level where it died.
         // A kill scatters coins worth the enemy's level around where it died,
@@ -1002,6 +1039,11 @@ export function createGame(container, levels, startIndex = 0) {
    * count down the kill cam, and ease the time scale toward slow motion while
    * either is on. Runs on real time; returns the time scale for this frame.
    */
+  /** Hit-stop: freeze the action for a beat on a big hit (the camera keeps moving). */
+  function hitStop(seconds) {
+    state.hitStop = Math.max(state.hitStop ?? 0, seconds);
+  }
+
   function updateDrama(realDt) {
     const C = CONFIG.camera;
     const live = state.phase === 'shot' || state.phase === 'enemyMove';
@@ -1031,6 +1073,10 @@ export function createGame(container, levels, startIndex = 0) {
     const target = state.killCam ? C.killSlow : state.closeCall ? C.closeSlow : 1;
     state.timeScale = (state.timeScale ?? 1) + (target - (state.timeScale ?? 1)) * (1 - Math.exp(-C.timeEaseRate * realDt));
     if (Math.abs(state.timeScale - 1) < 0.01 && target === 1) state.timeScale = 1;
+    if (state.hitStop > 0) {
+      state.hitStop -= realDt;
+      return 0;
+    }
     return state.timeScale;
   }
 
@@ -1232,6 +1278,7 @@ export function createGame(container, levels, startIndex = 0) {
     );
     heroView.update(dt);
     objectsView.update(dt);
+    effects.update(dt, renderer.getDrawingBufferSize(bufSize).y / ((rig.camera.top - rig.camera.bottom) / rig.camera.zoom));
     iceView.update(ice, state.move ?? 0, dt);
     doorsView.update(dt);
     objectsView.fadeChests(hero, state.aiming, dt);
@@ -1381,6 +1428,7 @@ export function createGame(container, levels, startIndex = 0) {
     heroView,
     objectsView,
     lighting,
+    effects,
     state,
     rig,
     respawn,

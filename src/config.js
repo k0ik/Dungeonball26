@@ -501,6 +501,26 @@ export const CONFIG = {
     vignette: 0.55, // darkness at the screen's corners (0 = none)
   },
 
+  // Effects (src/render/effects.js): particles, barrel debris, floor marks.
+  effects: {
+    maxParticles: 600, // per layer (glowing and soft)
+    particleScale: 1.7, // all particle sizes
+    maxDebris: 120, // barrel staves in flight or settling
+    stavesPerBarrel: 7,
+    minHitSpeed: 1.2, // tiles/s: softer contacts make no dust or sparks
+    dustColor: 0xb8aa98,
+    sparkColor: 0xffe2a0,
+    fireColor: 0xff9a2a,
+    emberColor: 0xffc860,
+    smokeColor: 0x3a3330,
+    glintColor: 0xffe27a,
+    ringRadius: 2.2, // tiles a blast's shockwave ring grows to
+    ringSeconds: 0.45,
+    scorchSize: 1.8, // tiles across; scorch marks stay for the level
+    hitStopKill: 0.06, // seconds the action freezes on a kill
+    hitStopBlast: 0.08, // and on an explosion
+  },
+
   // Procedural textures (src/render/textures.js), drawn at load.
   textures: {
     pxPerTile: 128, // texture resolution

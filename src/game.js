@@ -550,8 +550,9 @@ export function createGame(container, levels, startIndex = 0) {
     nextMove();
   }
 
-  // Death screen: input is blocked and the screen darkens for
-  // deathScreenSeconds. The respawn (or game-over restart) happens under it,
+  // Death screen: once your skull has rolled to a stop (at most
+  // skullRollMaxSeconds), the screen darkens for deathScreenSeconds; input is
+  // blocked throughout. The respawn (or game-over restart) happens under it,
   // just before it lightens, and play carries on.
   function knockedOut() {
     state.phase = 'down';
@@ -559,11 +560,20 @@ export function createGame(container, levels, startIndex = 0) {
     // everything but touching nothing: no hits, no barrels, chests or pickups.
     hero.inert = true;
     heroView.setSkull(true);
-    state.timer = CONFIG.hero.deathScreenSeconds;
+    // You lose any gear you held (a game over still restores what you entered the level with).
+    hero.sword = 0;
+    hero.shield = false;
+    state.deathShown = false;
+    state.timer = CONFIG.hero.skullRollMaxSeconds;
     state.aiming = false;
     aimView.hide();
+    sfx.play(state.lives - 1 > 0 ? 'down' : 'gameover', 0.9);
+  }
+
+  function showDeathScreen() {
+    state.deathShown = true;
+    state.timer = CONFIG.hero.deathScreenSeconds;
     const left = state.lives - 1;
-    sfx.play(left > 0 ? 'down' : 'gameover', 0.9);
     hud.showScreen('You Died!', left > 0 ? `${left} ${left === 1 ? 'life remains' : 'lives remain'}` : 'Game Over');
   }
 
@@ -1294,7 +1304,10 @@ export function createGame(container, levels, startIndex = 0) {
         break;
       case 'down':
         state.timer -= dt;
-        if (state.timer <= 0) afterKnockout();
+        if (!state.deathShown) {
+          // Let the skull roll to a stop before the screen darkens.
+          if (speedOf(hero) <= CONFIG.physics.stopThreshold || state.timer <= 0) showDeathScreen();
+        } else if (state.timer <= 0) afterKnockout();
         break;
       case 'won':
         state.timer -= dt;

@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { toonMaterial, silverMaterial, outlineHullMaterial, clearOccluder } from './materials.js';
-import { heroFaces, faceSprite, faceLook } from './faces.js';
+import { heroFaces, faceSprite, faceLook, skullTexture } from './faces.js';
 
 const shadowMaterial = new THREE.MeshBasicMaterial({
   color: CONFIG.colors.shadow,
@@ -68,7 +68,10 @@ export function createBallView(ball, { color, stripe, silver = false, toCamera =
   const chrome = body.material;
   const baseColor = chrome.color.clone();
   // Knocked out (setSkull): the ball turns bone white.
-  const bone = clearOccluder(toonMaterial(CONFIG.colors.skull));
+  // Its face is painted on the ball (not the camera-facing sprite), so it
+  // tumbles helplessly as the skull rolls.
+  const bone = clearOccluder(toonMaterial(CONFIG.colors.skull, { map: skullTexture() }));
+  const faceDir = new THREE.Vector3(0, 0, -1); // where skullTexture puts the face, in the body's frame
   const flashColor = new THREE.Color(CONFIG.colors.hitFlash);
   let flashLeft = 0;
   let flashLevel = 0;
@@ -108,7 +111,15 @@ export function createBallView(ball, { color, stripe, silver = false, toCamera =
     },
     /** Knocked out: a bone-white skull (on), or back to the ball's own look. */
     setSkull(on) {
+      if ((body.material === bone) === on) return;
       body.material = on ? bone : chrome;
+      if (face) face.visible = !on;
+      // Start with the face turned to the camera, upright, so you see it
+      // before it rolls away.
+      if (on && toCamera) {
+        q.setFromUnitVectors(faceDir, toCamera);
+        body.quaternion.copy(q);
+      }
     },
     /** Show an expression: 'confident', 'determined', 'worried', 'ouch' or 'dead'. */
     setExpression(name) {

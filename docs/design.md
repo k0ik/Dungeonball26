@@ -123,7 +123,7 @@ Every enemy that currently sees the hero shows a "!" above it, updated live even
 
 You have 3 lives. Reaching 0 HP costs one life and puts you back at the level start with full HP, while the board stays exactly as you left it.
 
-- **Your skull:** at 0 HP your ball turns bone white with XX eyes and a toothy grin (a skull) and rolls on as before, but it no longer touches the game: it bounces off enemies, barrels and chests as if they were fixed, without moving, hurting, cracking, opening or setting off anything, and picks nothing up. It's itself again when you respawn.
+- **Your skull:** at 0 HP your ball turns bone white with XX eyes and a toothy grin (a skull) and rolls on as before, but it no longer touches the game: it bounces off enemies, barrels and chests as if they were fixed, without moving, hurting, cracking, opening or setting off anything, and picks nothing up. Its face is painted on the ball (not turned to the camera like the living face), so it tumbles helplessly as the skull rolls. The death screen waits until the skull has rolled to a stop (at most 6 s, `hero.skullRollMaxSeconds`). You lose any sword and shield you held (a game over still restarts the level with the gear you entered it with). It's itself again when you respawn.
 - **Death screen:** at 0 HP, input is blocked and the screen darkens for 3 seconds with "You Died!" and, on a second line, the lives left ("2 lives remain", "1 life remains") or "Game Over". Anything still rolling stops under it, you're put back at the start (or the level restarts on a game over), and the screen lightens again with your move. Lives aren't shown in the HUD otherwise.
 
 - **Board state persists:** dead enemies stay dead, damaged enemies stay damaged, broken barrels stay broken, opened chests and doors stay open, and keys you hold stay with you.
@@ -569,7 +569,7 @@ The rules above use these defaults where your answers left a gap. Change any tha
 - Sight range is 6 tiles, not the screen width, because a portrait screen is only 9 tiles wide. Other enemies also block sight, so they can shield you.
 - Gear is the shield, a one-hit consumable held until an enemy hit or a red-barrel blast uses it up (they don't stack), and the sword, +3 ATK for every hit of the first shot in which you hit an enemy (combo and blast damage don't use it).
 - Chest gold is granted at once with a floating label. Barrel loot, keys and enemy coins lie on the floor until you roll over them.
-- Respawn restores full HP, and keys you hold are kept.
+- Respawn restores full HP; keys you hold are kept, but any sword and shield are lost.
 - Aiming is a slingshot pull-back rather than dragging toward the target.
 - An explosive barrel deals a flat 1 damage regardless of ATK (a held shield absorbs it and is used up), ignores the normal 0.4 tiles/s hit threshold, and drops no loot.
 - Zoom tracks the hero's speed only. Enemy lunges and patrols don't drive it.

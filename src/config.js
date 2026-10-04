@@ -323,6 +323,7 @@ export const CONFIG = {
     // (or "Game Over") and input is blocked for this long, then it lightens
     // and play resumes from the start.
     deathScreenSeconds: 3,
+    skullRollMaxSeconds: 6, // the death screen waits for your skull to stop rolling, at most this long
     deathFadeSeconds: 0.4, // darken / lighten time, inside the 3 s
     runCompleteSeconds: 4, // the "Run Complete!" screen after the last level, before a new run
     maxHp: 10,

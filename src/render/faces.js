@@ -163,8 +163,7 @@ const worriedFace = () =>
   });
 
 /** Knocked out: a skull: XX eyes, a grin of teeth. */
-const deadFace = () =>
-  faceTexture('dead', (g) => {
+function drawDead(g) {
     g.lineWidth = 7;
     g.beginPath();
     for (const x of [46, 82]) {
@@ -183,7 +182,37 @@ const deadFace = () =>
       g.lineTo(x, 95); // teeth
     }
     g.stroke();
-  });
+}
+const deadFace = () => faceTexture('dead', drawDead);
+
+let skullTex = null;
+/**
+ * The skull's face painted onto the ball itself (an equirectangular map for
+ * a SphereGeometry), so it rolls and tumbles with the body instead of
+ * turning to the camera: helpless, not in control. The face sits on the
+ * sphere's local -z side (u = 0.75, on the equator), covering about 90°.
+ */
+export function skullTexture() {
+  if (skullTex) return skullTex;
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 256;
+  const g = canvas.getContext('2d');
+  g.fillStyle = '#ffffff'; // white: the material's colour tints it bone
+  g.fillRect(0, 0, 512, 256);
+  g.fillStyle = g.strokeStyle = `#${CONFIG.colors.enemyFace.toString(16).padStart(6, '0')}`;
+  g.lineCap = 'round';
+  g.lineJoin = 'round';
+  // The 128-unit face drawing, centred at u = 0.75 and enlarged so it fills
+  // most of the side of the ball facing you.
+  g.translate(384, 128);
+  g.scale(1.7, 1.7);
+  g.translate(-64, -64);
+  drawDead(g);
+  skullTex = new THREE.CanvasTexture(canvas);
+  skullTex.colorSpace = THREE.SRGBColorSpace;
+  return skullTex;
+}
 
 export const heroFaces = { confident: confidentFace, determined: determinedFace, ouch: ouchFace, worried: worriedFace, dead: deadFace };
 

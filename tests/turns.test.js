@@ -1,0 +1,246 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { parseLevel } from '../src/level.js';
+import { createBall, createWorld, stepWorld, isAtRest } from '../src/physics.js';
+import { canSee } from '../src/sight.js';
+import { nextActor, lungeVelocity, patrolMove, heroDamage, pickPatrollers, walkDistances, seekerMove } from '../src/turns.js';
+import { createCombat, createEnemy } from '../src/combat.js';
+import { CONFIG } from '../src/config.js';
+
+// Square walls: these tests are about sight lines past a sharp pillar.
+const room = parseLevel(`
+1###########
+#..........#
+#..........#
+#....#.....#
+#..........#
+#S.........#
+############`);
+
+const hero = (x, z) => Object.assign(createBall({ x, z, kind: 'hero', id: 'hero' }), { hp: 10, maxHp: 10, atk: 1 });
+const enemy = (x, z, level = 1, id = 'e') => createEnemy({ x, z, level, id });
+
+test('sight: open line within range', () => {
+  const h = hero(1.5, 1.5);
+  const e = enemy(6.5, 1.5);
+  assert.equal(canSee(room, e, h, [h, e]), true);
+});
+
+test('sight: blocked by a wall', () => {
+  const h = hero(3.5, 3.5);
+  const e = enemy(8.5, 3.5); // wall at col 5, row 3 between them
+  assert.equal(canSee(room, e, h, [h, e]), false);
+});
+
+test('sight: blocked by another enemy in the way', () => {
+  const h = hero(1.5, 1.5);
+  const e = enemy(6.5, 1.5);
+  const blocker = enemy(4, 1.5, 1, 'b');
+  assert.equal(canSee(room, e, h, [h, e, blocker]), false);
+  const offLine = enemy(4, 3.5, 1, 'c');
+  assert.equal(canSee(room, e, h, [h, e, offLine]), true);
+});
+
+test('sight: limited to the sight range', () => {
+  const h = hero(1.5, 1.5);
+  assert.equal(canSee(room, enemy(1.5 + CONFIG.enemy.sightRange - 0.1, 1.5), h, []), true);
+  assert.equal(canSee(room, enemy(1.5 + CONFIG.enemy.sightRange + 0.2, 1.5), h, []), false);
+});
+
+test('sight: a hero-width sweep fits a one-tile gap', () => {
+  const gap = parseLevel(`
+#######
+#.....#
+###.###
+#.....#
+#S....#
+#######`);
+  const h = hero(3.5, 4.5);
+  assert.equal(canSee(gap, enemy(3.5, 1.5), h, []), true, 'straight through the gap');
+  assert.equal(canSee(gap, enemy(1.5, 1.5), h, []), false, 'diagonal clips the gap edge');
+});
+
+test('turn order: nearest untaken enemy first', () => {
+  const h = hero(1.5, 1.5);
+  const far = enemy(9, 1.5, 1, 'far');
+  const near = enemy(3, 1.5, 1, 'near');
+  const dead = Object.assign(enemy(2, 1.5, 1, 'dead'), { hp: 0 });
+  const taken = new Set();
+  assert.equal(nextActor([far, near, dead], h, taken), near);
+  taken.add(near);
+  assert.equal(nextActor([far, near, dead], h, taken), far);
+  taken.add(far);
+  assert.equal(nextActor([far, near, dead], h, taken), null);
+});
+
+test('lunge heads straight at the hero at lunge speed', () => {
+  const v = lungeVelocity(enemy(5, 5), hero(2, 1));
+  assert.ok(Math.abs(Math.hypot(v.vx, v.vz) - CONFIG.enemy.lungeSpeed) < 1e-9);
+  assert.ok(v.vx < 0 && v.vz < 0);
+});
+
+test('patrol picks a free floor tile within range and rolls to rest near it', () => {
+  const e = enemy(6.5, 2.5);
+  let seed = 0.37;
+  const rng = () => (seed = (seed * 9301 + 0.49297) % 1);
+  for (let i = 0; i < 20; i++) {
+    const move = patrolMove(room, e, [e], rng);
+    assert.ok(move);
+    assert.ok(move.target.d <= CONFIG.enemy.patrolRadius);
+    const speed = Math.hypot(move.vx, move.vz);
+    assert.ok(speed >= CONFIG.enemy.patrolSpeedMin - 1e-9 && speed <= CONFIG.enemy.patrolSpeedMax + 1e-9);
+  }
+  // Run one for real: it should come to rest close to its target.
+  const world = createWorld(room);
+  const move = patrolMove(room, e, [e], () => 0.5);
+  e.vx = move.vx;
+  e.vz = move.vz;
+  world.balls.push(e);
+  while (!isAtRest(world)) stepWorld(world);
+  assert.ok(Math.hypot(e.x - move.target.x, e.z - move.target.z) < 0.8);
+});
+
+test('patrol stays put when boxed in', () => {
+  const box = parseLevel('#####\n#S#.#\n#####');
+  const e = enemy(1.5, 1.5);
+  assert.equal(patrolMove(box, e, [e]), null);
+});
+
+test('an attacker hit costs the hero 1 HP, whatever its level', () => {
+  assert.equal(heroDamage(), 1);
+});
+
+test('enemy phase: only the attacker hurts the hero, once per turn', () => {
+  const world = createWorld(room);
+  const h = hero(3, 3);
+  const attacker = enemy(4, 3, 3, 'a');
+  const bystander = enemy(3, 4, 2, 'b');
+  world.balls.push(h, attacker, bystander);
+  const combat = createCombat();
+  combat.beginEnemyTurn(attacker);
+  world.events.push(
+    { type: 'ball', a: bystander, b: h, speed: 5 },
+    { type: 'ball', a: attacker, b: h, speed: 5 },
+    { type: 'ball', a: h, b: attacker, speed: 5 },
+    { type: 'ball', a: attacker, b: bystander, speed: 5 },
+  );
+  const out = combat.resolve(world, h);
+  assert.deepEqual(out.map((o) => [o.type, o.amount]), [['hurt', 1]], 'a level-3 attacker still deals 1');
+  assert.equal(h.hp, 9);
+  assert.equal(attacker.hp, 6, 'hero contact in the enemy phase does no damage');
+  assert.equal(bystander.hp, 4, 'enemy-enemy contact in the enemy phase does no damage');
+  combat.beginShot();
+  world.events.push({ type: 'ball', a: attacker, b: h, speed: 5 });
+  combat.resolve(world, h);
+  assert.equal(h.hp, 9, 'no hero damage during your own shot');
+});
+
+test('enemy phase: a soft touch below the hit threshold does no damage', () => {
+  const world = createWorld(room);
+  const h = hero(3, 3);
+  const attacker = enemy(4, 3, 1, 'a');
+  const combat = createCombat();
+  combat.beginEnemyTurn(attacker);
+  world.events.push({ type: 'ball', a: attacker, b: h, speed: 0.3 });
+  combat.resolve(world, h);
+  assert.equal(h.hp, 10);
+});
+
+test('half the enemies (rounded up) are picked to patrol each round, at random', () => {
+  const list = Array.from({ length: 7 }, (_, i) => enemy(i + 1.5, 1.5, 1, `e${i}`));
+  const picks = new Set();
+  for (let i = 0; i < 30; i++) {
+    const chosen = pickPatrollers(list, 0.5);
+    assert.equal(chosen.size, 4);
+    for (const e of chosen) assert.ok(list.includes(e));
+    picks.add([...chosen].map((e) => e.id).sort().join());
+  }
+  assert.ok(picks.size > 1, 'the choice varies between rounds');
+  assert.equal(pickPatrollers([], 0.5).size, 0);
+});
+
+import { createStaticCircle } from '../src/physics.js';
+
+test('sight: a barrel in the way blocks it', () => {
+  const h = hero(1.5, 1.5);
+  const e = enemy(6.5, 1.5);
+  const barrel = createStaticCircle({ x: 4, z: 1.5, radius: 0.34, kind: 'barrel', id: 'b' });
+  assert.equal(canSee(room, e, h, [h, e], [barrel]), false);
+  assert.equal(canSee(room, e, h, [h, e], []), true);
+});
+
+test('patrol never heads through or onto a barrel', () => {
+  const e = enemy(6.5, 2.5);
+  const barrels = [6.5, 7.5, 5.5].map((x, i) => createStaticCircle({ x, z: 1.5, radius: 0.34, kind: 'barrel', id: `b${i}` }));
+  let seed = 0.77;
+  const rng = () => (seed = (seed * 9301 + 0.49297) % 1);
+  for (let i = 0; i < 40; i++) {
+    const m = patrolMove(room, e, [e], rng, barrels);
+    for (const b of barrels) assert.ok(Math.hypot(m.target.x - b.x, m.target.z - b.z) > 0.6, 'target clear of barrels');
+  }
+});
+
+test('Ice: glides on a quarter of the friction, patrols further, and still stops where it aims', () => {
+  const hall = parseLevel(`
+1##############
+#.............#
+#.............#
+#.............#
+#......S......#
+#.............#
+#.............#
+#.............#
+###############`);
+  const s = createEnemy({ x: 7.5, z: 4.5, level: 1, id: 's', type: 'ice' });
+  assert.equal(s.type, 'ice');
+  assert.equal(s.friction, CONFIG.enemy.types.ice.friction);
+  // Same launch, much further roll than a basic enemy.
+  const roll = (b) => {
+    const world = createWorld(hall);
+    Object.assign(b, { x: 1.5, z: 4.5, vx: 2, vz: 0 });
+    world.balls.push(b);
+    while (!isAtRest(world)) stepWorld(world);
+    return b.x - 1.5;
+  };
+  assert.ok(roll(createEnemy({ x: 0, z: 0, level: 1, id: 'b' })) * 3 < roll(createEnemy({ x: 0, z: 0, level: 1, id: 's2', type: 'ice' })));
+  let seed = 0.21;
+  const rng = () => (seed = (seed * 9301 + 0.49297) % 1);
+  let far = 0;
+  for (let i = 0; i < 30; i++) {
+    const e = createEnemy({ x: 7.5, z: 4.5, level: 1, id: 's', type: 'ice' });
+    const move = patrolMove(hall, e, [e], rng);
+    assert.ok(move.target.d <= CONFIG.enemy.types.ice.patrolRadius);
+    if (move.target.d > CONFIG.enemy.patrolRadius) far++;
+    if (move.target.d < 2) continue; // the minimum patrol speed overshoots the nearest tiles a little
+    const world = createWorld(hall);
+    e.vx = move.vx;
+    e.vz = move.vz;
+    world.balls.push(e);
+    while (!isAtRest(world)) stepWorld(world);
+    assert.ok(Math.hypot(e.x - move.target.x, e.z - move.target.z) < 0.8, `ended ${Math.hypot(e.x - move.target.x, e.z - move.target.z).toFixed(2)} from its target`);
+  }
+  assert.ok(far > 0, 'some patrols go beyond a basic enemy\'s range');
+});
+
+test('Seeker: without sight, its patrols close the walking distance to you, round walls', () => {
+  // A U-bend: the hero is just across a wall, but the walk is the long way round.
+  const level = parseLevel(`
+1##########
+#S........#
+#########.#
+#.........#
+###########`);
+  const toHero = walkDistances(level, 1.5, 1.5);
+  assert.equal(toHero(1, 3), 18, 'the long way round');
+  const s = createEnemy({ x: 1.5, z: 3.5, level: 1, id: 's', type: 'seeker' });
+  let seed = 0.3;
+  const rng = () => (seed = (seed * 9301 + 0.49297) % 1);
+  const start = toHero(1, 3);
+  for (let i = 0; i < 4; i++) {
+    const move = seekerMove(level, s, [s], toHero, rng);
+    assert.ok(move);
+    s.x = move.target.x;
+    s.z = move.target.z;
+  }
+  assert.ok(toHero(Math.floor(s.x), Math.floor(s.z)) <= start - 8, `closed in: ${toHero(Math.floor(s.x), Math.floor(s.z))} of ${start}`);
+});

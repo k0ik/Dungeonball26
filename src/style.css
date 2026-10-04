@@ -1,0 +1,1097 @@
+/* Keep the hidden attribute authoritative over display rules below. */
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #0c0a10;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* A portrait column: full height, as wide as the aspect allows, never wider
+   than the window. Sized by CSS so it corrects itself whenever the page
+   resizes; the renderer follows via a ResizeObserver. */
+#game {
+  position: relative;
+  height: 100%;
+  aspect-ratio: var(--max-aspect, 0.5625);
+  max-width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+#game canvas {
+  display: block;
+}
+
+.debug {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  margin: 0;
+  padding: 6px 8px;
+  font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace;
+  color: #d8f3dc;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.overlay > * {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+}
+
+/* Your ball, pinned to the screen edge while a map drag has it off screen.
+   Silver like the ball, ringed like the enemies' edge "!"; tap to go back. */
+.hero-edge {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffffff 0 18%, #c3c8d0 45%, #868c95 70%, #5a606a 100%);
+  box-shadow: 0 0 0 2px #e8ebf0, 0 2px 6px rgba(0, 0, 0, 0.6);
+  pointer-events: auto;
+  cursor: pointer;
+  /* Pulse the ring, not the size: a scale here would also scale the
+     translate that places it. */
+  animation: hero-edge-pulse 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes hero-edge-pulse {
+  to {
+    box-shadow: 0 0 0 5px rgba(232, 235, 240, 0.55), 0 2px 6px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* HP bars, after the mockup's pill bars. Width is set per ball. */
+.tag {
+  display: flex;
+}
+
+.tag .hp {
+  position: relative;
+  height: 5px;
+  border-radius: 3px;
+  background: #2a2b2e;
+  overflow: hidden;
+}
+
+.tag .fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 100%;
+  background: #e8336f;
+  border-radius: 3px;
+  transition: width 0.2s ease-out;
+}
+
+.tag.hero .fill {
+  background: #5ad16a;
+}
+
+/* A Gold ball's bar counts its shots left. */
+.tag.gold .fill {
+  background: #f2c230;
+}
+
+/* One notch per HP point, so a bar shows both level and damage taken. */
+.tag .hp::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to right,
+    transparent 0 calc(100% / var(--segments) - 1px),
+    #2a2b2e calc(100% / var(--segments) - 1px) calc(100% / var(--segments))
+  );
+}
+
+.float {
+  font-size: 32px;
+  font-weight: 800;
+  color: #ff4f8b; /* your hits: hot pink */
+  text-shadow:
+    0 0 2px #3a0018,
+    0 1px 0 #3a0018,
+    0 -1px 0 #3a0018,
+    1px 0 0 #3a0018,
+    -1px 0 0 #3a0018;
+  /* Rise for ~0.5 s, hold at rest for 0.5 s so it can be read, then fade. */
+  animation: float-up 1.3s ease-out forwards;
+}
+
+.float.combo {
+  color: #ffc233; /* combos: gold */
+  text-shadow:
+    0 0 2px #3d2a00,
+    0 1px 0 #3d2a00,
+    0 -1px 0 #3d2a00,
+    1px 0 0 #3d2a00,
+    -1px 0 0 #3d2a00;
+}
+
+@keyframes float-up {
+  from {
+    margin-top: 0;
+    opacity: 1;
+  }
+  38% {
+    margin-top: -36px;
+    opacity: 1;
+  }
+  77% {
+    margin-top: -36px;
+    opacity: 1;
+  }
+  to {
+    margin-top: -42px;
+    opacity: 0;
+  }
+}
+
+.death {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  background: rgba(8, 8, 10, 0.78);
+  color: #e4e5e8;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  text-align: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--fade, 0.4s) ease, visibility 0s linear var(--fade, 0.4s);
+  z-index: 10;
+}
+
+/* While shown it catches every touch, so nothing reaches the game. */
+.death.on {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  touch-action: none;
+  transition: opacity var(--fade, 0.4s) ease;
+}
+
+.death strong {
+  font-size: 44px;
+  font-weight: 800;
+  color: #ff4a4a;
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.7);
+}
+
+.death[data-variant='win'] strong {
+  color: #ffd23f;
+}
+
+.death span {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float {
+    animation-duration: 0.01s;
+    animation-delay: 0.6s;
+  }
+}
+
+.float.hurt {
+  color: #ff7a3d; /* damage to you: orange-red */
+  font-size: 36px;
+  text-shadow:
+    0 0 2px #3d1000,
+    0 1px 0 #3d1000,
+    0 -1px 0 #3d1000,
+    1px 0 0 #3d1000,
+    -1px 0 0 #3d1000;
+}
+
+.float.combo-label {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffc233;
+  text-shadow:
+    0 0 2px #3d2a00,
+    0 1px 0 #3d2a00,
+    0 -1px 0 #3d2a00,
+    1px 0 0 #3d2a00,
+    -1px 0 0 #3d2a00;
+  animation-duration: 1.6s;
+}
+
+/* "!" over an enemy that can see you, as in the mockup. */
+.alert {
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffd23f;
+  text-shadow:
+    0 0 2px #7a0a2c,
+    0 1px 0 #7a0a2c,
+    0 -1px 0 #7a0a2c,
+    1px 0 0 #7a0a2c,
+    -1px 0 0 #7a0a2c;
+}
+
+.alert span {
+  display: inline-block;
+}
+
+.alert.acting span {
+  animation: alert-pulse 0.35s ease-in-out infinite alternate;
+}
+
+/* Pinned to the screen edge when the watcher is off screen. */
+.alert.edge {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+  border-radius: 50%;
+  background: rgba(122, 10, 44, 0.85);
+  box-shadow: 0 0 0 2px #ffd23f;
+}
+
+@keyframes alert-pulse {
+  to {
+    scale: 1.35;
+  }
+}
+
+.hud {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 44px;
+  padding-top: env(safe-area-inset-top, 0px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding-inline: 16px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hud-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The mockup's gold coin, with the score beside it. */
+.coin {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffc24a;
+  /* No bar behind the HUD, so a dark rim and shadow keep it readable on any floor. */
+  box-shadow: inset 0 0 0 2px #e0a02c, 0 0 0 2px #1e1f21, 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.hud-gold {
+  font: 700 20px/1 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-variant-numeric: tabular-nums;
+  color: #f2f2f4;
+  /* Dark outline plus a soft drop shadow. */
+  -webkit-text-stroke: 4px #1e1f21;
+  paint-order: stroke fill;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.hud-gold.bump {
+  animation: gold-bump 0.3s ease-out;
+}
+
+@keyframes gold-bump {
+  40% {
+    scale: 1.25;
+    color: #ffd84a;
+  }
+}
+
+/* The inventory along the bottom: your artifacts (tap one to see it), then
+   your keys stacked in a small column beside them, aligned to their top. */
+.inventory {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  pointer-events: auto;
+}
+.card-hand {
+  display: flex;
+  gap: 6px;
+}
+.key-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.card-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px 3px 6px;
+  border-radius: 999px;
+  background: rgba(24, 25, 28, 0.82);
+  border: 1px solid rgba(255, 210, 63, 0.55);
+  color: #f2f2f4;
+  font: 700 11px/1.2 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* A held card, opened from its chip: the game pauses underneath. */
+.card-view {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px 16px;
+  background: rgba(8, 8, 10, 0.78);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  z-index: 12;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.card-view.on {
+  display: flex;
+  animation: banner-in 0.2s ease-out;
+}
+
+.card.big {
+  width: min(100%, 340px);
+  cursor: inherit;
+}
+
+.card-view-hint {
+  margin: 0;
+  font-size: 13px;
+  color: #b9bcc2;
+}
+
+.card-chip span {
+  font-size: 14px;
+}
+
+/* End-of-level card pick: a full-screen panel over a darkened board. */
+.card-pick {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px 16px;
+  background: rgba(8, 8, 10, 0.86);
+  color: #e4e5e8;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  text-align: center;
+  z-index: 11;
+  touch-action: none;
+}
+
+.card-pick.on {
+  display: flex;
+  animation: banner-in 0.25s ease-out;
+}
+
+.card-pick h2 {
+  margin: 0;
+  font-size: 28px;
+  color: #ffd23f;
+}
+
+.card-pick p {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: #b9bcc2;
+}
+
+.card-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(100%, 340px);
+}
+
+.card {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 2px solid #ffd23f;
+  background: #2a2b30;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.card:hover,
+.card:focus-visible {
+  background: #36373d;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 210, 63, 0.35);
+}
+
+.card.held {
+  border-color: #c8005f;
+}
+
+.card-icon {
+  grid-row: span 2;
+  font-size: 34px;
+  text-align: center;
+}
+
+.card-name {
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.card-text {
+  font-size: 13px;
+  line-height: 1.3;
+  color: #c9ccd2;
+}
+
+.card-skip {
+  margin-top: 6px;
+  padding: 8px 22px;
+  border-radius: 999px;
+  border: 1px solid #6b6d72;
+  background: transparent;
+  color: #c9ccd2;
+  font: 700 14px system-ui, -apple-system, 'Segoe UI', sans-serif;
+  cursor: pointer;
+}
+
+/* Keys you hold, in the inventory: about 30% of an artifact's height, so
+   all three stack beside the row. */
+.key-slot.arriving {
+  visibility: hidden;
+}
+
+/* A picked-up key on its way into the HUD (hud.flyKey). */
+.key-fly {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.key-fly svg,
+.key-slot svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+}
+
+/* Gear beside the hero ball. */
+.gear-icon svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
+}
+
+.danger-edge {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 40px 6px rgba(230, 20, 50, 0.38);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  z-index: 1;
+}
+
+/* A slow heartbeat while shown. */
+.danger-edge.on {
+  opacity: 1;
+  animation: danger-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes danger-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.turn-label {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font: 800 13px/1.3 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.turn-label[data-who='player'] {
+  color: #10301a;
+  background: #5ad16a; /* the your-turn ring's green */
+}
+
+.turn-label[data-who='enemy'] {
+  color: #fff;
+  background: #c8005f; /* enemy magenta */
+}
+
+/* Big copy of the label at each turn change, in the upper third: pops in,
+   holds, then shrinks and flies up to land exactly on the label's spot (the
+   label is hidden meanwhile, then takes over). 13px / 34px = 0.382 scale. */
+.turn-label.landing {
+  visibility: hidden;
+}
+
+.turn-toast {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  translate: -50% -50%;
+  padding: 10.5px 31.4px; /* the label's 4px 12px, scaled up by 34/13 */
+  border-radius: 999px;
+  font: 800 34px/1.3 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.turn-toast[data-who='player'] {
+  color: #10301a;
+  background: #5ad16a;
+}
+
+.turn-toast[data-who='enemy'] {
+  color: #fff;
+  background: #c8005f;
+}
+
+.turn-toast.show {
+  animation: turn-toast 1.05s ease-in-out forwards;
+}
+
+@keyframes turn-toast {
+  0% {
+    opacity: 0;
+    scale: 0.6;
+  }
+  15% {
+    opacity: 1;
+    scale: 1.08;
+  }
+  25% {
+    scale: 1;
+    top: 30%;
+  }
+  60% {
+    opacity: 1;
+    scale: 1;
+    top: 30%;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  }
+  100% {
+    opacity: 1;
+    scale: 0.382;
+    top: var(--land-y, 70%);
+    box-shadow: none;
+  }
+}
+
+.turn-label.show {
+  animation: turn-pulse 0.35s ease-out;
+}
+
+@keyframes turn-pulse {
+  40% {
+    scale: 1.15;
+  }
+}
+
+.banner {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  translate: -50% -50%;
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  padding: 12px 20px;
+  border-radius: 10px;
+  background: rgba(24, 25, 28, 0.85);
+  color: #e4e5e8;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  text-align: center;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.banner strong {
+  font-size: 22px;
+  color: #ffd23f;
+  text-wrap: balance;
+}
+
+.banner span {
+  font-size: 13px;
+}
+
+.banner.show {
+  animation: banner-in 0.25s ease-out;
+}
+
+@keyframes banner-in {
+  from {
+    opacity: 0;
+    scale: 0.9;
+  }
+}
+
+.death {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  background: rgba(8, 8, 10, 0.78);
+  color: #e4e5e8;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  text-align: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--fade, 0.4s) ease, visibility 0s linear var(--fade, 0.4s);
+  z-index: 10;
+}
+
+/* While shown it catches every touch, so nothing reaches the game. */
+.death.on {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  touch-action: none;
+  transition: opacity var(--fade, 0.4s) ease;
+}
+
+.death strong {
+  font-size: 44px;
+  font-weight: 800;
+  color: #ff4a4a;
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.7);
+}
+
+.death[data-variant='win'] strong {
+  color: #ffd23f;
+}
+
+.death span {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alert.acting span,
+  .hud-gold.bump,
+  .turn-label.show,
+  .banner.show,
+  .turn-toast.show,
+  .danger-edge.on {
+    animation: none;
+  }
+}
+
+/* Pickup labels over the hero. */
+.float.gold {
+  color: #ffd84a;
+  text-shadow:
+    0 0 2px #4a3000,
+    0 1px 0 #4a3000,
+    0 -1px 0 #4a3000,
+    1px 0 0 #4a3000,
+    -1px 0 0 #4a3000;
+}
+
+.float.heal {
+  color: #7be08a;
+  text-shadow:
+    0 0 2px #0f3a16,
+    0 1px 0 #0f3a16,
+    0 -1px 0 #0f3a16,
+    1px 0 0 #0f3a16,
+    -1px 0 0 #0f3a16;
+}
+
+.float.gear {
+  font-size: 28px;
+  color: #d6e6ff;
+  text-shadow:
+    0 0 2px #0b2350,
+    0 1px 0 #0b2350,
+    0 -1px 0 #0b2350,
+    1px 0 0 #0b2350,
+    -1px 0 0 #0b2350;
+  animation-duration: 1.6s;
+}
+
+/* --- Level editor (src/editor.js): desktop, over the whole window. --- */
+.editor {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  background: #1b1c1f;
+  color: #e6e7ea;
+  font: 13px/1.3 system-ui, -apple-system, sans-serif;
+}
+.editor button {
+  font: inherit;
+  color: inherit;
+  background: #2c2e33;
+  border: 1px solid #44474e;
+  border-radius: 6px;
+  padding: 4px 9px;
+  margin: 0 2px;
+  cursor: pointer;
+}
+.editor button:hover {
+  background: #383b41;
+}
+.editor button.on {
+  background: #3f6fd8;
+  border-color: #6d95f0;
+}
+.editor button.primary {
+  background: #2f8f55;
+  border-color: #4cbf78;
+}
+.ed-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #33353a;
+}
+.ed-title {
+  font-size: 15px;
+}
+.ed-spacer {
+  flex: 1;
+}
+.ed-main {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+.ed-palette {
+  width: 150px;
+  padding: 8px;
+  overflow-y: auto;
+  border-right: 1px solid #33353a;
+}
+.ed-palette button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 0 0 4px;
+  text-align: left;
+}
+.ed-palette canvas {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  flex: none;
+}
+.ed-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
+}
+.ed-stage canvas {
+  cursor: crosshair;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.5);
+}
+.ed-help {
+  padding: 6px 12px;
+  color: #9a9ca3;
+  border-top: 1px solid #33353a;
+}
+.ed-modal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+.ed-modal > div {
+  background: #26282c;
+  padding: 16px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ed-modal textarea {
+  width: 420px;
+  height: 360px;
+  font: 14px/1.15 ui-monospace, Menlo, Consolas, monospace;
+  background: #15161a;
+  color: #e6e7ea;
+  border: 1px solid #44474e;
+  border-radius: 6px;
+  padding: 8px;
+}
+.ed-modal p {
+  margin: 0;
+}
+
+.ed-ask p {
+  max-width: 420px;
+}
+.ed-ask-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* The turn label over the level's message, along the bottom, above the cards. */
+.bottom-stack {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 3;
+}
+/* A level's message (tutorials). */
+.level-message {
+  width: max-content;
+  max-width: 100%;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: rgba(24, 25, 28, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f2f2f4;
+  font: 600 14px/1.35 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  text-align: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Level change fade (hud.fade). */
+.screen-fade {
+  position: absolute;
+  inset: 0;
+  background: #0c0a10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 8;
+}
+.screen-fade.on {
+  opacity: 1;
+}
+
+/* A startup or runtime error, shown instead of a blank page (main.js showFatal). */
+.fatal {
+  position: fixed;
+  left: 50%;
+  top: 40%;
+  translate: -50% -50%;
+  width: min(92vw, 460px);
+  z-index: 100;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: #26181c;
+  border: 1px solid #a33a4f;
+  color: #f2e6e8;
+  font: 14px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+.fatal strong {
+  display: block;
+  font-size: 17px;
+  color: #ff8fa3;
+  margin-bottom: 6px;
+}
+.fatal p {
+  margin: 0 0 8px;
+}
+.fatal code {
+  display: block;
+  white-space: pre-wrap;
+  font: 11px/1.35 ui-monospace, Menlo, Consolas, monospace;
+  color: #c9b7bb;
+}
+
+/* The chest card screen (hud.showCardFind): the new card, then your slots. */
+.pick-kicker {
+  color: #ffd23f !important;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.pick-new {
+  width: min(100%, 340px);
+}
+.pick-new .card {
+  cursor: default;
+}
+.pick-new .card.new {
+  box-shadow: 0 0 0 3px rgba(255, 210, 63, 0.35), 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+.card-pick h2 {
+  margin-top: 8px;
+}
+.slot-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: min(100%, 340px);
+}
+.slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 74px;
+  padding: 8px 6px;
+  border-radius: 12px;
+  font: 700 12px/1.2 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: #f2f2f4;
+  cursor: pointer;
+}
+.slot.held {
+  background: #2a2b30;
+  border: 2px solid #c8005f;
+}
+.slot.empty {
+  background: #1d1e22;
+  border: 2px dashed #6b6d72;
+  color: #9a9ca3;
+}
+.slot:hover,
+.slot:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 210, 63, 0.35);
+}
+.slot-icon {
+  font-size: 26px;
+}
+.confirm-row {
+  display: flex;
+  gap: 10px;
+}
+.confirm-row .yes {
+  background: #c8005f;
+  border-color: #c8005f;
+  color: #fff;
+}
+
+/* Artifacts (the cards) are vertical: title, then a big icon, then what it
+   does. These rules restyle the earlier horizontal layout. */
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 16px 16px;
+  text-align: center;
+}
+.card .card-name {
+  order: 0;
+  font-size: 17px;
+  line-height: 1.15;
+}
+.card .card-icon {
+  order: 1;
+  font-size: 52px;
+  line-height: 1.1;
+  margin: 4px 0;
+}
+.card .card-text {
+  order: 2;
+}
+.pick-new,
+.card.big {
+  width: min(100%, 230px);
+}
+/* Held artifacts along the bottom: mini vertical cards, icon over name. */
+.card-hand {
+  align-items: flex-end;
+}
+.card-chip {
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  width: 72px;
+  min-height: 58px;
+  padding: 6px 4px;
+  border-radius: 10px;
+  white-space: normal;
+  text-align: center;
+  font: 700 10px/1.15 system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+.card-chip span {
+  font-size: 24px;
+  line-height: 1;
+}
+/* A soft dark frame around the board (lighting.vignette). */
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 75% 70% at 50% 50%, transparent 55%, rgba(12, 8, 6, var(--vignette, 0.45)) 100%);
+  pointer-events: none;
+  z-index: 1;
+}

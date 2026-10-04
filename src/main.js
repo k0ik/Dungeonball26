@@ -1,0 +1,65 @@
+import { createGame } from './game.js';
+import { createEditor } from './editor.js';
+import longHall from './levels/long-hall.txt?raw';
+import oneKey from './levels/one-key.txt?raw';
+import warrens from './levels/warrens.txt?raw';
+import crawlspace from './levels/crawlspace.txt?raw';
+import gauntlet02 from './levels/gauntlet02.txt?raw';
+import billiards from './levels/billiards.txt?raw';
+import barrelRun from './levels/barrel-run.txt?raw';
+import lineOfSight from './levels/line-of-sight.txt?raw';
+import fight from './levels/fight.txt?raw';
+import tut01 from './levels/tut01.txt?raw';
+import enemytester01 from './levels/enemytester01.txt?raw';
+import bowls from './levels/bowls.txt?raw';
+
+// The run, in order (design doc: "Levels"). Levels 4 and 5 arrive in M8.
+const LEVELS = [
+  // The tutorials first, in order (see CLAUDE.md); a level played from the
+  // level editor slots in at the current place instead.
+  // `message` (optional): shown in a panel at the bottom while you're on the level.
+  { id: 'tut01', name: 'Tutorial 01', text: tut01, message: 'Press on the ball and drag to aim. Release to shoot. Reach the exit.' },
+  { id: 'line-of-sight', name: 'Line of Sight', text: lineOfSight, message: 'Enemies only attack if they can see you.' },
+  { id: 'fight', name: 'Fight!', text: fight, message: "You're tougher than you think." },
+  { id: 'barrel-run', name: 'Barrel Run', text: barrelRun, message: 'Wooden barrels contain loot. Red barrels contain explosives.' },
+  { id: 'billiards', name: 'Billiards', text: billiards },
+  { id: 'bowls', name: 'Bowls', text: bowls },
+  { id: 'long-hall', name: 'Long Hall', text: longHall },
+  { id: 'one-key', name: 'One Key', text: oneKey },
+  { id: 'warrens', name: 'Warrens', text: warrens },
+  { id: 'crawlspace', name: 'Crawlspace', text: crawlspace },
+  { id: 'gauntlet02', name: 'Gauntlet 02', text: gauntlet02 },
+  { id: 'enemytester01', name: 'Enemy Tester 01', text: enemytester01 },
+];
+
+// Start on a level with the URL hash, e.g. #one-key.
+const fromHash = LEVELS.findIndex((l) => `#${l.id}` === location.hash);
+// If anything breaks (above all, the browser refusing to start WebGL), say so
+// on screen instead of leaving a blank page, so it can be reported.
+function showFatal(err) {
+  if (document.querySelector('.fatal')) return;
+  const box = document.createElement('div');
+  box.className = 'fatal';
+  const webgl = /webgl|context/i.test(String(err?.message ?? err));
+  box.innerHTML = '<strong></strong><p></p><code></code>';
+  box.querySelector('strong').textContent = webgl ? "The game couldn't start its 3D graphics" : 'Something went wrong';
+  box.querySelector('p').textContent = webgl
+    ? 'Your browser refused to create a WebGL context (this can happen after many reloads). Try reloading the page, or opening it in a new tab.'
+    : 'Reload the page to try again. If it keeps happening, send a screenshot of this message.';
+  box.querySelector('code').textContent = String(err?.stack ?? err?.message ?? err).split('\n').slice(0, 4).join('\n');
+  document.body.appendChild(box);
+}
+window.addEventListener('error', (e) => showFatal(e.error ?? e.message));
+window.addEventListener('unhandledrejection', (e) => showFatal(e.reason));
+
+try {
+  window.game = createGame(document.getElementById('game'), LEVELS, Math.max(0, fromHash));
+} catch (err) {
+  showFatal(err);
+  throw err;
+}
+
+// The level editor (desktop): E opens the current level in it.
+const editor = createEditor({ getLevel: () => window.game.levelDef, onPlay: (def) => window.game.playLevel(def) });
+// Finishing a level played from the editor goes back to the editor.
+window.game.onTestComplete = () => editor.open();

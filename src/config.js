@@ -514,10 +514,10 @@ export const CONFIG = {
     background: 0x2e2b2a, // warm dark
     floorA: 0x55575a,
     floorB: 0x55575a, // same as floorA: the mockup floor has no checker
-    wallTop: 0xb5b8be,
-    wallFront: 0x85878c, // faces pointing down-left on screen
-    wallSide: 0x7a7c81, // faces pointing down-right on screen
-    wallBack: 0x6e7075, // faces pointing away from the camera
+    wallTop: 0x8a8c91, // darkened from 0xb5b8be with the higher-contrast lighting
+    wallFront: 0x6c6e72, // faces pointing down-left on screen
+    wallSide: 0x626468, // faces pointing down-right on screen
+    wallBack: 0x57595d, // faces pointing away from the camera
     outline: 0x1e1f21,
     exit: 0x5fd08a,
     exitBeam: 0xffd27a, // the golden glow your ball is drawn up into at the exit

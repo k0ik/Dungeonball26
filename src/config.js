@@ -91,6 +91,9 @@ export const CONFIG = {
     // The enemies' red turn rings stay on screen at least this long, counted
     // once the camera has framed them all, before they move together.
     turnRingBeat: 0.6,
+    // Red rings under the enemies moving this round. Off for now: they were
+    // easily confused with your own green ring.
+    turnRings: false,
     enemyTurnMaxWait: 1.5, // seconds the enemies wait at most for the camera to frame them
     // Enemy types (design doc: "Enemy ideas"). Each changes one thing about
     // the basic enemy; anything a type doesn't set uses the values above.

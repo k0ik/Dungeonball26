@@ -1197,8 +1197,9 @@ export function createGame(container, levels, startIndex = 0) {
     // While you aim, walls in front of your ball and aim path turn see-through.
     setSeeThrough(hero, seePath, rig.camera.getWorldDirection(viewDir), dt);
 
-    // Red rings under every enemy moving this round, from the telegraph until the moves end.
-    const ringed = new Set(state.phase === 'enemyWait' || state.phase === 'enemyMove' ? state.moves.map((m) => m.enemy) : []);
+    // Red rings under every enemy moving this round, from the telegraph until
+    // the moves end (when enemy.turnRings is on).
+    const ringed = new Set(CONFIG.enemy.turnRings && (state.phase === 'enemyWait' || state.phase === 'enemyMove') ? state.moves.map((m) => m.enemy) : []);
     for (const enemy of ringed) {
       if (enemy.hp <= 0) continue;
       if (!actorRings.has(enemy)) {

@@ -1453,6 +1453,15 @@ export function createGame(container, levels, startIndex = 0) {
     const lungers = new Set(enemyMove ? state.moves.filter((m) => m.kind === 'lunge').map((m) => m.enemy) : []);
     for (const enemy of enemies()) {
       if (isTool(enemy)) continue; // tool balls never watch or attack, so no "!"
+      if (hero.inert) {
+        // You're knocked out: every enemy loses interest. Calm, no "!",
+        // not watching you (Jekylls cool off too).
+        enemy.watching = null;
+        enemy.enraged = false;
+        overlay.setAlert(enemy, false, false);
+        enemyViews.get(enemy)?.setAngry(false);
+        continue;
+      }
       if (enemy.type === 'jekyll') {
         // Calm and blind to you until provoked; enraged, it shows it (whoever it'll go for).
         // Once its attack connects (you or an enemy), it's spent and calm again.

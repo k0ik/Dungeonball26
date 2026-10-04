@@ -188,7 +188,7 @@ export function createObjectsView(scene) {
           v.group.position.x = s.x + Math.sin(v.shake * 90) * 0.04 * (v.shake / 0.25);
         }
         if (v.opening && v.open < 1) {
-          v.open = Math.min(1, v.open + dt * 4);
+          v.open = Math.min(1, v.open + dt / O.chestOpenSeconds);
           v.hinge.rotation.x = -1.9 * (1 - (1 - v.open) ** 3);
         }
         if (v.pop >= 0) {

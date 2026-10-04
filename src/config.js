@@ -206,6 +206,7 @@ export const CONFIG = {
     barrelRadius: 0.34,
     barrelHits: 2, // the second hit breaks it; its loot then waits on the floor
     barrelCooldown: 0.15, // seconds between cracks, per barrel
+    chestOpenSeconds: 0.25, // the lid swinging open
     chestHalfX: 0.36, // chest footprint, half-size along x and z
     chestHalfZ: 0.28,
     chestGoldMin: 8,
@@ -307,7 +308,7 @@ export const CONFIG = {
     // Testing aid: every new game starts with this many random cards already
     // dealt (0 for the normal game, which starts with none).
     startDealt: 0,
-    chestPickDelay: 0.9, // seconds after a chest opens (its coins flying) before its card pick opens
+    chestPickDelay: 0.25, // seconds after a chest opens before its artifact pick: as its lid finishes opening (objects.chestOpenSeconds)
     vampirismHeal: 1, // HP per kill
     bullionaire: 1.5, // gold multiplier (fractions carry over, so it's exact)
     junkHunter: 2, // barrel weight multiplier for swords and shields
@@ -557,10 +558,8 @@ export const CONFIG = {
     metalColor: 0xc9ccd2,
     metalDarkColor: 0x6e7279,
     maxBlood: 160,
-    bloodColor: 0x6c7078, // the trail: grey, the ball's metal skin
-    bloodColorLight: 0xc4c7cd, // each smear a random grey between these
-    bloodColorDark: 0x4a4d53,
-    bloodOpacity: 0.75,
+    bloodColor: 0x2b2d31, // the trail: one dark grey, like oil
+    bloodOpacity: 0.85,
     bloodSeconds: 6, // each dab fades away over this
     bloodSpacing: 0.18, // tiles rolled between dabs
     bloodSize: 0.3, // tiles across, at the skull's slowest (bigger when fast)

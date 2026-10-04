@@ -10,6 +10,7 @@ import barrelRun from './levels/barrel-run.txt?raw';
 import lineOfSight from './levels/line-of-sight.txt?raw';
 import fight from './levels/fight.txt?raw';
 import tut01 from './levels/tut01.txt?raw';
+import roundTheBend from './levels/round-the-bend.txt?raw';
 import enemytester01 from './levels/enemytester01.txt?raw';
 import bowls from './levels/bowls.txt?raw';
 
@@ -19,6 +20,7 @@ const LEVELS = [
   // level editor slots in at the current place instead.
   // `message` (optional): shown in a panel at the bottom while you're on the level.
   { id: 'tut01', name: 'Tutorial 01', text: tut01, message: 'Press on the ball and drag to aim. Release to shoot. Reach the exit.' },
+  { id: 'round-the-bend', name: 'Round the Bend', text: roundTheBend, message: 'Shoot straight ahead to bank around curves.' },
   { id: 'line-of-sight', name: 'Line of Sight', text: lineOfSight, message: 'Enemies only attack if they can see you.' },
   { id: 'fight', name: 'Fight!', text: fight, message: "You're tougher than you think." },
   { id: 'barrel-run', name: 'Barrel Run', text: barrelRun, message: 'Wooden barrels contain loot. Red barrels contain explosives.' },

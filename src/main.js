@@ -12,7 +12,6 @@ import fight from './levels/fight.txt?raw';
 import tut01 from './levels/tut01.txt?raw';
 import roundTheBend from './levels/round-the-bend.txt?raw';
 import enemytester01 from './levels/enemytester01.txt?raw';
-import bowls from './levels/bowls.txt?raw';
 
 // The run, in order (design doc: "Levels"). Levels 4 and 5 arrive in M8.
 const LEVELS = [
@@ -25,7 +24,6 @@ const LEVELS = [
   { id: 'fight', name: 'Fight!', text: fight, message: "You're tougher than you think." },
   { id: 'barrel-run', name: 'Barrel Run', text: barrelRun, message: 'Wooden barrels contain loot. Red barrels contain explosives.' },
   { id: 'billiards', name: 'Billiards', text: billiards },
-  { id: 'bowls', name: 'Bowls', text: bowls },
   { id: 'long-hall', name: 'Long Hall', text: longHall },
   { id: 'one-key', name: 'One Key', text: oneKey },
   { id: 'warrens', name: 'Warrens', text: warrens },

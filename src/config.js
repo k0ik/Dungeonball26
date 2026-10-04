@@ -39,7 +39,12 @@ export const CONFIG = {
 
   aim: {
     cancelRadius: 0.6, // releasing closer than this to the hero cancels the shot
-    fullPowerDrag: 1.6, // drag distance that reaches max launch speed
+    fullPowerDrag: 2.1, // drag distance that reaches max launch speed (about the screen's half-width at rest)
+    // Power rises slowly near the ball and faster as you pull further:
+    // power = (share of the drag range) ^ powerCurve. A shot's travel grows
+    // with the square of its speed, so with a straight line (1) small drags
+    // were twitchy; at 1.8 half the drag range gives a short ~2.5-tile shot.
+    powerCurve: 1.8,
     maxLaunchSpeed: 9,
     grabRadius: 1.0, // how close to the hero a press must land to start aiming
     // The preview runs the real physics ahead of time, so it ends where the

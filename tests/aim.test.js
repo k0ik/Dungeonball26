@@ -12,11 +12,11 @@ test('releasing inside the cancel radius cancels', () => {
   assert.equal(shotFromDrag(hero, { x: 5.3, z: 5 }).cancel, true);
 });
 
-test('pull-back fires the opposite way, power scales with drag distance', () => {
+test('pull-back fires the opposite way, power rises along the curve with drag distance', () => {
   const half = shotFromDrag(hero, { x: 5, z: 5 + (A.cancelRadius + A.fullPowerDrag) / 2 });
   assert.equal(half.cancel, false);
-  assert.ok(Math.abs(half.fill - 0.5) < 1e-9);
-  assert.ok(Math.abs(half.speed - A.maxLaunchSpeed / 2) < 1e-9);
+  assert.ok(Math.abs(half.fill - 0.5 ** A.powerCurve) < 1e-9, 'half the drag range gives less than half power');
+  assert.ok(Math.abs(half.speed - A.maxLaunchSpeed * 0.5 ** A.powerCurve) < 1e-9);
   assert.ok(half.dirZ < -0.999, 'dragging toward +z launches toward -z');
   assert.equal(shotFromDrag(hero, { x: 1, z: 5 }).speed, A.maxLaunchSpeed, 'clamped at full');
 });

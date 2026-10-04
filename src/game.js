@@ -307,6 +307,7 @@ export function createGame(container, levels, startIndex = 0) {
   // against a frozen copy of the view from when you pressed (in effect, in
   // screen pixels), so the zoom never feeds back into the shot's power.
   let aimCamera = null;
+  const aimPx = { x: 0, y: 0, heroX: 0, heroY: 0, unitsPerPx: 0 }; // the drag on screen, for shot power
 
   function pointerOn(plane, e, out, camera = rig.camera) {
     const rect = canvas.getBoundingClientRect();
@@ -347,6 +348,15 @@ export function createGame(container, levels, startIndex = 0) {
     aimCamera.updateMatrixWorld();
     rig.beginAim(hero);
     pointerOn(groundPlane, e, state.pointer, aimCamera);
+    // Power is measured on screen (see aimShot): where the ball is, and how
+    // many tiles a pixel spans across the view, as the drag starts.
+    const rect = canvas.getBoundingClientRect();
+    tmp.set(hero.x, hero.radius, hero.z).project(aimCamera);
+    aimPx.heroX = ((tmp.x + 1) / 2) * rect.width;
+    aimPx.heroY = ((1 - tmp.y) / 2) * rect.height;
+    aimPx.unitsPerPx = (aimCamera.right - aimCamera.left) / aimCamera.zoom / rect.width;
+    aimPx.x = e.clientX - rect.left;
+    aimPx.y = e.clientY - rect.top;
   });
 
   canvas.addEventListener('pointermove', (e) => {
@@ -360,7 +370,16 @@ export function createGame(container, levels, startIndex = 0) {
     }
     if (!state.aiming || e.pointerId !== state.pointerId) return;
     pointerOn(groundPlane, e, state.pointer, aimCamera);
+    const rect = canvas.getBoundingClientRect();
+    aimPx.x = e.clientX - rect.left;
+    aimPx.y = e.clientY - rect.top;
   });
+
+  /** The shot the current drag sets up: aimed on the ground, powered by the drag's length on screen. */
+  function aimShot() {
+    const px = Math.hypot(aimPx.x - aimPx.heroX, aimPx.y - aimPx.heroY);
+    return shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z }, px * aimPx.unitsPerPx);
+  }
 
   function endAim(e, fire) {
     if (e.pointerId === pan.pointerId) {
@@ -377,7 +396,7 @@ export function createGame(container, levels, startIndex = 0) {
     let shot = state.shownShot;
     if (!shot) {
       pointerOn(groundPlane, e, state.pointer, aimCamera);
-      shot = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z });
+      shot = aimShot();
     }
     if (shot.cancel || shot.speed <= CONFIG.physics.stopThreshold) return;
     hero.vx = shot.dirX * shot.speed;
@@ -1278,7 +1297,7 @@ export function createGame(container, levels, startIndex = 0) {
 
     let seePath = null;
     if (state.aiming) {
-      const shot = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z });
+      const shot = aimShot();
       state.shownShot = shot; // what release will fire
       const others = world.balls.filter((b) => b !== hero);
       const preview = shot.cancel ? null : previewPath(level, hero, shot.dirX, shot.dirZ, shot.speed, others, world.statics, {
@@ -1389,7 +1408,7 @@ export function createGame(container, levels, startIndex = 0) {
 
     if (state.aiming) {
       // Aiming: zoom out with shot power, anchored on the ball.
-      const fill = shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z }).fill;
+      const fill = aimShot().fill;
       const from = rig.aimStartWidth;
       rig.aimZoom(hero, from + (Math.max(from, CONFIG.camera.aimMaxWidth) - from) * fill, realDt);
     } else if (state.panned && state.phase !== 'aim') {

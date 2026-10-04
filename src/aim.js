@@ -14,12 +14,16 @@ const RUBBER = CONFIG.enemy.types.rubber;
  * Turn a drag point into a shot. `fill` is 0..1 of full power;
  * `cancel` is true while the pointer is inside the cancel radius.
  */
-export function shotFromDrag(hero, pointer) {
+export function shotFromDrag(hero, pointer, dragDist = null) {
   const dx = hero.x - pointer.x;
   const dz = hero.z - pointer.z;
   const dist = Math.hypot(dx, dz);
   if (dist < A.cancelRadius) return { cancel: true, fill: 0, speed: 0, dirX: 0, dirZ: 0 };
-  const fill = Math.min(1, (dist - A.cancelRadius) / (A.fullPowerDrag - A.cancelRadius));
+  // Power comes from `dragDist` when given: the drag's length on screen in
+  // tiles at the resting scale, the same in every direction (on the ground,
+  // an up-or-down drag covers more tiles than a sideways one, foreshortened).
+  const t = Math.max(0, Math.min(1, ((dragDist ?? dist) - A.cancelRadius) / (A.fullPowerDrag - A.cancelRadius)));
+  const fill = t ** A.powerCurve; // gentle near the ball, steeper further out
   return { cancel: false, fill, speed: fill * A.maxLaunchSpeed, dirX: dx / dist, dirZ: dz / dist };
 }
 

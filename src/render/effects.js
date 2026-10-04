@@ -126,6 +126,25 @@ function scorchTexture() {
   return new THREE.CanvasTexture(c);
 }
 
+/** A soft, irregular splat, white (tinted by the material) for blood dabs. */
+function bloodTexture() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const g = c.getContext('2d');
+  for (let i = 0; i < 6; i++) {
+    const x = 32 + (Math.random() - 0.5) * 22;
+    const y = 32 + (Math.random() - 0.5) * 22;
+    const r = 8 + Math.random() * 12;
+    const grad = g.createRadialGradient(x, y, 0, x, y, r);
+    grad.addColorStop(0, 'rgba(255,255,255,0.9)');
+    grad.addColorStop(0.7, 'rgba(255,255,255,0.6)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 64, 64);
+  }
+  return new THREE.CanvasTexture(c);
+}
+
 export function createEffects(scene) {
   const root = new THREE.Group();
   scene.add(root);
@@ -156,6 +175,17 @@ export function createEffects(scene) {
   const ringGeo = new THREE.RingGeometry(0.86, 1, 48).rotateX(-Math.PI / 2);
   const rings = [];
   const scorches = [];
+  // Blood dabs (a ring buffer of floor decals, each with its own fade).
+  const bloodTex = bloodTexture();
+  const bloodPool = Array.from({ length: E.maxBlood }, () => {
+    const m = new THREE.Mesh(scorchGeo, new THREE.MeshBasicMaterial({ map: bloodTex, color: E.bloodColor, transparent: true, depthWrite: false, opacity: 0 }));
+    m.visible = false;
+    m.renderOrder = 1;
+    markGroup.add(m);
+    m.userData.t = 0;
+    return m;
+  });
+  let bloodNext = 0;
 
   const rand = (a, b) => a + Math.random() * (b - a);
   const colorOf = (hex) => tmp.set(hex);
@@ -277,6 +307,20 @@ export function createEffects(scene) {
       markGroup.add(scorch);
       scorches.push({ mesh: scorch, t: 0 });
     },
+    /**
+     * Your skull rolling: a dab of blood on the floor at (x, z), `size`
+     * across, that soaks in and fades over effects.bloodSeconds.
+     */
+    blood(x, z, size) {
+      const m = bloodPool[bloodNext];
+      bloodNext = (bloodNext + 1) % bloodPool.length;
+      m.position.set(x, 0.005 + bloodNext * 1e-6, z);
+      m.rotation.y = Math.random() * Math.PI * 2;
+      m.scale.set(size * (0.7 + Math.random() * 0.6), 1, size);
+      m.material.opacity = E.bloodOpacity;
+      m.visible = true;
+      m.userData.t = 0;
+    },
     /** A coin was picked up at (x, z): a small golden glint. */
     glint(x, z) {
       burst(glow, x, 0.3, z, 6, { color: E.glintColor, speed: [0.5, 1.6], up: [0.8, 2], life: [0.2, 0.4], size: [0.04, 0.08], gravity: 3 });
@@ -290,6 +334,7 @@ export function createEffects(scene) {
       for (const s of scorches) markGroup.remove(s.mesh);
       rings.length = 0;
       scorches.length = 0;
+      for (const m of bloodPool) m.visible = false;
     },
     /** Advance everything; `pxPerUnit` is screen pixels per world unit (for particle sizes). */
     update(dt, pxPerUnit) {
@@ -353,6 +398,13 @@ export function createEffects(scene) {
       for (const s of scorches) {
         s.t += dt;
         s.mesh.material.opacity = Math.min(1, s.t / 0.25);
+      }
+      for (const m of bloodPool) {
+        if (!m.visible) continue;
+        m.userData.t += dt;
+        const u = m.userData.t / E.bloodSeconds;
+        if (u >= 1) m.visible = false;
+        else m.material.opacity = E.bloodOpacity * (u < 0.6 ? 1 : 1 - (u - 0.6) / 0.4);
       }
     },
   };

@@ -551,6 +551,13 @@ export const CONFIG = {
     ringRadius: 2.2, // tiles a blast's shockwave ring grows to
     ringSeconds: 0.45,
     scorchSize: 1.8, // tiles across; scorch marks stay for the level
+    // Your skull leaves a trail of blood dabs as it rolls.
+    maxBlood: 160,
+    bloodColor: 0x7a0c10,
+    bloodOpacity: 0.75,
+    bloodSeconds: 6, // each dab fades away over this
+    bloodSpacing: 0.18, // tiles rolled between dabs
+    bloodSize: 0.3, // tiles across, at the skull's slowest (bigger when fast)
     hitStopKill: 0.06, // seconds the action freezes on a kill
     hitStopBlast: 0.08, // and on an explosion
   },

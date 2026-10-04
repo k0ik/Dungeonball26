@@ -288,6 +288,7 @@ export function createGame(container, levels, startIndex = 0) {
     if (heal) hero.hp = hero.maxHp;
     hero.inert = false;
     hero.wobble = 0;
+    hero.bledAt = null;
     heroView.setSkull(false);
     hero.radius = CONFIG.ball.diameter / 2;
     applyCards(); // its friction (Rollerskates)
@@ -600,6 +601,18 @@ export function createGame(container, levels, startIndex = 0) {
     const c = Math.cos(turn);
     const s = Math.sin(turn);
     [hero.vx, hero.vz] = [hero.vx * c - hero.vz * s, hero.vx * s + hero.vz * c];
+  }
+
+  /** The skull leaves a trail of blood dabs on the floor as it rolls. */
+  function bleedSkull() {
+    const E = CONFIG.effects;
+    const last = hero.bledAt ?? (hero.bledAt = { x: hero.x, z: hero.z });
+    const d = Math.hypot(hero.x - last.x, hero.z - last.z);
+    if (d < E.bloodSpacing) return;
+    // Thicker and smeared a little longer when it's fast.
+    effects.blood(hero.x, hero.z, E.bloodSize * (1 + Math.min(1, speedOf(hero) / 6) * 0.5));
+    last.x = hero.x;
+    last.z = hero.z;
   }
 
   function showDeathScreen() {
@@ -1257,7 +1270,10 @@ export function createGame(container, levels, startIndex = 0) {
     let steps = 0;
     while (acc >= step && steps < CONFIG.physics.maxStepsPerFrame) {
       stepWorld(world, step);
-      if (hero.inert) jiggleSkull(step);
+      if (hero.inert) {
+        jiggleSkull(step);
+        bleedSkull();
+      }
       stepIce(world, level, ice, state.move ?? 0);
       looks.noteHits(world.events, hasFace);
       rollGold(step);

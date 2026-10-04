@@ -200,6 +200,36 @@ export function skullTexture() {
   const g = canvas.getContext('2d');
   g.fillStyle = '#ffffff'; // white: the material's colour tints it bone
   g.fillRect(0, 0, 512, 256);
+  // Old bone: grime in soft brown blotches, darker specks, and a hairline
+  // crack across the crown. Seeded, so it's the same skull every time.
+  let seed = 9;
+  const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 70; i++) {
+    const x = rand() * 512;
+    const y = 30 + rand() * 196;
+    const r = 6 + rand() * 26;
+    const grad = g.createRadialGradient(x, y, 0, x, y, r);
+    grad.addColorStop(0, `rgba(${110 + rand() * 40},${85 + rand() * 30},${55 + rand() * 20},${0.12 + rand() * 0.22})`);
+    grad.addColorStop(1, 'rgba(110,85,55,0)');
+    g.fillStyle = grad;
+    g.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  for (let i = 0; i < 260; i++) {
+    g.fillStyle = `rgba(70,55,40,${0.15 + rand() * 0.35})`;
+    g.fillRect(rand() * 512, rand() * 256, 1 + rand() * 2.5, 1 + rand() * 2.5);
+  }
+  g.strokeStyle = 'rgba(60,45,35,0.7)';
+  g.lineWidth = 2;
+  g.beginPath();
+  let cx = 330;
+  let cy = 40;
+  g.moveTo(cx, cy);
+  for (let i = 0; i < 9; i++) {
+    cx += 8 + rand() * 10;
+    cy += (rand() - 0.35) * 14;
+    g.lineTo(cx, cy);
+  }
+  g.stroke();
   g.fillStyle = g.strokeStyle = `#${CONFIG.colors.enemyFace.toString(16).padStart(6, '0')}`;
   g.lineCap = 'round';
   g.lineJoin = 'round';

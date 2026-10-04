@@ -22,31 +22,10 @@ const page = `<meta charset="utf-8">
 :root { color-scheme: dark; }
 html, body { height: 100%; }
 ${css}
-.hint {
-  /* Below the turn label (top 52px, about 25px tall), which used to sit on top of it. */
-  position: absolute; top: calc(88px + env(safe-area-inset-top, 0px)); left: 16px; right: 16px; margin: 0; z-index: 2;
-  font: 500 13px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif;
-  color: #e4e5e8; text-align: center; letter-spacing: 0.01em;
-  padding: 8px 12px; border-radius: 8px; background: rgba(24, 25, 28, 0.78);
-  pointer-events: none; transition: opacity 0.6s;
-}
-.hint b { color: #ffd166; font-weight: 600; }
-.hint.gone { opacity: 0; }
 </style>
-<div id="game"><p class="hint" id="hint"><b>Press on the ball</b>, drag back, release to shoot.<br>Let go near the ball to cancel. Knock enemies into each other for combos. Roll over a key to open its door; the green exit leads on. Drag anywhere else to look around the map.<br>Keys: <b>r</b> respawn, <b>n</b> next level, <b>d</b> debug.</p></div>
+<div id="game"></div>
 <script type="module">
 ${js}
-</script>
-<script>
-(function watchFirstShot() {
-  var hint = document.getElementById('hint');
-  function tick() {
-    var g = window.game;
-    if (g && g.state && g.state.shots > 0) { hint.classList.add('gone'); return; }
-    requestAnimationFrame(tick);
-  }
-  tick();
-})();
 </script>
 `;
 writeFileSync(out, page);

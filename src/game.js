@@ -1454,9 +1454,9 @@ export function createGame(container, levels, startIndex = 0) {
     for (const enemy of enemies()) {
       if (isTool(enemy)) continue; // tool balls never watch or attack, so no "!"
       if (hero.inert) {
-        // You're knocked out: every enemy loses interest. Calm, no "!",
-        // not watching you (Jekylls cool off too).
-        enemy.watching = null;
+        // You're knocked out: every enemy turns passive. Calm, no "!" (Jekylls
+        // cool off too), but its eyes follow your rolling skull.
+        enemy.watching = hero;
         enemy.enraged = false;
         overlay.setAlert(enemy, false, false);
         enemyViews.get(enemy)?.setAngry(false);

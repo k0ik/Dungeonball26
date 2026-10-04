@@ -160,6 +160,7 @@ function resolveStatic(world, b, s) {
   // Reflect, then keep a fraction of the total speed, like walls.
   b.vx = (b.vx - 2 * vn * c.nx) * P.bumperRestitution;
   b.vz = (b.vz - 2 * vn * c.nz) * P.bumperRestitution;
+  if (b.inert) return; // your skull after a knockout: it bounces, but cracks, opens and sets off nothing
   world.events.push({ type: 'static', ball: b, obj: s, speed: -vn });
 }
 
@@ -196,8 +197,10 @@ function resolveBallPair(world, a, b) {
 
   // Split the positional correction by mass: a heavy ball (a Brute) gives
   // way less. Balls are mass 1 unless they carry their own.
-  const ia = 1 / (a.mass ?? 1);
-  const ib = 1 / (b.mass ?? 1);
+  // An inert ball (your skull after a knockout) bounces off the other as if
+  // it were fixed, and never moves it.
+  const ia = b.inert && !a.inert ? 0 : 1 / (a.mass ?? 1);
+  const ib = a.inert && !b.inert ? 0 : 1 / (b.mass ?? 1);
   const push = (minDist - d) / (ia + ib);
   a.x -= nx * push * ia;
   a.z -= nz * push * ia;
@@ -213,6 +216,7 @@ function resolveBallPair(world, a, b) {
   a.vz -= j * ia * nz;
   b.vx += j * ib * nx;
   b.vz += j * ib * nz;
+  if (a.inert || b.inert) return; // no hit: no damage, no combo, no sound
   world.events.push({ type: 'ball', a, b, speed: approach, nx, nz, before });
 }
 

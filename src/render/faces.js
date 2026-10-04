@@ -162,7 +162,30 @@ const worriedFace = () =>
     g.fill();
   });
 
-export const heroFaces = { confident: confidentFace, determined: determinedFace, ouch: ouchFace, worried: worriedFace };
+/** Knocked out: a skull: XX eyes, a grin of teeth. */
+const deadFace = () =>
+  faceTexture('dead', (g) => {
+    g.lineWidth = 7;
+    g.beginPath();
+    for (const x of [46, 82]) {
+      g.moveTo(x - 9, 45);
+      g.lineTo(x + 9, 63);
+      g.moveTo(x + 9, 45);
+      g.lineTo(x - 9, 63);
+    }
+    g.stroke();
+    g.lineWidth = 5;
+    g.beginPath();
+    g.moveTo(42, 88);
+    g.lineTo(86, 88); // the jaw line
+    for (const x of [51, 60, 69, 78]) {
+      g.moveTo(x, 81);
+      g.lineTo(x, 95); // teeth
+    }
+    g.stroke();
+  });
+
+export const heroFaces = { confident: confidentFace, determined: determinedFace, ouch: ouchFace, worried: worriedFace, dead: deadFace };
 
 /** A camera-facing face sprite for a ball of radius `r`. */
 export function faceSprite(texture, r, toCamera) {

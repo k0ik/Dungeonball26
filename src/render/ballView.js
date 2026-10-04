@@ -65,7 +65,10 @@ export function createBallView(ball, { color, stripe, silver = false, toCamera =
   // Hit flash: tint the ball red, fading back over hitFlashSeconds. The
   // material colour multiplies the ball's own colours, so red turns the white
   // body red (an emissive glow on top of white only reads as pale pink).
-  const baseColor = body.material.color.clone();
+  const chrome = body.material;
+  const baseColor = chrome.color.clone();
+  // Knocked out (setSkull): the ball turns bone white.
+  const bone = clearOccluder(toonMaterial(CONFIG.colors.skull));
   const flashColor = new THREE.Color(CONFIG.colors.hitFlash);
   let flashLeft = 0;
   let flashLevel = 0;
@@ -103,7 +106,11 @@ export function createBallView(ball, { color, stripe, silver = false, toCamera =
     flash() {
       flashLeft = CONFIG.render.hitFlashSeconds;
     },
-    /** Show an expression: 'confident', 'determined', 'worried' or 'ouch'. */
+    /** Knocked out: a bone-white skull (on), or back to the ball's own look. */
+    setSkull(on) {
+      body.material = on ? bone : chrome;
+    },
+    /** Show an expression: 'confident', 'determined', 'worried', 'ouch' or 'dead'. */
     setExpression(name) {
       if (!face || name === expression) return;
       expression = name;
@@ -123,7 +130,7 @@ export function createBallView(ball, { color, stripe, silver = false, toCamera =
       if (flashLeft > 0 || flashLevel > 0) {
         flashLeft = Math.max(0, flashLeft - dt);
         flashLevel = flashLeft / CONFIG.render.hitFlashSeconds;
-        body.material.color.lerpColors(baseColor, flashColor, flashLevel);
+        chrome.color.lerpColors(baseColor, flashColor, flashLevel);
       }
       const dx = ball.x - lastX;
       const dz = ball.z - lastZ;

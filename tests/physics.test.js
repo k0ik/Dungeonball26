@@ -224,3 +224,37 @@ test('Ghost: while faded, balls pass straight through it', async () => {
   assert.ok(faded.heroX > 4.5 + 0.5, 'rolled right through');
   assert.equal(faded.ghostX, 4.5, 'and the ghost never moved');
 });
+
+test('an inert ball (your skull) bounces off balls and bumpers without moving or hitting them', () => {
+  const world = createWorld(room);
+  const skull = createBall({ x: 3, z: 5.5 });
+  skull.inert = true;
+  skull.vx = 4;
+  const other = createBall({ x: 5, z: 5.5 });
+  world.balls.push(skull, other);
+  let events = 0;
+  for (let i = 0; i < 300; i++) {
+    stepWorld(world);
+    events += world.events.filter((e) => e.type === 'ball').length;
+    world.events.length = 0;
+  }
+  assert.equal(events, 0, 'no hit event');
+  assert.equal(other.x, 5, 'the other ball never moves');
+  assert.equal(other.vx, 0);
+  assert.ok(skull.vx < 0 || skull.x < 4.5, 'the skull bounced back');
+
+  const w2 = createWorld(room);
+  const s2 = createBall({ x: 3, z: 5.5 });
+  s2.inert = true;
+  s2.vx = 5;
+  w2.balls.push(s2);
+  w2.statics.push(createStaticCircle({ x: 5.5, z: 5.5, radius: 0.34, kind: 'barrel', id: 'b0' }));
+  let hit = false;
+  for (let i = 0; i < 400; i++) {
+    stepWorld(w2);
+    hit ||= w2.events.some((e) => e.type === 'static');
+    w2.events.length = 0;
+  }
+  assert.equal(hit, false, 'no bumper event: nothing cracks, opens or goes off');
+  assert.ok(s2.vx <= 0, 'bounced off the barrel');
+});

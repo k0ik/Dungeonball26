@@ -123,6 +123,7 @@ Every enemy that currently sees the hero shows a "!" above it, updated live even
 
 You have 3 lives. Reaching 0 HP costs one life and puts you back at the level start with full HP, while the board stays exactly as you left it.
 
+- **Your skull:** at 0 HP your ball turns bone white with XX eyes and a toothy grin (a skull) and rolls on as before, but it no longer touches the game: it bounces off enemies, barrels and chests as if they were fixed, without moving, hurting, cracking, opening or setting off anything, and picks nothing up. It's itself again when you respawn.
 - **Death screen:** at 0 HP, input is blocked and the screen darkens for 3 seconds with "You Died!" and, on a second line, the lives left ("2 lives remain", "1 life remains") or "Game Over". Anything still rolling stops under it, you're put back at the start (or the level restarts on a game over), and the screen lightens again with your move. Lives aren't shown in the HUD otherwise.
 
 - **Board state persists:** dead enemies stay dead, damaged enemies stay damaged, broken barrels stay broken, opened chests and doors stay open, and keys you hold stay with you.

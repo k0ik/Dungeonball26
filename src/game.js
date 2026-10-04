@@ -286,6 +286,8 @@ export function createGame(container, levels, startIndex = 0) {
     hero.z = start.z;
     hero.vx = hero.vz = 0;
     if (heal) hero.hp = hero.maxHp;
+    hero.inert = false;
+    heroView.setSkull(false);
     state.ouch = 0;
     heroView.snap();
     state.phase = 'aim';
@@ -553,6 +555,10 @@ export function createGame(container, levels, startIndex = 0) {
   // just before it lightens, and play carries on.
   function knockedOut() {
     state.phase = 'down';
+    // Your ball becomes a bone-white skull that rolls on, bouncing off
+    // everything but touching nothing: no hits, no barrels, chests or pickups.
+    hero.inert = true;
+    heroView.setSkull(true);
     state.timer = CONFIG.hero.deathScreenSeconds;
     state.aiming = false;
     aimView.hide();
@@ -723,7 +729,7 @@ export function createGame(container, levels, startIndex = 0) {
 
   /** Money Magnet: coins near the ball slide in to it (taken on contact as usual). */
   function pullCoins(dt) {
-    if (!card('moneyMagnet')) return;
+    if (!card('moneyMagnet') || hero.inert) return;
     const k = 1 - Math.exp(-CONFIG.cards.magnetPull * dt);
     for (const item of world.items) {
       if (item.kind !== 'coin' || item.fly || item.hot) continue;
@@ -883,6 +889,7 @@ export function createGame(container, levels, startIndex = 0) {
 
   /** Roll over a floor item to take it, once you can use it. */
   function checkPickups() {
+    if (hero.inert) return; // a skull takes nothing
     const reach = hero.radius + CONFIG.objects.itemRadius;
     for (const item of [...world.items]) {
       if (item.fly || item.hot || Math.hypot(item.x - hero.x, item.z - hero.z) > reach || !canCollect(item, hero)) continue;
@@ -1342,7 +1349,9 @@ export function createGame(container, levels, startIndex = 0) {
     state.ouch = Math.max(0, state.ouch - dt);
     const enemyTurn = state.phase === 'enemyWait' || state.phase === 'enemyMove';
     heroView.setExpression(
-      state.ouch > 0 || state.phase === 'down'
+      state.phase === 'down'
+        ? 'dead'
+        : state.ouch > 0
         ? 'ouch'
         : enemyTurn
           ? 'worried'

@@ -1360,7 +1360,7 @@ export function createGame(container, levels, startIndex = 0) {
     updateFlyingCoins(dt);
     updateCardPicks(dt);
     pullCoins(dt);
-    itemsView.update(dt);
+    itemsView.update(dt, rig.viewWidth / CONFIG.camera.baseViewWidth);
     for (const [enemy, view] of enemyViews) {
       view.update(dt);
       if (view.gone) {

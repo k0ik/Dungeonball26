@@ -52,9 +52,11 @@ function itemMesh(item) {
   switch (kind) {
     case 'coin': {
       // A single coin, standing on edge and spinning, like a dot to eat.
+      // Sized like a game piece next to the balls, not a prop (itemScale).
       const coin = outlined(new THREE.CylinderGeometry(0.1, 0.1, 0.03, 16), C.coin, 1.15);
       coin.rotation.x = Math.PI / 2;
-      coin.position.y = 0.16;
+      coin.scale.setScalar(CONFIG.loot.itemScale);
+      coin.position.y = 0.06 + 0.1 * CONFIG.loot.itemScale;
       g.add(coin);
       break;
     }
@@ -66,7 +68,10 @@ function itemMesh(item) {
       flask.position.y = r;
       const neck = outlined(new THREE.CylinderGeometry(0.035, 0.04, 0.08, 10), 0xe8e8ee);
       neck.position.y = r * 2 + 0.03;
-      g.add(flask, neck);
+      const bottle = new THREE.Group();
+      bottle.add(flask, neck);
+      bottle.scale.setScalar(CONFIG.loot.itemScale); // a game piece, like the coins
+      g.add(bottle);
       break;
     }
     case 'shield': {
@@ -103,7 +108,8 @@ function itemMesh(item) {
         tooth.position.set(0.05, y, 0);
         g.add(tooth);
       }
-      g.scale.setScalar(1.5); // keys matter more than coins: make them easy to spot
+      g.userData.baseScale = 1.5; // keys matter more than coins: make them easy to spot (see update)
+      g.scale.setScalar(1.5);
       break;
     }
     case 'oneUp': {
@@ -182,7 +188,12 @@ export function createItemsView(scene) {
         views.set(item, g);
       }
     },
-    update(dt) {
+    /**
+     * `zoom` is the view's width over its base width: keys grow with it when
+     * the camera pulls out, so like the HP bars they keep their size on
+     * screen and stay easy to spot.
+     */
+    update(dt, zoom = 1) {
       t += dt;
       for (let i = sparks.length - 1; i >= 0; i--) {
         const s = sparks[i];
@@ -233,6 +244,7 @@ export function createItemsView(scene) {
         g.position.x = item.x;
         g.position.z = item.z;
         g.position.y = item.fly ? flightHeight(item.fly) : 0.04 + Math.sin(t * 3 + kindPhase) * 0.03;
+        if (item.kind === 'key') g.scale.setScalar(g.userData.baseScale * Math.max(1, zoom));
       }
     },
   };

@@ -227,6 +227,7 @@ export const CONFIG = {
 
   // Barrel loot (design doc: "Objects"). Weights are relative.
   loot: {
+    itemScale: 2, // coins and potions are drawn this much bigger than their first size: game pieces beside the balls, not props
     table: [
       { kind: 'empty', weight: 40 }, // nothing inside
       { kind: 'gold', weight: 30 },

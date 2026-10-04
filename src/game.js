@@ -577,6 +577,10 @@ export function createGame(container, levels, startIndex = 0) {
     const launch = Math.min(H.skullLaunchMax, Math.max(H.skullLaunch, v * 1.5));
     hero.vx = Math.cos(a) * launch;
     hero.vz = Math.sin(a) * launch;
+    // Kill cam on you: slow motion, tight on the skull as it's flung away;
+    // then the skull camera follows it (see the framing).
+    state.killCam = { x: hero.x, z: hero.z, left: CONFIG.camera.deathCamSeconds, hero: true };
+    hitStop(CONFIG.effects.hitStopKill);
     state.deathShown = false;
     state.timer = CONFIG.hero.skullRollMaxSeconds;
     state.aiming = false;
@@ -1104,7 +1108,11 @@ export function createGame(container, levels, startIndex = 0) {
   function updateDrama(realDt) {
     const C = CONFIG.camera;
     const live = state.phase === 'shot' || state.phase === 'enemyMove';
-    if (state.killCam) {
+    // Your own kill cam (a knockout) runs in the 'down' phase.
+    if (state.killCam?.hero && state.phase === 'down') {
+      state.killCam.left -= realDt;
+      if (state.killCam.left <= 0) state.killCam = null;
+    } else if (state.killCam) {
       state.killCam.left -= realDt;
       if (state.killCam.left <= 0 || !live) state.killCam = null;
     }
@@ -1459,7 +1467,9 @@ export function createGame(container, levels, startIndex = 0) {
         // Knocked out: closing in on your skull as it slows, ending with it
         // filling skullFill of the view.
         const tightest = (2 * hero.radius) / C.skullFill;
-        rig.focus(hero, tightest + speedOf(hero) * C.skullSpeedWidth, realDt, C.skullZoomRate);
+        // First the kill cam: tight on the skull, in slow motion.
+        if (state.killCam?.hero) rig.focus(hero, C.killWidth, realDt, C.closeZoomRate);
+        else rig.focus(hero, tightest + speedOf(hero) * C.skullSpeedWidth, realDt, C.skullZoomRate);
       } else if (state.phase === 'aim') {
         // Your turn, at rest: tight on your ball (restFill of the view);
         // aiming zooms out from here with power.

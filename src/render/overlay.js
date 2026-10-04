@@ -188,6 +188,9 @@ export function createOverlay(container, camera) {
         gear.shield.style.transform = `translate(${(c.left - gap).toFixed(1)}px, ${c.top.toFixed(1)}px) translate(-50%, -50%) scale(${k.toFixed(3)})`;
       }
       for (const [ball, bar] of bars) {
+        // No bar over your skull (knocked out).
+        if (bar.el.hidden !== !!ball.inert) bar.el.hidden = !!ball.inert;
+        if (ball.inert) continue;
         place(bar.el, ball.x, ball.radius * 2 + BAR_HEIGHT, ball.z);
         if (bar.shown !== ball.hp) {
           bar.shown = ball.hp;

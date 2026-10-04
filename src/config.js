@@ -346,6 +346,7 @@ export const CONFIG = {
     skullFill: 0.5,
     skullSpeedWidth: 1,
     skullZoomRate: 2.5,
+    deathCamSeconds: 1.1, // your own kill cam at a knockout (real seconds, in slow motion)
     // Matched to the mockup: the grid is turned so level columns run gently
     // down-right and rows run steeply down-left, seen from ~37° above the ground.
     elevationDeg: 37, // camera angle above the ground plane

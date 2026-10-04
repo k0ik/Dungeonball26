@@ -222,6 +222,10 @@ export function createGame(container, levels, startIndex = 0) {
     levelIndex = (i + levels.length) % levels.length;
     const def = levels[levelIndex];
     hud.setMessage(def.message ?? null);
+    // Any death scene in progress ends with the old level (respawn heals you).
+    hud.hideScreen();
+    state.killCam = null;
+    state.deathShown = false;
     level = parseLevel(def.text, def.name);
     if (levelView) scene.remove(levelView);
     levelView = buildLevelView(level);
@@ -285,7 +289,9 @@ export function createGame(container, levels, startIndex = 0) {
     hero.x = start.x;
     hero.z = start.z;
     hero.vx = hero.vz = 0;
-    if (heal) hero.hp = hero.maxHp;
+    // Never come back at 0 HP: an enemy can't hurt a ball with none left, so
+    // you'd be stuck unkillable (skipping a level mid-death used to do it).
+    if (heal || hero.hp <= 0) hero.hp = hero.maxHp;
     hero.inert = false;
     hero.wobble = 0;
     hero.bledAt = null;
@@ -1211,7 +1217,7 @@ export function createGame(container, levels, startIndex = 0) {
     if (e.key === 'd' || e.key === '`') debug.hidden = !debug.hidden;
     if (e.key === 'p') perfView.hidden = !perfView.hidden;
     if (e.key === 'r' && state.phase === 'aim') respawn();
-    if (e.key === 'n' && state.phase !== 'won' && state.phase !== 'pick' && state.phase !== 'exiting') {
+    if (e.key === 'n' && state.phase !== 'won' && state.phase !== 'pick' && state.phase !== 'exiting' && state.phase !== 'down') {
       loadLevel(levelIndex + 1);
       levelBanner();
     }

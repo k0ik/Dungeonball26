@@ -468,29 +468,32 @@ export const CONFIG = {
   // Lighting (src/render/lighting.js): light pools on the flat floor and
   // walls, plus a few real lights for the round objects.
   lighting: {
-    ambient: 0.6, // the floor and walls away from any pool (1 = their full colour)
+    ambient: 0.36, // the floor and walls away from any pool (1 = their full colour)
     maxPools: 24, // pools drawn at once: flashes, your torch, then the nearest
     torchColor: 0xffb46a, // warm
-    torchPool: 1.6, // added light at your ball's centre
-    torchPoolRadius: 2.6, // tiles
-    torchLight: 4, // the real point light's intensity, for nearby objects
-    torchRadius: 5, // tiles it reaches
+    torchPool: 2.8, // added light at your ball's centre
+    torchPoolRadius: 3.8, // tiles
+    torchLight: 7, // the real point light's intensity, for nearby objects
+    torchRadius: 6, // tiles it reaches
     torchHeight: 1.4,
-    enemyPool: 1.3, // tinted by the enemy's colour
-    enemyPoolRadius: 1.6,
-    chestPool: 1.1, // gold, while it's closed
-    chestPoolRadius: 1.3,
-    explosivePool: 0.8, // a low red glow
-    explosivePoolRadius: 1.2,
+    enemyPool: 2.0, // tinted by the enemy's colour
+    enemyPoolRadius: 2.4,
+    chestPool: 1.8, // gold, while it's closed
+    chestPoolRadius: 2.0,
+    explosivePool: 1.2, // a low red glow
+    explosivePoolRadius: 1.8,
+    exitColor: 0x5fd08a, // the exit's green glow
+    exitPool: 2.4,
+    exitPoolRadius: 2.8,
     flashColor: 0xffb04a, // an explosion's flash
-    flashPool: 5,
-    flashPoolRadius: 5,
+    flashPool: 6,
+    flashPoolRadius: 6,
     flashLight: 14,
     flashRadius: 7,
     flashSeconds: 0.45,
-    ambientLight: 1.2, // the scene's lights, for the round objects
+    ambientLight: 0.85, // the scene's lights, for the round objects
     sunLight: 2.0,
-    vignette: 0.45, // darkness at the screen's corners (0 = none)
+    vignette: 0.55, // darkness at the screen's corners (0 = none)
   },
 
   // Procedural textures (src/render/textures.js), drawn at load.

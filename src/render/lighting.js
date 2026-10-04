@@ -61,7 +61,7 @@ vec3 poolLight() {
 }
 
 /**
- * The scene's lights and pools. `update(dt, hero, balls, statics)` each frame
+ * The scene's lights and pools. `update(dt, hero, balls, statics, exits)` each frame
  * gathers the pools nearest your ball (up to lighting.maxPools) and eases
  * any flashes out; `flash(x, z)` marks an explosion.
  */
@@ -80,6 +80,7 @@ export function createLighting(scene) {
   uniforms.uAmbient.value.setScalar(L.ambient);
   const torchCol = new THREE.Color(L.torchColor);
   const flashCol = new THREE.Color(L.flashColor);
+  const exitCol = new THREE.Color(L.exitColor);
   const tmp = new THREE.Color();
   let flashes = [];
   const candidates = [];
@@ -94,7 +95,7 @@ export function createLighting(scene) {
       flashLight.position.set(x, 1.2, z);
       flashLight.intensity = L.flashLight;
     },
-    update(dt, hero, balls, statics) {
+    update(dt, hero, balls, statics, exits = []) {
       candidates.length = 0;
       flashes = flashes.filter((f) => (f.t += dt) < L.flashSeconds);
       for (const f of flashes) {
@@ -109,6 +110,8 @@ export function createLighting(scene) {
         const type = b.type && CONFIG.enemy.types[b.type];
         add(b.x, b.z, L.enemyPoolRadius, tmp.set(type?.color ?? CONFIG.colors.enemy), L.enemyPool);
       }
+      // The exit glows green, so you can spot it from afar.
+      for (const e of exits) add(e.col + 0.5, e.row + 0.5, L.exitPoolRadius, exitCol, L.exitPool);
       for (const s of statics) {
         if (s.kind === 'chest' && !s.opened) add(s.x, s.z, L.chestPoolRadius, tmp.set(CONFIG.colors.chestBand), L.chestPool);
         else if (s.kind === 'explosive') add(s.x, s.z, L.explosivePoolRadius, tmp.set(CONFIG.colors.explosive), L.explosivePool);

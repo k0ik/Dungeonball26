@@ -1333,7 +1333,7 @@ export function createGame(container, levels, startIndex = 0) {
       if (state.returnBoost > 0) state.returnBoost = rig.settled ? 0 : state.returnBoost - dt;
     }
     rig.updateShake(realDt);
-    lighting.update(realDt, hero, world.balls, world.statics);
+    lighting.update(realDt, hero, world.balls, world.statics, level.exits);
     renderer.render(scene, rig.camera);
     overlay.update();
     hud.setGold(state.gold);

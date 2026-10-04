@@ -323,15 +323,29 @@ export const CONFIG = {
     // (or "Game Over") and input is blocked for this long, then it lightens
     // and play resumes from the start.
     deathScreenSeconds: 3,
-    skullRollMaxSeconds: 6, // the death screen waits for your skull to stop rolling, at most this long
+    skullRollMaxSeconds: 8, // the death screen waits for your skull to stop rolling, at most this long
+    // Your skull (knocked out): smaller, light and slippery, so it skitters on.
+    skullScale: 0.8, // its size (and collision radius) against your ball's
+    skullMass: 0.5,
+    skullFriction: 0.6, // a scale on the floor's friction
+    // At the knockout the skull is flung on at least this speed (tiles/s), the
+    // way it was going, so you watch it careen round the room.
+    skullLaunch: 6.5,
+    skullLaunchMax: 9,
     deathFadeSeconds: 0.4, // darken / lighten time, inside the 3 s
     runCompleteSeconds: 4, // the "Run Complete!" screen after the last level, before a new run
-    maxHp: 10,
+    maxHp: 1, // TESTING: 1 HP, to try the knockout quickly (normally 10)
     atk: 1,
     lives: 3,
   },
 
   camera: {
+    // Knocked out: the camera closes in on your skull as it slows, ending
+    // with it filling skullFill of the view's width; faster, it widens by
+    // skullSpeedWidth tiles per tile/s.
+    skullFill: 0.5,
+    skullSpeedWidth: 1,
+    skullZoomRate: 2.5,
     // Matched to the mockup: the grid is turned so level columns run gently
     // down-right and rows run steeply down-left, seen from ~37° above the ground.
     elevationDeg: 37, // camera angle above the ground plane
@@ -498,6 +512,7 @@ export const CONFIG = {
     enemyPoolRadius: 2.4,
     chestPool: 1.8, // gold, while it's closed
     chestPoolRadius: 2.0,
+    chestFadeSeconds: 0.6, // an opened chest's glow dies away over this
     explosivePool: 1.2, // a low red glow
     explosivePoolRadius: 1.8,
     exitColor: 0x5fd08a, // the exit's green glow

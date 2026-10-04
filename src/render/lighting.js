@@ -84,6 +84,7 @@ export function createLighting(scene) {
   const tmp = new THREE.Color();
   let flashes = [];
   let clock = 0;
+  const chestGlow = new WeakMap(); // chest -> its glow, 1 lit .. 0 out
   const candidates = [];
 
   function add(x, z, radius, color, strength) {
@@ -116,7 +117,12 @@ export function createLighting(scene) {
       const pulse = 1 - L.exitPulseDepth * 0.5 * (1 - Math.cos(clock * L.exitPulseHz * Math.PI * 2));
       for (const e of exits) add(e.col + 0.5, e.row + 0.5, L.exitPoolRadius, exitCol, L.exitPool * pulse);
       for (const s of statics) {
-        if (s.kind === 'chest' && !s.opened) add(s.x, s.z, L.chestPoolRadius, tmp.set(CONFIG.colors.chestBand), L.chestPool);
+        if (s.kind === 'chest') {
+          // An opened chest's light goes out, fading over chestFadeSeconds.
+          const g = s.opened ? Math.max(0, (chestGlow.get(s) ?? 1) - dt / L.chestFadeSeconds) : 1;
+          chestGlow.set(s, g);
+          if (g > 0) add(s.x, s.z, L.chestPoolRadius, tmp.set(CONFIG.colors.chestBand), L.chestPool * g * g);
+        }
         else if (s.kind === 'explosive') add(s.x, s.z, L.explosivePoolRadius, tmp.set(CONFIG.colors.explosive), L.explosivePool);
       }
       // Flashes and the torch first (they're added first), then the nearest

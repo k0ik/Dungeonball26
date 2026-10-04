@@ -288,6 +288,9 @@ export function createGame(container, levels, startIndex = 0) {
     if (heal) hero.hp = hero.maxHp;
     hero.inert = false;
     heroView.setSkull(false);
+    hero.radius = CONFIG.ball.diameter / 2;
+    hero.mass = undefined;
+    applyCards(); // its friction (Rollerskates)
     state.ouch = 0;
     heroView.snap();
     state.phase = 'aim';
@@ -563,6 +566,17 @@ export function createGame(container, levels, startIndex = 0) {
     // You lose any gear you held (a game over too).
     hero.sword = 0;
     hero.shield = false;
+    // Smaller, light and slippery (restored on respawn).
+    const H = CONFIG.hero;
+    hero.radius = (CONFIG.ball.diameter / 2) * H.skullScale;
+    hero.mass = H.skullMass;
+    hero.friction = (hero.friction ?? 1) * H.skullFriction;
+    // Flung on hard, the way it was going (any way at all if it was still).
+    const v = speedOf(hero);
+    const a = v > 0.05 ? Math.atan2(hero.vz, hero.vx) : Math.random() * Math.PI * 2;
+    const launch = Math.min(H.skullLaunchMax, Math.max(H.skullLaunch, v * 1.5));
+    hero.vx = Math.cos(a) * launch;
+    hero.vz = Math.sin(a) * launch;
     state.deathShown = false;
     state.timer = CONFIG.hero.skullRollMaxSeconds;
     state.aiming = false;
@@ -1441,7 +1455,12 @@ export function createGame(container, levels, startIndex = 0) {
       // Closeness (design doc: "Camerawork"): the camera stays on you.
       const C = CONFIG.camera;
       const boost = state.returnBoost > 0 ? C.returnBoost : 1;
-      if (state.phase === 'aim') {
+      if (state.phase === 'down') {
+        // Knocked out: closing in on your skull as it slows, ending with it
+        // filling skullFill of the view.
+        const tightest = (2 * hero.radius) / C.skullFill;
+        rig.focus(hero, tightest + speedOf(hero) * C.skullSpeedWidth, realDt, C.skullZoomRate);
+      } else if (state.phase === 'aim') {
         // Your turn, at rest: tight on your ball (restFill of the view);
         // aiming zooms out from here with power.
         rig.focus(hero, CONFIG.ball.diameter / C.restFill, realDt, C.restZoomRate, boost);
@@ -1484,7 +1503,7 @@ export function createGame(container, levels, startIndex = 0) {
     hud.setGold(state.gold);
     hud.setKeys(state.keys);
     hud.setCards(state.cards);
-    hud.setDanger(hero.hp > 0 && hero.hp <= CONFIG.render.dangerHp && state.phase !== 'down');
+    hud.setDanger(hero.hp > 0 && hero.hp <= CONFIG.render.dangerHp && hero.maxHp > CONFIG.render.dangerHp && state.phase !== 'down');
     // Whose turn it is, always shown: yours while you aim and your shot rolls,
     // the enemies' from the first enemy move until it's back to you.
     hud.setTurn(['enemyWait', 'enemyMove', 'down'].includes(state.phase) ? 'enemy' : 'player');

@@ -114,6 +114,7 @@ export function createBallView(ball, { color, stripe, silver = false, toCamera =
       if ((body.material === bone) === on) return;
       body.material = on ? bone : chrome;
       if (face) face.visible = !on;
+      group.scale.setScalar(on ? CONFIG.hero.skullScale : 1); // the skull is smaller
       // Start with the face turned to the camera, upright, so you see it
       // before it rolls away.
       if (on && toCamera) {

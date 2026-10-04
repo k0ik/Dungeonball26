@@ -486,8 +486,10 @@ export const CONFIG = {
     explosivePool: 1.2, // a low red glow
     explosivePoolRadius: 1.8,
     exitColor: 0x5fd08a, // the exit's green glow
-    exitPool: 2.4,
-    exitPoolRadius: 2.8,
+    exitPool: 1.6, // at the pulse's peak
+    exitPoolRadius: 2.0,
+    exitPulseHz: 1, // the glow breathes slowly, once a second
+    exitPulseDepth: 0.45, // how far it dims between peaks (share of its strength)
     flashColor: 0xffb04a, // an explosion's flash
     flashPool: 6,
     flashPoolRadius: 6,

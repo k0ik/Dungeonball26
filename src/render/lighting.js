@@ -83,6 +83,7 @@ export function createLighting(scene) {
   const exitCol = new THREE.Color(L.exitColor);
   const tmp = new THREE.Color();
   let flashes = [];
+  let clock = 0;
   const candidates = [];
 
   function add(x, z, radius, color, strength) {
@@ -110,8 +111,10 @@ export function createLighting(scene) {
         const type = b.type && CONFIG.enemy.types[b.type];
         add(b.x, b.z, L.enemyPoolRadius, tmp.set(type?.color ?? CONFIG.colors.enemy), L.enemyPool);
       }
-      // The exit glows green, so you can spot it from afar.
-      for (const e of exits) add(e.col + 0.5, e.row + 0.5, L.exitPoolRadius, exitCol, L.exitPool);
+      // The exit glows green, pulsing slowly, so you can spot it from afar.
+      clock += dt;
+      const pulse = 1 - L.exitPulseDepth * 0.5 * (1 - Math.cos(clock * L.exitPulseHz * Math.PI * 2));
+      for (const e of exits) add(e.col + 0.5, e.row + 0.5, L.exitPoolRadius, exitCol, L.exitPool * pulse);
       for (const s of statics) {
         if (s.kind === 'chest' && !s.opened) add(s.x, s.z, L.chestPoolRadius, tmp.set(CONFIG.colors.chestBand), L.chestPool);
         else if (s.kind === 'explosive') add(s.x, s.z, L.explosivePoolRadius, tmp.set(CONFIG.colors.explosive), L.explosivePool);

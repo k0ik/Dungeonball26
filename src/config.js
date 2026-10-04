@@ -332,6 +332,10 @@ export const CONFIG = {
     // way it was going, so you watch it careen round the room.
     skullLaunch: 6.5,
     skullLaunchMax: 9,
+    // It's lumpy: its heading wobbles as it rolls (a random walk in its turn
+    // rate, radians/s, kicked each physics step and damped).
+    skullJiggleKick: 2,
+    skullJiggleDamping: 4,
     deathFadeSeconds: 0.4, // darken / lighten time, inside the 3 s
     runCompleteSeconds: 4, // the "Run Complete!" screen after the last level, before a new run
     maxHp: 1, // TESTING: 1 HP, to try the knockout quickly (normally 10)

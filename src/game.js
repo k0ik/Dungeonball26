@@ -287,6 +287,7 @@ export function createGame(container, levels, startIndex = 0) {
     hero.vx = hero.vz = 0;
     if (heal) hero.hp = hero.maxHp;
     hero.inert = false;
+    hero.wobble = 0;
     heroView.setSkull(false);
     hero.radius = CONFIG.ball.diameter / 2;
     hero.mass = undefined;
@@ -586,6 +587,21 @@ export function createGame(container, levels, startIndex = 0) {
     state.aiming = false;
     aimView.hide();
     sfx.play(state.lives - 1 > 0 ? 'down' : 'gameover', 0.9);
+  }
+
+  /**
+   * The skull is lumpy: its path wobbles as it rolls. Its heading turns at a
+   * rate that wanders at random (a smooth random walk), more at speed.
+   */
+  function jiggleSkull(dt) {
+    const H = CONFIG.hero;
+    const v = speedOf(hero);
+    if (v < 0.05) return;
+    hero.wobble = ((hero.wobble ?? 0) + (Math.random() - 0.5) * H.skullJiggleKick) * Math.exp(-H.skullJiggleDamping * dt);
+    const turn = hero.wobble * Math.min(1, v / 3) * dt;
+    const c = Math.cos(turn);
+    const s = Math.sin(turn);
+    [hero.vx, hero.vz] = [hero.vx * c - hero.vz * s, hero.vx * s + hero.vz * c];
   }
 
   function showDeathScreen() {
@@ -1243,6 +1259,7 @@ export function createGame(container, levels, startIndex = 0) {
     let steps = 0;
     while (acc >= step && steps < CONFIG.physics.maxStepsPerFrame) {
       stepWorld(world, step);
+      if (hero.inert) jiggleSkull(step);
       stepIce(world, level, ice, state.move ?? 0);
       looks.noteHits(world.events, hasFace);
       rollGold(step);

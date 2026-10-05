@@ -6,7 +6,7 @@
 // boxes that keep `bumperRestitution` of a ball's speed.
 
 import { CONFIG } from './config.js';
-import { isSolid, tileAt } from './level.js';
+import { isSolid, tileAt, isHazard } from './level.js';
 import { wallContacts, insideWall } from './wallGeometry.js';
 
 const P = CONFIG.physics;
@@ -42,7 +42,11 @@ export function stepWorld(world, dt = P.step) {
   const { balls } = world;
   world.time += dt;
 
+  // Slopes: divots pull a ball toward their centre, bumps push it away.
+  for (const b of balls) if (!b.fallen) applySlope(world, b, dt);
+
   for (const b of balls) {
+    if (b.fallen) continue;
     const speed = speedOf(b);
     if (speed === 0) continue;
     // A ball can carry its own friction scale (the Athletic card lowers the hero's).
@@ -64,9 +68,38 @@ export function stepWorld(world, dt = P.step) {
   }
 
   for (const b of balls) {
+    if (b.fallen) continue;
     for (const s of world.statics) resolveStatic(world, b, s);
     resolveWalls(world, b);
+    // Into a pit or lava: once its centre is over the hole, it falls in.
+    const t = tileAt(world.level, Math.floor(b.x), Math.floor(b.z));
+    if (isHazard(t)) {
+      b.fallen = t;
+      b.vx = b.vz = 0;
+      world.events.push({ type: 'fall', ball: b, kind: t });
+    }
   }
+}
+
+/**
+ * Divot or bump under `b`: an acceleration toward (divot) or away from
+ * (bump) the tile's centre, strongest at the rim of its round dish and
+ * nothing at the very centre or past the rim. A ball at rest only starts
+ * moving if the slope beats friction there.
+ */
+function applySlope(world, b, dt) {
+  const col = Math.floor(b.x);
+  const row = Math.floor(b.z);
+  const t = tileAt(world.level, col, row);
+  if (t !== 'divot' && t !== 'bump') return;
+  const dx = b.x - (col + 0.5);
+  const dz = b.z - (row + 0.5);
+  const d = Math.hypot(dx, dz);
+  if (d < 1e-4 || d > 0.5) return;
+  const a = (t === 'divot' ? -P.divotPull : P.bumpPush) * (d / 0.5) * Math.sin(Math.PI * Math.min(1, d / 0.5));
+  if (b.vx === 0 && b.vz === 0 && Math.abs(a) <= P.friction * (b.friction ?? 1)) return;
+  b.vx += (dx / d) * a * dt;
+  b.vz += (dz / d) * a * dt;
 }
 
 /**
@@ -185,6 +218,7 @@ export function bounceOffFixed(ev, ball) {
 
 function resolveBallPair(world, a, b) {
   if (a.phased || b.phased) return; // a faded Ghost: balls pass straight through
+  if (a.fallen || b.fallen) return; // gone down a pit
   const dx = b.x - a.x;
   const dz = b.z - a.z;
   const minDist = a.radius + b.radius;

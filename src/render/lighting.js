@@ -81,6 +81,7 @@ export function createLighting(scene) {
   const torchCol = new THREE.Color(L.torchColor);
   const flashCol = new THREE.Color(L.flashColor);
   const exitCol = new THREE.Color(L.exitColor);
+  const lavaCol = new THREE.Color(L.lavaColor);
   const tmp = new THREE.Color();
   let flashes = [];
   let clock = 0;
@@ -97,7 +98,7 @@ export function createLighting(scene) {
       flashLight.position.set(x, 1.2, z);
       flashLight.intensity = L.flashLight;
     },
-    update(dt, hero, balls, statics, exits = []) {
+    update(dt, hero, balls, statics, exits = [], lavas = []) {
       candidates.length = 0;
       flashes = flashes.filter((f) => (f.t += dt) < L.flashSeconds);
       for (const f of flashes) {
@@ -118,6 +119,8 @@ export function createLighting(scene) {
       clock += dt;
       const pulse = 1 - L.exitPulseDepth * 0.5 * (1 - Math.cos(clock * L.exitPulseHz * Math.PI * 2));
       for (const e of exits) add(e.col + 0.5, e.row + 0.5, L.exitPoolRadius, exitCol, L.exitPool * pulse);
+      // Lava glows, flickering a little.
+      for (const t of lavas) add(t.col + 0.5, t.row + 0.5, L.lavaPoolRadius, lavaCol, L.lavaPool * (0.85 + 0.15 * Math.sin(clock * 3.1 + t.col * 1.7 + t.row)));
       for (const s of statics) {
         if (s.kind === 'chest') {
           // An opened chest's light goes out, fading over chestFadeSeconds.

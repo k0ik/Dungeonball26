@@ -5,7 +5,7 @@
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
-import { tileAt } from '../level.js';
+import { tileAt, isHazard } from '../level.js';
 import { loopPolygons } from '../wallGeometry.js';
 import { outlineLineMaterial, markOccluder, seeThrough } from './materials.js';
 import { litByPools } from './lighting.js';
@@ -62,6 +62,105 @@ function roundedExit(level, col, row, color) {
   return mesh;
 }
 
+// Holes: pits and lava, sunk below the floor. Their walls are unlit vertex
+// colours fading down into the dark; lava has a glowing floor (and the
+// lighting adds a glow around it).
+const holeMaterial = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide });
+const lavaMaterial = new THREE.MeshBasicMaterial({ color: C.lava });
+function addHoles(group, level) {
+  const R = CONFIG.render;
+  const pos = [];
+  const col = [];
+  const lava = [];
+  const lavaCol = [];
+  const black = new THREE.Color(0x000000);
+  const pitTop = new THREE.Color(C.pitRim);
+  const lavaTop = new THREE.Color(C.lavaRim);
+  const lavaLow = new THREE.Color(C.lava).multiplyScalar(0.45);
+  const wall = (a, b, depth, top, bottom) => {
+    // A side from the floor's edge a-b straight down to depth: top colour at the rim.
+    for (const v of [[a, 0], [b, 0], [b, -depth], [a, 0], [b, -depth], [a, -depth]]) pos.push(v[0][0], v[1], v[0][1]);
+    for (const y of [0, 0, 1, 0, 1, 1]) {
+      const c = y ? bottom : top;
+      col.push(c.r, c.g, c.b);
+    }
+  };
+  for (let row = 0; row < level.height; row++) {
+    for (let c = 0; c < level.width; c++) {
+      const t = tileAt(level, c, row);
+      if (!isHazard(t)) continue;
+      const depth = t === 'lava' ? R.lavaDepth : R.pitDepth;
+      const top = t === 'lava' ? lavaTop : pitTop;
+      const bottom = t === 'lava' ? lavaLow : black;
+      const x0 = c;
+      const x1 = c + 1;
+      const z0 = row;
+      const z1 = row + 1;
+      // A side wherever the neighbour isn't the same kind of hole.
+      if (tileAt(level, c, row - 1) !== t) wall([x0, z0], [x1, z0], depth, top, bottom);
+      if (tileAt(level, c, row + 1) !== t) wall([x1, z1], [x0, z1], depth, top, bottom);
+      if (tileAt(level, c - 1, row) !== t) wall([x0, z1], [x0, z0], depth, top, bottom);
+      if (tileAt(level, c + 1, row) !== t) wall([x1, z0], [x1, z1], depth, top, bottom);
+      const floor = t === 'lava' ? lava : pos;
+      const floorC = t === 'lava' ? lavaCol : col;
+      for (const v of [[x0, z1], [x1, z1], [x1, z0], [x0, z1], [x1, z0], [x0, z0]]) floor.push(v[0], -depth, v[1]);
+      if (t !== 'lava') for (let i = 0; i < 6; i++) floorC.push(0, 0, 0);
+    }
+  }
+  if (pos.length) group.add(meshFrom(pos, col, holeMaterial));
+  if (lava.length) {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(lava, 3));
+    group.add(new THREE.Mesh(geo, lavaMaterial));
+  }
+}
+
+/** A divot (a shaded dish) or a bump (a lit mound) drawn on its floor tile. */
+let slopeTextures = null;
+function slopeDecal(kind, col, row) {
+  if (!slopeTextures) {
+    const make = (draw) => {
+      const c = document.createElement('canvas');
+      c.width = c.height = 128;
+      draw(c.getContext('2d'));
+      return new THREE.CanvasTexture(c);
+    };
+    slopeTextures = {
+      // Dark in the middle, lit on the far rim: a dip.
+      divot: make((g) => {
+        const grad = g.createRadialGradient(64, 58, 4, 64, 64, 62);
+        grad.addColorStop(0, 'rgba(0,0,0,0.55)');
+        grad.addColorStop(0.75, 'rgba(0,0,0,0.18)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        g.fillStyle = grad;
+        g.fillRect(0, 0, 128, 128);
+        g.strokeStyle = 'rgba(255,255,255,0.18)';
+        g.lineWidth = 4;
+        g.beginPath();
+        g.arc(64, 64, 52, Math.PI * 0.15, Math.PI * 0.85);
+        g.stroke();
+      }),
+      // Lit on top, shadowed round its base: a rise.
+      bump: make((g) => {
+        const grad = g.createRadialGradient(60, 56, 2, 64, 64, 62);
+        grad.addColorStop(0, 'rgba(255,255,255,0.4)');
+        grad.addColorStop(0.55, 'rgba(255,255,255,0.1)');
+        grad.addColorStop(0.85, 'rgba(0,0,0,0.25)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        g.fillStyle = grad;
+        g.fillRect(0, 0, 128, 128);
+      }),
+    };
+  }
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2),
+    new THREE.MeshBasicMaterial({ map: slopeTextures[kind], transparent: true, depthWrite: false }),
+  );
+  mesh.position.set(col + 0.5, 0.004, row + 0.5);
+  mesh.renderOrder = 1;
+  return mesh;
+}
+
 export function buildLevelView(level) {
   const group = new THREE.Group();
   const h = CONFIG.render.wallHeight;
@@ -76,12 +175,15 @@ export function buildLevelView(level) {
   for (let row = 0; row < level.height; row++) {
     for (let col = 0; col < level.width; col++) {
       const tile = tileAt(level, col, row);
+      if (isHazard(tile)) continue; // a hole: drawn by addHoles
       const color = tile === 'exit' && !level.geometry ? exitCol : (col + row) % 2 ? floorB : floorA;
       pushQuad(floorPos, floorCol, [col, 0, row + 1], [col + 1, 0, row + 1], [col + 1, 0, row], [col, 0, row], color);
+      if (tile === 'divot' || tile === 'bump') group.add(slopeDecal(tile, col, row));
       if (tile === 'exit' && level.geometry) group.add(roundedExit(level, col, row, exitCol));
     }
   }
   group.add(meshFrom(floorPos, floorCol));
+  addHoles(group, level);
 
   if (level.geometry) {
     const polys = addOutlineWalls(group, level, h);

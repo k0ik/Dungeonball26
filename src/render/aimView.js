@@ -89,6 +89,19 @@ export function createAimView(yaw = 0) {
     pathGroup.add(ring);
   }
 
+  // A path that ends in a pit or lava ends in a red warning: a ring with an X.
+  const fallMat = new THREE.MeshBasicMaterial({ color: CONFIG.colors.fallWarning, transparent: true, opacity: 0.95, depthWrite: false });
+  const fallMark = new THREE.Group();
+  fallMark.rotation.y = yaw;
+  fallMark.add(new THREE.Mesh(new THREE.RingGeometry(0.2, 0.27, 28).rotateX(-Math.PI / 2), fallMat));
+  for (const a of [Math.PI / 4, -Math.PI / 4]) {
+    const bar = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.06).rotateX(-Math.PI / 2), fallMat);
+    bar.rotation.y = a;
+    fallMark.add(bar);
+  }
+  fallMark.visible = false;
+  pathGroup.add(fallMark);
+
   const m = new THREE.Matrix4();
   const q = new THREE.Quaternion();
   const up = new THREE.Vector3(0, 1, 0);
@@ -163,11 +176,17 @@ export function createAimView(yaw = 0) {
       dashes.instanceMatrix.needsUpdate = true;
 
       // Every point after the start: each bounce, then the end of the path.
+      const last = path.points.length - 2; // the end's hoop
       hoops.forEach((ring, i) => {
         const p = path.points[i + 1] ?? null;
-        ring.visible = !!p;
+        ring.visible = !!p && !(path.fell && i === last);
         if (p) ring.position.set(p.x, Y + 0.001, p.z);
       });
+      fallMark.visible = !!path.fell;
+      if (path.fell) {
+        const end = path.points[path.points.length - 1];
+        fallMark.position.set(end.x, Y + 0.002, end.z);
+      }
     },
   };
 }

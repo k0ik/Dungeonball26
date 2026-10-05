@@ -78,6 +78,13 @@ export function previewPath(level, hero, dirX, dirZ, speed, others = [], statics
   for (let i = 0; i < maxSteps && (ghost.vx !== 0 || ghost.vz !== 0); i++) {
     stepWorld(world);
     stepIce(world, level, puddles, move);
+    // Into a pit or lava: the path ends there, marked as a fall.
+    if (world.events.some((ev) => ev.type === 'fall' && ev.ball === ghost)) {
+      points.push({ x: ghost.x, z: ghost.z });
+      return { points, bends, stopped: true, fell: true };
+    }
+    world.balls = world.balls.filter((b) => !b.fallen); // others that fell in are gone
+    world.events = world.events.filter((ev) => ev.type !== 'fall');
     const hit = world.events.some(touchesGhost);
     combat.resolve(world, ghost);
     resolveObjects(world, ghost, () => 0.5, { heroBarrelHits: barrelHits });

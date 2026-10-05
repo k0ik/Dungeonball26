@@ -258,3 +258,72 @@ test('an inert ball (your skull) bounces off balls and bumpers without moving or
   assert.equal(hit, false, 'no bumper event: nothing cracks, opens or goes off');
   assert.ok(s2.vx <= 0, 'bounced off the barrel');
 });
+
+const holes = parseLevel(`
+#########
+#.......#
+#.._....#
+#.......#
+#....u..#
+#.......#
+#..n....#
+#S..~...#
+#########`);
+
+test('a ball whose centre rolls over a pit falls in (one fall event, then it stays put)', () => {
+  const world = createWorld(holes);
+  const b = createBall({ x: 1.5, z: 2.5 });
+  b.vx = 3;
+  world.balls.push(b);
+  const falls = [];
+  for (let i = 0; i < 240; i++) {
+    stepWorld(world);
+    falls.push(...world.events.filter((e) => e.type === 'fall'));
+    world.events.length = 0;
+  }
+  assert.equal(falls.length, 1);
+  assert.equal(falls[0].kind, 'pit');
+  assert.ok(b.fallen && b.vx === 0 && Math.floor(b.x) === 3, 'it stopped in the pit');
+});
+
+test('lava swallows a ball too', () => {
+  const world = createWorld(holes);
+  const b = createBall({ x: 2.5, z: 7.5 });
+  b.vx = 3;
+  world.balls.push(b);
+  let kind = null;
+  for (let i = 0; i < 240 && !kind; i++) {
+    stepWorld(world);
+    kind = world.events.find((e) => e.type === 'fall')?.kind ?? null;
+    world.events.length = 0;
+  }
+  assert.equal(kind, 'lava');
+});
+
+test('a divot bends a passing ball toward its centre; a bump bends it away', () => {
+  const pass = (z) => {
+    const world = createWorld(holes);
+    const b = createBall({ x: 4.6, z });
+    b.vx = 2;
+    world.balls.push(b);
+    for (let i = 0; i < 120; i++) stepWorld(world);
+    return b.vz;
+  };
+  // The divot (5, 4) is centred on z = 4.5: a ball passing just above it (z 4.3) is pulled down (+z).
+  assert.ok(pass(4.3) > 0.02, 'pulled toward the divot centre');
+  // The bump (3, 6) is centred on z = 6.5: a ball passing just above it (z 6.3), starting on it, is pushed up (-z).
+  const world = createWorld(holes);
+  const b = createBall({ x: 3.2, z: 6.3 });
+  b.vx = 1.5;
+  world.balls.push(b);
+  for (let i = 0; i < 60; i++) stepWorld(world);
+  assert.ok(b.vz < -0.02, 'pushed away from the bump centre');
+});
+
+test('a ball at rest near a divot centre stays put (the slope there is weaker than friction)', () => {
+  const world = createWorld(holes);
+  const b = createBall({ x: 5.52, z: 4.5 });
+  world.balls.push(b);
+  for (let i = 0; i < 120; i++) stepWorld(world);
+  assert.equal(b.x, 5.52);
+});

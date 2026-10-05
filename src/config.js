@@ -8,6 +8,11 @@ export const CONFIG = {
     maxStepsPerFrame: 12, // cap catch-up after a stall so we never spiral
     friction: 1.3125, // constant deceleration, tiles/s² (the doc's 3.5 halved after playtesting, then cut by a quarter more: what the Athletic card used to give)
     stopThreshold: 0.25, // below this a ball counts as at rest
+    // Divots and bumps (tiles u and n): their slope's push, tiles/s², at its
+    // steepest (partway out from the centre); it eases to nothing at the
+    // centre and the rim.
+    divotPull: 4,
+    bumpPush: 4,
     wallRestitution: 0.9, // fraction of speed kept after a wall bounce
     bumperRestitution: 0.7, // barrels and chests (M5)
     // Barrels are pinball bumpers for every ball: bouncing off one adds this
@@ -338,7 +343,7 @@ export const CONFIG = {
     skullJiggleDamping: 12, // high: small, quick wobbles
     deathFadeSeconds: 0.4, // darken / lighten time, inside the 3 s
     runCompleteSeconds: 4, // the "Run Complete!" screen after the last level, before a new run
-    maxHp: 1, // TESTING: 1 HP, to try the knockout quickly (normally 10)
+    maxHp: 3, // TESTING: 3 HP (normally 10)
     atk: 1,
     lives: 3,
   },
@@ -454,6 +459,9 @@ export const CONFIG = {
     // exitGlidePull, 1/s and 1/s²), is drawn up in a golden glow and swirl of
     // sparkles after exitGlideSeconds over exitBeamSeconds, and the screen
     // fades out and back in over exitFadeSeconds.
+    fallSeconds: 0.5, // a ball falling in a pit or lava drops out of sight over this
+    pitDepth: 1.4, // how far a bottomless pit's walls are drawn down before the black
+    lavaDepth: 0.35, // how far below the floor the lava lies
     exitGlideSeconds: 0.45,
     exitGlideDamping: 7,
     exitGlidePull: 45,
@@ -531,6 +539,9 @@ export const CONFIG = {
     explosivePool: 1.2, // a low red glow
     explosivePoolRadius: 1.8,
     exitColor: 0x5fd08a, // the exit's green glow
+    lavaColor: 0xff6a2a, // lava's glow
+    lavaPool: 1.6,
+    lavaPoolRadius: 1.7,
     exitPool: 1.6, // at the pulse's peak
     exitPoolRadius: 2.0,
     exitPulseHz: 1, // the glow breathes slowly, once a second
@@ -613,6 +624,10 @@ export const CONFIG = {
     turnRing: 0x5ad16a, // matches the hero's HP bar
     enemyTurnRing: 0xff2a2a, // the enemy that's about to move
     hitFlash: 0xff2a2a,
+    fallWarning: 0xff3b30, // the aim path's end mark when the shot would fall in a pit or lava
+    pitRim: 0x2a2a2e, // a pit's walls, darkening to black
+    lava: 0xff5a1f,
+    lavaRim: 0x1a1418, // obsidian walls down to the lava
     // Objects and pickups, after the mockup.
     barrel: 0xa87c40,
     barrelTop: 0xfcc062,

@@ -2,7 +2,7 @@
 // next, and where a patrolling enemy heads. Pure functions, unit tested.
 
 import { CONFIG } from './config.js';
-import { tileAt } from './level.js';
+import { tileAt, isHazard, isFloorLike } from './level.js';
 import { overlapsSolid, staticContact } from './physics.js';
 
 const E = CONFIG.enemy;
@@ -52,6 +52,7 @@ function pathClear(level, statics, x0, z0, x1, z1, r) {
     const t = i / steps;
     const p = { x: x0 + (x1 - x0) * t, z: z0 + (z1 - z0) * t };
     if (overlapsSolid(level, p.x, p.z, r)) return false;
+    if (isHazard(tileAt(level, Math.floor(p.x), Math.floor(p.z)))) return false; // never over a pit
     if (statics.some((s) => staticContact(p, s, r))) return false;
   }
   return true;
@@ -72,7 +73,7 @@ export function patrolMove(level, enemy, balls, rng = Math.random, statics = [])
   for (let row = row0 - R; row <= row0 + R; row++) {
     for (let col = col0 - R; col <= col0 + R; col++) {
       if (col === col0 && row === row0) continue;
-      if (tileAt(level, col, row) !== 'floor') continue;
+      if (!isFloorLike(tileAt(level, col, row)) || tileAt(level, col, row) === 'exit') continue;
       const x = col + 0.5;
       const z = row + 0.5;
       const d = Math.hypot(x - enemy.x, z - enemy.z);
@@ -102,7 +103,7 @@ export function patrolMove(level, enemy, balls, rng = Math.random, statics = [])
 export function walkDistances(level, x, z) {
   const W = level.width;
   const dist = new Float64Array(W * level.height).fill(Infinity);
-  const open = (c, r) => c >= 0 && r >= 0 && c < W && r < level.height && !['wall', 'door'].includes(level.tiles[r][c]);
+  const open = (c, r) => c >= 0 && r >= 0 && c < W && r < level.height && !['wall', 'door', 'pit', 'lava'].includes(level.tiles[r][c]);
   const c0 = Math.floor(x);
   const r0 = Math.floor(z);
   if (open(c0, r0)) {

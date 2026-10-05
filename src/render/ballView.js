@@ -97,6 +97,7 @@ export function createBallView(ball, { color, stripe, silver = false, toCamera =
     return m;
   });
   let beamT = -1; // seconds into the beam-out, or -1
+  let fallT = -1; // seconds into a fall (pit or lava), or -1
 
   return {
     object: root,
@@ -156,6 +157,13 @@ export function createBallView(ball, { color, stripe, silver = false, toCamera =
       lastX = ball.x;
       lastZ = ball.z;
       root.position.set(ball.x, 0, ball.z);
+      if (fallT >= 0) {
+        fallT += dt;
+        const t = Math.min(1, fallT / CONFIG.render.fallSeconds);
+        group.position.y = -t * t * 1.2;
+        group.scale.setScalar(Math.max(0.001, (body.material === bone ? CONFIG.hero.skullScale : 1) * (1 - t * 0.6)));
+        group.visible = t < 1;
+      }
       if (beamT >= 0) {
         beamT += dt;
         const u = Math.min(1, beamT / CONFIG.render.exitBeamSeconds);
@@ -178,8 +186,13 @@ export function createBallView(ball, { color, stripe, silver = false, toCamera =
         group.visible = u < 1;
       }
     },
+    /** Fell in a pit or lava: drop out of sight over CONFIG.render.fallSeconds. */
+    fall() {
+      fallT = 0;
+    },
     /** Jump without rolling (respawn), and undo a beam-out. */
     snap() {
+      fallT = -1;
       lastX = ball.x;
       lastZ = ball.z;
       root.position.set(ball.x, 0, ball.z);

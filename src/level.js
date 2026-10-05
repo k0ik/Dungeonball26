@@ -31,6 +31,10 @@ export const LEGEND = {
   R: 'door',
   B: 'door',
   Y: 'door',
+  _: 'pit', // a bottomless pit: any ball whose centre rolls over it falls in
+  '~': 'lava', // a lava pit: the same, sunk below the floor with glowing lava
+  u: 'divot', // a shallow dish that pulls rolling balls toward its centre
+  n: 'bump', // a low mound that pushes rolling balls away from its centre
 };
 
 import { CONFIG } from './config.js';
@@ -40,7 +44,8 @@ const KEY_COLORS = { r: 'red', b: 'blue', y: 'yellow', R: 'red', B: 'blue', Y: '
 
 /**
  * Parse a level text into a grid of base tiles plus entity spawn lists.
- * Base tiles are 'wall', 'floor', 'exit' or 'door'; everything else sits on floor.
+ * Base tiles are 'wall', 'floor', 'exit', 'door', 'pit', 'lava', 'divot' or
+ * 'bump'; everything else sits on floor.
  * `requireStart: false` accepts a level with no start yet (the level editor's
  * outline preview of a half-drawn level).
  */
@@ -126,6 +131,15 @@ export function parseLevel(text, name = 'level', { requireStart = true } = {}) {
         case 'gold':
           level.golds.push(at);
           break;
+        case 'lava':
+          (level.lavas ??= []).push(at);
+          base = kind;
+          break;
+        case 'pit':
+        case 'divot':
+        case 'bump':
+          base = kind;
+          break;
       }
       tileRow.push(base);
     }
@@ -209,6 +223,12 @@ export function isSolid(level, col, row) {
   const t = tileAt(level, col, row);
   return t === 'wall' || t === 'door';
 }
+
+/** A hole a ball falls into: a bottomless pit or a lava pit. */
+export const isHazard = (t) => t === 'pit' || t === 'lava';
+
+/** Floor a ball rolls over (patrols may stop on it): plain floor, the exit, a divot or a bump. */
+export const isFloorLike = (t) => t === 'floor' || t === 'exit' || t === 'divot' || t === 'bump';
 
 export function tileCenter({ col, row }) {
   return { x: col + 0.5, z: row + 0.5 };

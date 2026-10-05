@@ -88,6 +88,7 @@ export function createEnemyView(ball, toCamera) {
   let ghostOpacity = ball.phased ? CONFIG.enemy.types.ghost.fadedOpacity : 1;
 
   let dying = -1;
+  let falling = false;
 
   return {
     object: group,
@@ -136,7 +137,14 @@ export function createEnemyView(ball, toCamera) {
         spark.scale.y /= fuse.scale.y; // keep the spark round on the squashed fuse
         body.material.color.setHex(lit ? CONFIG.enemy.types.bomb.litColor : color);
       }
-      if (dying >= 0) {
+      if (dying >= 0 && falling) {
+        // Fell in a pit or lava: it drops out of sight, shrinking as it goes.
+        dying += dt * (0.25 / CONFIG.render.fallSeconds);
+        const t = Math.min(1, dying / 0.25);
+        group.position.y = -t * t * 1.2;
+        group.scale.setScalar(Math.max(0.001, 1 - t * 0.6));
+        if (t >= 1) group.visible = false;
+      } else if (dying >= 0) {
         // Pop: a quick swell, then shrink away.
         dying += dt;
         const t = dying / 0.25;
@@ -153,6 +161,11 @@ export function createEnemyView(ball, toCamera) {
       face.material.needsUpdate = true;
     },
     die() {
+      if (dying < 0) dying = 0;
+    },
+    /** Fell in a pit or lava: drops out of sight (CONFIG.render.fallSeconds). */
+    fall() {
+      falling = true;
       if (dying < 0) dying = 0;
     },
     get gone() {

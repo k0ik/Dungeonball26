@@ -216,6 +216,16 @@ export function createCombat() {
       return out;
     },
     /**
+     * `enemy` fell in a pit or lava: it dies, and counts as a kill for the
+     * shot's combos (its coins fall with it). Returns outcomes like resolve().
+     */
+    fell(w, enemy) {
+      world = w;
+      enemy.hp = 0;
+      world.balls = world.balls.filter((b) => b !== enemy);
+      return [{ type: 'kill', target: enemy, shotKills: ++killsThisShot, fell: true }];
+    },
+    /**
      * Call as the enemy phase starts, with the enemies that move this round
      * (one, or a list: they all move at once). Each can hurt the hero at most
      * once.

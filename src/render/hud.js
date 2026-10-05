@@ -105,7 +105,7 @@ export function createHud(container) {
   let shownTurn = '';
 
   // Turn toast: at each change of turn the same words appear big in the
-  // upper third of the screen for a moment, then shrink and fly down to become
+  // screen just below your ball for a moment, then shrink and fly down to become
   // the label. The label itself stays hidden meanwhile, so it never doubles up.
   const toast = document.createElement('div');
   toast.className = 'turn-toast';
@@ -113,7 +113,7 @@ export function createHud(container) {
   container.appendChild(toast);
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
   toast.addEventListener('animationend', () => {
-    toast.classList.remove('show');
+    toast.classList.remove('show', 'stay');
     turn.classList.remove('landing');
   });
 
@@ -163,10 +163,16 @@ export function createHud(container) {
       turn.textContent = who === 'enemy' ? 'Enemy Turn' : 'Player Turn';
       turn.dataset.who = who;
       if (who === 'enemy') {
-        // The enemy turn just switches the label: no pulse, no toast (and any
-        // toast still flying is dropped).
+        // The enemy turn: the big label pops up just below your ball, holds
+        // and fades there; no small label at the bottom (hidden in CSS).
         turn.classList.remove('show', 'landing');
-        toast.classList.remove('show');
+        toast.classList.remove('show', 'stay');
+        if (!first && !reducedMotion?.matches) {
+          toast.textContent = turn.textContent;
+          toast.dataset.who = who;
+          void toast.offsetWidth; // restart the animation
+          toast.classList.add('stay');
+        }
         return;
       }
       turn.classList.remove('show');
@@ -180,7 +186,7 @@ export function createHud(container) {
         const at = turn.getBoundingClientRect();
         const box = container.getBoundingClientRect();
         toast.style.setProperty('--land-y', `${at.top - box.top + at.height / 2}px`);
-        toast.classList.remove('show');
+        toast.classList.remove('show', 'stay');
         void toast.offsetWidth; // restart the animation
         toast.classList.add('show');
       }

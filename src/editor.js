@@ -37,6 +37,10 @@ const TOOLS = [
   { ch: 'R', name: 'Red door' },
   { ch: 'B', name: 'Blue door' },
   { ch: 'Y', name: 'Yellow door' },
+  { ch: '_', name: 'Pit' },
+  { ch: '~', name: 'Lava' },
+  { ch: 'u', name: 'Divot' },
+  { ch: 'n', name: 'Bump' },
 ];
 
 const SIZES = { small: [9, 12], medium: [13, 20], large: [17, 30] };
@@ -272,6 +276,20 @@ export function createEditor({ getLevel, onPlay }) {
         g.textAlign = 'center';
         g.textBaseline = 'middle';
         g.fillText('S', cx, cy + 1);
+        break;
+      case '_':
+        g.fillStyle = '#050506';
+        g.fillRect(x + 1, y + 1, s - 2, s - 2);
+        break;
+      case '~':
+        g.fillStyle = hex(C.lava);
+        g.fillRect(x + 1, y + 1, s - 2, s - 2);
+        break;
+      case 'u':
+        circle(s * 0.38, 'rgba(0,0,0,0.35)', 'rgba(255,255,255,0.25)');
+        break;
+      case 'n':
+        circle(s * 0.38, 'rgba(255,255,255,0.3)', 'rgba(0,0,0,0.35)');
         break;
       case 'X': {
         g.fillStyle = hex(C.exit);

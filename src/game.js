@@ -293,6 +293,8 @@ export function createGame(container, levels, startIndex = 0) {
     // you'd be stuck unkillable (skipping a level mid-death used to do it).
     if (heal || hero.hp <= 0) hero.hp = hero.maxHp;
     hero.inert = false;
+    hero.fallen = false;
+    state.fellIn = false;
     hero.wobble = 0;
     hero.bledAt = null;
     heroView.setSkull(false);
@@ -564,7 +566,7 @@ export function createGame(container, levels, startIndex = 0) {
   // about halfway through your skull's roll, for at least deathScreenSeconds
   // and until the skull stops; input is blocked throughout. The respawn (or game-over restart) happens under it,
   // just before it lightens, and play carries on.
-  function knockedOut() {
+  function knockedOut({ fell = false } = {}) {
     state.phase = 'down';
     // Your ball becomes a bone-white skull that rolls on, bouncing off
     // everything but touching nothing: no hits, no barrels, chests or pickups.
@@ -578,14 +580,17 @@ export function createGame(container, levels, startIndex = 0) {
     const H = CONFIG.hero;
     hero.radius = (CONFIG.ball.diameter / 2) * H.skullScale;
     hero.friction = H.skullFriction;
-    // Flung on hard, the way it was going (any way at all if it was still).
-    const v = speedOf(hero);
+    // Flung on hard, the way it was going (any way at all if it was still);
+    // unless it fell in a pit, when it's already gone.
+    const v = fell ? 0 : speedOf(hero);
     const a = v > 0.05 ? Math.atan2(hero.vz, hero.vx) : Math.random() * Math.PI * 2;
     const launch = Math.min(H.skullLaunchMax, Math.max(H.skullLaunch, v * 1.2));
-    hero.vx = Math.cos(a) * launch;
-    hero.vz = Math.sin(a) * launch;
-    // It sheds its metal skin: a big spray of silver flakes.
-    effects.shed(hero.x, hero.z, Math.cos(a), Math.sin(a));
+    if (!fell) {
+      hero.vx = Math.cos(a) * launch;
+      hero.vz = Math.sin(a) * launch;
+      // It sheds its metal skin: a big spray of silver flakes.
+      effects.shed(hero.x, hero.z, Math.cos(a), Math.sin(a));
+    }
     // Kill cam on you: tight on the skull as it's flung away (no slow motion);
     // then the skull camera follows it (see the framing).
     state.killCam = { x: hero.x, z: hero.z, left: CONFIG.camera.deathCamSeconds, hero: true };
@@ -616,6 +621,36 @@ export function createGame(container, levels, startIndex = 0) {
     const c = Math.cos(turn);
     const s = Math.sin(turn);
     [hero.vx, hero.vz] = [hero.vx * c - hero.vz * s, hero.vx * s + hero.vz * c];
+  }
+
+  /**
+   * Balls that fell in a pit or lava this step: an enemy dies (a kill for
+   * combos, its coins lost with it), a tool ball is simply gone, and you
+   * die whatever your HP (a skull just drops out of sight).
+   */
+  function handleFalls() {
+    for (const ev of world.events) {
+      if (ev.type !== 'fall') continue;
+      const b = ev.ball;
+      sfx.play('down', 0.5, { pitch: 1.4 });
+      if (b === hero) {
+        heroView.fall();
+        state.fellIn = true;
+        if (!hero.inert) {
+          hero.hp = 0;
+          hero.shield = false; // a shield doesn't save you from a fall
+          knockedOut({ fell: true });
+        }
+      } else if (b.kind === 'enemy') {
+        enemyViews.get(b)?.fall();
+        overlay.removeBar(b);
+        if (isTool(b)) world.balls = world.balls.filter((x) => x !== b);
+        else handleOutcomes(combat.fell(world, b));
+      } else {
+        world.balls = world.balls.filter((x) => x !== b);
+      }
+    }
+    world.events = world.events.filter((ev) => ev.type !== 'fall');
   }
 
   /** The skull leaves a trail of its shed metal skin on the floor as it rolls. */
@@ -1096,14 +1131,16 @@ export function createGame(container, levels, startIndex = 0) {
           const K = CONFIG.camera;
           state.killCam = { x: o.target.x, z: o.target.z, left: (o.shotKills ?? 1) >= 2 ? K.comboSeconds : K.killSeconds };
         }
-        enemyViews.get(o.target)?.die();
-        effects.kill(o.target.x, o.target.z, enemyColor(o.target));
+        if (!o.fell) {
+          enemyViews.get(o.target)?.die();
+          effects.kill(o.target.x, o.target.z, enemyColor(o.target));
+        }
         hitStop(CONFIG.effects.hitStopKill);
         overlay.removeBar(o.target);
-        // A kill drops coins worth the enemy's level where it died.
         // A kill scatters coins worth the enemy's level around where it died,
-        // and now and then a sword, shield or potion too.
-        scatterCoins(o.target.x, o.target.z, o.target.level * CONFIG.loot.killGoldPerLevel, rollEnemyDrops());
+        // and now and then a sword, shield or potion too (not when it fell
+        // in a pit: its coins fall with it).
+        if (!o.fell) scatterCoins(o.target.x, o.target.z, o.target.level * CONFIG.loot.killGoldPerLevel, rollEnemyDrops());
         // Vampirism: every kill heals you.
         if (card('vampirism') && hero.hp > 0 && hero.hp < hero.maxHp) {
           hero.hp = Math.min(hero.maxHp, hero.hp + CONFIG.cards.vampirismHeal);
@@ -1289,6 +1326,7 @@ export function createGame(container, levels, startIndex = 0) {
     let steps = 0;
     while (acc >= step && steps < CONFIG.physics.maxStepsPerFrame) {
       stepWorld(world, step);
+      handleFalls();
       if (hero.inert) {
         jiggleSkull(step);
         bleedSkull();
@@ -1379,7 +1417,9 @@ export function createGame(container, levels, startIndex = 0) {
         // has been up for deathScreenSeconds and the skull has stopped (or
         // the longest roll allowed is over).
         state.downTime += dt;
-        const stopped = speedOf(hero) <= CONFIG.physics.stopThreshold || state.downTime >= CONFIG.hero.skullRollMaxSeconds;
+        // (Fallen in a pit: give the fall a moment to play.)
+        const resting = speedOf(hero) <= CONFIG.physics.stopThreshold && (!state.fellIn || state.downTime >= CONFIG.render.fallSeconds);
+        const stopped = resting || state.downTime >= CONFIG.hero.skullRollMaxSeconds;
         if (!state.deathShown) {
           if (state.downTime >= state.deathAt || stopped) showDeathScreen();
         } else if ((state.timer -= dt) <= 0 && stopped) afterKnockout();
@@ -1588,7 +1628,7 @@ export function createGame(container, levels, startIndex = 0) {
       if (state.returnBoost > 0) state.returnBoost = rig.settled ? 0 : state.returnBoost - dt;
     }
     rig.updateShake(realDt);
-    lighting.update(realDt, hero, world.balls, world.statics, level.exits);
+    lighting.update(realDt, hero, world.balls, world.statics, level.exits, level.lavas ?? []);
     renderer.render(scene, rig.camera);
     overlay.update();
     trackPerf(Math.min(0.25, realDtRaw), performance.now() - frameStart);

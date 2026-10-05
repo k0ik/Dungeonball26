@@ -44,6 +44,14 @@ export function stepWorld(world, dt = P.step) {
 
   // Slopes: divots pull a ball toward their centre, bumps push it away.
   for (const b of balls) if (!b.fallen) applySlope(world, b, dt);
+  // A ball that fell in slides on into the middle of the hole as it drops,
+  // so it goes down clear of the rim instead of through it.
+  for (const b of balls) {
+    if (!b.fallen || !b.fallTo) continue;
+    const k = 1 - Math.exp(-P.fallSlide * dt);
+    b.x += (b.fallTo.x - b.x) * k;
+    b.z += (b.fallTo.z - b.z) * k;
+  }
 
   for (const b of balls) {
     if (b.fallen) continue;
@@ -76,6 +84,7 @@ export function stepWorld(world, dt = P.step) {
     if (isHazard(t)) {
       b.fallen = t;
       b.vx = b.vz = 0;
+      b.fallTo = { x: Math.floor(b.x) + 0.5, z: Math.floor(b.z) + 0.5 };
       world.events.push({ type: 'fall', ball: b, kind: t });
     }
   }

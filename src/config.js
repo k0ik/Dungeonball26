@@ -12,6 +12,7 @@ export const CONFIG = {
     // steepest (partway out from the centre); it eases to nothing at the
     // centre and the rim.
     divotPull: 4,
+    fallSlide: 14, // 1/s: how fast a ball that fell in slides to the middle of the hole as it drops
     bumpPush: 4,
     wallRestitution: 0.9, // fraction of speed kept after a wall bounce
     bumperRestitution: 0.7, // barrels and chests (M5)

@@ -294,6 +294,7 @@ export function createGame(container, levels, startIndex = 0) {
     if (heal || hero.hp <= 0) hero.hp = hero.maxHp;
     hero.inert = false;
     hero.fallen = false;
+    hero.fallTo = null;
     state.fellIn = false;
     hero.wobble = 0;
     hero.bledAt = null;

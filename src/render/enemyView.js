@@ -138,7 +138,13 @@ export function createEnemyView(ball, toCamera) {
         body.material.color.setHex(lit ? CONFIG.enemy.types.bomb.litColor : color);
       }
       if (dying >= 0 && falling) {
-        // Fell in a pit or lava: it drops out of sight, shrinking as it goes.
+        // Fell in a pit or lava: it slides on into the middle of the hole
+        // (it's out of the physics by now) and drops out of sight, shrinking.
+        if (ball.fallTo) {
+          const k = 1 - Math.exp(-CONFIG.physics.fallSlide * dt);
+          ball.x += (ball.fallTo.x - ball.x) * k;
+          ball.z += (ball.fallTo.z - ball.z) * k;
+        }
         dying += dt * (0.25 / CONFIG.render.fallSeconds);
         const t = Math.min(1, dying / 0.25);
         group.position.y = -t * t * 1.2;

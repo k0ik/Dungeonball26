@@ -21,7 +21,7 @@ import { CONFIG } from './config.js';
 import { parseLevel, tileCenter, tileAt } from './level.js';
 import { createWorld, createBall, stepWorld, isAtRest, speedOf, overlapsSolid, applyBumperKicks, applyRubberRebound } from './physics.js';
 import { createCombat, createEnemy } from './combat.js';
-import { canSee } from './sight.js';
+import { canSee, lungeClear } from './sight.js';
 import { lungeVelocity, patrolMove, pickPatrollers, walkDistances, seekerMove } from './turns.js';
 import { shotFromDrag, canGrab, previewPath } from './aim.js';
 import { buildLevelView } from './render/levelView.js';
@@ -453,7 +453,16 @@ export function createGame(container, levels, startIndex = 0) {
       }
       // A faded Ghost doesn't know it's harmless: it lunges like any enemy (and passes straight through).
       if (canSee(level, enemy, hero, world.balls, world.statics)) {
-        moves.push({ enemy, from, kind: 'lunge' });
+        if (lungeClear(level, enemy, hero)) moves.push({ enemy, from, kind: 'lunge' });
+        else {
+          // It sees you over a half-wall but can't roll through it: it works
+          // its way round toward you instead, like a Seeker.
+          toHero ??= walkDistances(level, hero.x, hero.z);
+          const move = seekerMove(level, enemy, [...world.balls, ...claimed], toHero, Math.random, world.statics);
+          if (!move) continue;
+          moves.push({ enemy, from, kind: 'patrol', hunting: true, ...move });
+          claimed.push({ x: move.target.x, z: move.target.z, radius: enemy.radius });
+        }
       } else if (enemy.type === 'seeker') {
         // It can't see you but knows roughly where you are: it always moves, drifting your way.
         toHero ??= walkDistances(level, hero.x, hero.z);
@@ -1597,7 +1606,7 @@ export function createGame(container, levels, startIndex = 0) {
           points = [];
           const near = (p) => Math.hypot(p.x - hero.x, p.z - hero.z) <= C.enemyNearRadius;
           for (const m of state.moves) {
-            const attacking = m.kind === 'lunge' && (!m.target || m.target === hero);
+            const attacking = (m.kind === 'lunge' && (!m.target || m.target === hero)) || m.hunting;
             if (!attacking && !near(m.from) && !near(m.enemy)) continue;
             if (attacking || near(m.from)) points.push(m.from);
             if (m.enemy.hp > 0 && (attacking || near(m.enemy))) points.push(m.enemy);

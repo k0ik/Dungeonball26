@@ -462,6 +462,7 @@ export const CONFIG = {
     // sparkles after exitGlideSeconds over exitBeamSeconds, and the screen
     // fades out and back in over exitFadeSeconds.
     fallSeconds: 0.5, // a ball falling in a pit or lava drops out of sight over this
+    halfWallShare: 0.5, // a half-wall's height as a share of a wall's: one course of stone
     pitDepth: 1.4, // how far a bottomless pit's walls are drawn down before the black
     lavaDepth: 0.35, // how far below the floor the lava lies
     exitGlideSeconds: 0.45,

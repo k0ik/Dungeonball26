@@ -35,6 +35,7 @@ export const LEGEND = {
   '~': 'lava', // a lava pit: the same, sunk below the floor with glowing lava
   u: 'divot', // a shallow dish that pulls rolling balls toward its centre
   n: 'bump', // a low mound that pushes rolling balls away from its centre
+  '=': 'half', // a half-wall: blocks balls like a wall, but enemies see over it
 };
 
 import { CONFIG } from './config.js';
@@ -44,8 +45,8 @@ const KEY_COLORS = { r: 'red', b: 'blue', y: 'yellow', R: 'red', B: 'blue', Y: '
 
 /**
  * Parse a level text into a grid of base tiles plus entity spawn lists.
- * Base tiles are 'wall', 'floor', 'exit', 'door', 'pit', 'lava', 'divot' or
- * 'bump'; everything else sits on floor.
+ * Base tiles are 'wall', 'floor', 'exit', 'door', 'half', 'pit', 'lava',
+ * 'divot' or 'bump'; everything else sits on floor.
  * `requireStart: false` accepts a level with no start yet (the level editor's
  * outline preview of a half-drawn level).
  */
@@ -135,6 +136,7 @@ export function parseLevel(text, name = 'level', { requireStart = true } = {}) {
           (level.lavas ??= []).push(at);
           base = kind;
           break;
+        case 'half':
         case 'pit':
         case 'divot':
         case 'bump':
@@ -218,10 +220,14 @@ export function tileAt(level, col, row) {
   return level.tiles[row][col];
 }
 
-/** Solid for physics and sight. A closed door is solid; an opened one becomes floor (doors.js). */
-export function isSolid(level, col, row) {
+/**
+ * Solid for physics: walls, closed doors (an opened one becomes floor,
+ * doors.js) and half-walls. `ignoreHalf` leaves half-walls out, for sight,
+ * which passes over them.
+ */
+export function isSolid(level, col, row, ignoreHalf = false) {
   const t = tileAt(level, col, row);
-  return t === 'wall' || t === 'door';
+  return t === 'wall' || t === 'door' || (t === 'half' && !ignoreHalf);
 }
 
 /** A hole a ball falls into: a bottomless pit or a lava pit. */

@@ -115,6 +115,37 @@ function addHoles(group, level) {
   }
 }
 
+/**
+ * Half-walls: low blocks, one course of stone high (half a wall), coloured
+ * and lit like the walls. A side only where the neighbour isn't solid.
+ */
+function addHalfWalls(group, level) {
+  const h = CONFIG.render.wallHeight * CONFIG.render.halfWallShare;
+  const pos = [];
+  const col = [];
+  const top = new THREE.Color(C.wallTop);
+  const front = new THREE.Color(C.wallFront);
+  const side = new THREE.Color(C.wallSide);
+  const back = new THREE.Color(C.wallBack);
+  const open = (c, r) => !['half', 'wall'].includes(tileAt(level, c, r));
+  for (let row = 0; row < level.height; row++) {
+    for (let c = 0; c < level.width; c++) {
+      if (tileAt(level, c, row) !== 'half') continue;
+      const x0 = c, x1 = c + 1, z0 = row, z1 = row + 1;
+      pushQuad(pos, col, [x0, h, z1], [x1, h, z1], [x1, h, z0], [x0, h, z0], top);
+      if (open(c, row + 1)) pushQuad(pos, col, [x0, 0, z1], [x1, 0, z1], [x1, h, z1], [x0, h, z1], front);
+      if (open(c, row - 1)) pushQuad(pos, col, [x1, 0, z0], [x0, 0, z0], [x0, h, z0], [x1, h, z0], back);
+      if (open(c + 1, row)) pushQuad(pos, col, [x1, 0, z1], [x1, 0, z0], [x1, h, z0], [x1, h, z1], side);
+      if (open(c - 1, row)) pushQuad(pos, col, [x0, 0, z0], [x0, 0, z1], [x0, h, z1], [x0, h, z0], back);
+    }
+  }
+  if (!pos.length) return;
+  const mesh = meshFrom(pos, col, wallMaterial);
+  mesh.renderOrder = WALL_ORDER;
+  group.add(mesh);
+  if (CONFIG.render.wallOutlines) group.add(new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry, 30), outlineLineMaterial));
+}
+
 /** A divot (a shaded dish) or a bump (a lit mound) drawn on its floor tile. */
 let slopeTextures = null;
 function slopeDecal(kind, col, row) {
@@ -184,6 +215,7 @@ export function buildLevelView(level) {
   }
   group.add(meshFrom(floorPos, floorCol));
   addHoles(group, level);
+  addHalfWalls(group, level);
 
   if (level.geometry) {
     const polys = addOutlineWalls(group, level, h);

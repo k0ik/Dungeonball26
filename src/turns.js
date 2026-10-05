@@ -103,7 +103,7 @@ export function patrolMove(level, enemy, balls, rng = Math.random, statics = [])
 export function walkDistances(level, x, z) {
   const W = level.width;
   const dist = new Float64Array(W * level.height).fill(Infinity);
-  const open = (c, r) => c >= 0 && r >= 0 && c < W && r < level.height && !['wall', 'door', 'pit', 'lava'].includes(level.tiles[r][c]);
+  const open = (c, r) => c >= 0 && r >= 0 && c < W && r < level.height && !['wall', 'door', 'half', 'pit', 'lava'].includes(level.tiles[r][c]);
   const c0 = Math.floor(x);
   const r0 = Math.floor(z);
   if (open(c0, r0)) {

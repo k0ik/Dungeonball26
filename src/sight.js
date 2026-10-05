@@ -38,7 +38,7 @@ export function canSee(level, enemy, hero, balls, statics = []) {
   const steps = Math.ceil(dist / SWEEP_STEP);
   for (let i = 1; i < steps; i++) {
     const t = i / steps;
-    if (overlapsSolid(level, enemy.x + dx * t, enemy.z + dz * t, r)) return false;
+    if (overlapsSolid(level, enemy.x + dx * t, enemy.z + dz * t, r, true)) return false; // it sees over half-walls
   }
 
   // ...and against other balls: blocked if the sweep's circle would touch one.
@@ -48,6 +48,24 @@ export function canSee(level, enemy, hero, balls, statics = []) {
   }
   for (const s of statics) {
     if (distToSegment(s.x, s.z, enemy.x, enemy.z, hero.x, hero.z) < staticRadius(s) + hero.radius) return false;
+  }
+  return true;
+}
+
+/**
+ * Could `enemy` roll straight at `hero` (a lunge) without hitting a
+ * half-wall? (Sight already rules out walls, balls and statics; this adds
+ * the half-walls it sees over but can't roll through.)
+ */
+export function lungeClear(level, enemy, hero) {
+  const dx = hero.x - enemy.x;
+  const dz = hero.z - enemy.z;
+  const dist = Math.hypot(dx, dz);
+  const r = enemy.radius - 1e-3;
+  const steps = Math.ceil(dist / SWEEP_STEP);
+  for (let i = 1; i < steps; i++) {
+    const t = i / steps;
+    if (overlapsSolid(level, enemy.x + dx * t, enemy.z + dz * t, r)) return false;
   }
   return true;
 }

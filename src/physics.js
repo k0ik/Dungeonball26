@@ -294,12 +294,18 @@ function tileContact(level, x, z, r, col, row) {
   return { ...faces[0], d2: 0 };
 }
 
-/** Solid tiles a circle could touch: every wall and door tile, or only doors when the level has a rounded outline. */
-function nearbySolidTiles(level, x, z, r) {
+/**
+ * Solid tiles a circle could touch: every wall, door and half-wall tile, or
+ * only doors and half-walls when the level has a rounded outline (its walls
+ * are the outline). `ignoreHalf` leaves half-walls out (sight).
+ */
+function nearbySolidTiles(level, x, z, r, ignoreHalf = false) {
   const tiles = [];
   for (let row = Math.floor(z - r); row <= Math.floor(z + r); row++) {
     for (let col = Math.floor(x - r); col <= Math.floor(x + r); col++) {
-      if (level.geometry ? tileAt(level, col, row) === 'door' : isSolid(level, col, row)) tiles.push({ col, row });
+      const t = tileAt(level, col, row);
+      const solid = level.geometry ? t === 'door' || (t === 'half' && !ignoreHalf) : isSolid(level, col, row, ignoreHalf);
+      if (solid) tiles.push({ col, row });
     }
   }
   return tiles;
@@ -348,24 +354,24 @@ function resolveWalls(world, b) {
   }
 }
 
-/** No wall between two points (a thin sweep, like sight's): what a blast can reach. */
+/** No wall between two points (a thin sweep, like sight's): what a blast can reach. Half-walls are low: it passes over them. */
 export function lineClear(level, a, b) {
   const d = Math.hypot(b.x - a.x, b.z - a.z);
   const steps = Math.ceil(d / 0.1);
   for (let i = 1; i < steps; i++) {
     const t = i / steps;
-    if (overlapsSolid(level, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, 0.05)) return false;
+    if (overlapsSolid(level, a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, 0.05, true)) return false;
   }
   return true;
 }
 
-/** True if a circle at (x, z) overlaps any solid tile (or rounded wall). */
-export function overlapsSolid(level, x, z, r) {
+/** True if a circle at (x, z) overlaps any solid tile (or rounded wall). `ignoreHalf`: half-walls don't count (sight passes over them). */
+export function overlapsSolid(level, x, z, r, ignoreHalf = false) {
   if (level.geometry) {
     if (insideWall(level.geometry, x, z, tileAt(level, Math.floor(x), Math.floor(z)) === 'wall')) return true;
     if (wallContacts(level.geometry, x, z, r).length) return true;
   }
-  return nearbySolidTiles(level, x, z, r).some(({ col, row }) => tileContact(level, x, z, r, col, row));
+  return nearbySolidTiles(level, x, z, r, ignoreHalf).some(({ col, row }) => tileContact(level, x, z, r, col, row));
 }
 
 /**

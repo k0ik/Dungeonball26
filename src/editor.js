@@ -37,6 +37,7 @@ const TOOLS = [
   { ch: 'R', name: 'Red door' },
   { ch: 'B', name: 'Blue door' },
   { ch: 'Y', name: 'Yellow door' },
+  { ch: '=', name: 'Half wall' },
   { ch: '_', name: 'Pit' },
   { ch: '~', name: 'Lava' },
   { ch: 'u', name: 'Divot' },
@@ -277,6 +278,18 @@ export function createEditor({ getLevel, onPlay }) {
         g.textBaseline = 'middle';
         g.fillText('S', cx, cy + 1);
         break;
+      case '=': {
+        // A low wall: a band of stone with a brick joint, lower than a full wall tile.
+        g.fillStyle = hex(C.wallTop);
+        g.fillRect(x + 1, y + s * 0.3, s - 2, s * 0.4);
+        g.strokeStyle = 'rgba(0,0,0,0.45)';
+        g.lineWidth = Math.max(1, s * 0.05);
+        g.beginPath();
+        g.moveTo(cx, y + s * 0.3);
+        g.lineTo(cx, y + s * 0.7);
+        g.stroke();
+        break;
+      }
       case '_':
         g.fillStyle = '#050506';
         g.fillRect(x + 1, y + 1, s - 2, s - 2);

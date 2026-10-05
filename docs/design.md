@@ -412,6 +412,21 @@ Two habits keep tuning cheap. Put every number from this doc in one config file.
 
 Changes agreed during development that aren't built yet. (Trait cards are scheduled as M7.)
 
+### Backlog at a glance
+
+One line per open item, grouped; the full entries are below (or in the named section). `?` = an idea not yet agreed.
+
+- **Polish and feedback:** artifacts light up when they act · enemy hit expression · shield blinks out when used · cancel "X" above the ball · Seekers always look at you · hold the camera on an enemy's death · effects still to come (squash and stretch, motion trails, bloom, chest-lid debris, ice and goop shimmer) · swap in your sound effects · custom artifact icons (Artifacts table)
+- **HUD and menus:** lives counter · pause button and panel · keys stay on the key ring, in card-like frames · tap an enemy to learn about it · accessibility pass · `?` map button
+- **Rules and scoring:** coins expire after 2 turns · clear-the-level bonus · all-chests bonus · end-of-level scorecard maths and gold per level (Scorecard) · trick shots (Trick shots) · red barrel blast push · stackable artifacts (to explore, Artifacts)
+- **Tiles and level features:** bottomless pit · lava pit · portals · divots and bumps · boost tiles · outdoor tiles (cobblestone, dirt, grass, mud, water) · `?` progressive reveal
+- **Enemies and tool balls** (Enemy ideas): Double · Slime · Zombie · Stink · Magnet (tool) · Key ball (tool)
+- **Artifact ideas** (Artifacts): Wizard · Medic · Warrior · Paladin · Poisoner · Ninja · Rogue · Chainsmoker · Clairvoyance · Fleet Feet · Alchemist · Mountain Pose · +1 max HP (name to come) · Limber · Bomb Squad · Charmer · Value Vacuum with a taper
+- **Levels and tools:** level editor saving (step 2) · remaining tutorial lessons · M8 levels (Two Keys, Gauntlet) · a second visual mood (stone crypt)
+- **Testing settings to undo:** hero max HP back to 10 (`hero.maxHp`, now 1)
+
+### In detail
+
 - **Accessibility, across every front.** A goal for the whole game, not one feature: anything that carries information should reach players who can't see colour, can't hear, can't move precisely, or are easily overwhelmed. Most of it lands in an Accessibility section of a settings screen (which doesn't exist yet); the defaults should already be good. To check each new feature against as it's built:
   - **Colour never carries meaning alone.** About 1 in 12 men has red-green colour blindness, and the game leans on green / yellow / orange / red and on enemy colours.
     - Health dots: pair each colour with a second cue, such as the dot shrinking (or losing a quarter, like a pie slice) as it drops from 4 to 1, so the countdown reads in greyscale.

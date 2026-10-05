@@ -578,6 +578,7 @@ export function createGame(container, levels, startIndex = 0) {
     // You lose your gear now; your artifacts stay on show while the skull
     // rolls and go when you come back (afterKnockout).
     hero.sword = 0;
+    hero.atk = CONFIG.hero.atk; // and the sword's +3 with it
     hero.shield = false;
     // Smaller and slippery (restored on respawn).
     const H = CONFIG.hero;
@@ -686,12 +687,12 @@ export function createGame(container, levels, startIndex = 0) {
     } else {
       // Game over: the level starts from scratch, with the HP and gold you
       // entered it with, but no gear or artifacts (the knockout took them).
-      const { hp, atk, gold } = state.entry;
+      const { hp, gold } = state.entry;
       state.cards = [];
       applyCards();
       // Doppleganger: +1 to the lives a game over restores.
       state.lives = CONFIG.hero.lives + (has(state.cards, 'doppleganger') ? 1 : 0);
-      Object.assign(hero, { hp, atk, shield: false, sword: 0 });
+      Object.assign(hero, { hp, atk: CONFIG.hero.atk, shield: false, sword: 0 });
       state.gold = gold;
       loadLevel(levelIndex);
     }

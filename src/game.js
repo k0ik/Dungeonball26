@@ -1625,7 +1625,9 @@ export function createGame(container, levels, startIndex = 0) {
           const d = Math.hypot(hero.x - e.x, hero.z - e.z);
           rig.focus({ x: (hero.x + e.x) / 2, z: (hero.z + e.z) / 2 }, Math.max(C.closeWidth, d * 1.3 + 1.2), realDt, C.closeZoomRate);
         } else {
-          rig.follow(hero, points, tight + (C.maxViewWidth - tight) * fast, C.maxFrameWidth, realDt);
+          state.framePoints = points; // debugging: what the camera is fitting
+          const enemyTurn = state.phase === 'enemyWait' || state.phase === 'enemyMove';
+          rig.follow(hero, points, tight + (C.maxViewWidth - tight) * fast, C.maxFrameWidth, realDt, enemyTurn ? C.enemyZoomOutRate : C.followZoomOutRate);
         }
       }
       if (state.returnBoost > 0) state.returnBoost = rig.settled ? 0 : state.returnBoost - dt;

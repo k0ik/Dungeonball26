@@ -214,7 +214,7 @@ export function createCameraRig() {
      * view with followPadding, from minWidth up to maxWidth; narrow back
      * (slowly) when they come in.
      */
-    follow(center, points, minWidth, maxWidth, dt) {
+    follow(center, points, minWidth, maxWidth, dt, zoomOutRate = K.followZoomOutRate) {
       const all = [center, ...points.flatMap((p) => [p, { x: 2 * center.x - p.x, z: 2 * center.z - p.z }])];
       const width = computeFraming(all, { yaw, elevation, aspect, minWidth, maxWidth, padding: K.followPadding }).width;
       Object.assign(goal, { x: center.x, z: center.z, width });
@@ -222,7 +222,7 @@ export function createCameraRig() {
       const k = 1 - Math.exp(-K.followRate * dt);
       target.x += (goal.x - target.x) * k;
       target.z += (goal.z - target.z) * k;
-      const rate = goal.width > viewWidth ? K.followZoomOutRate : K.followZoomInRate;
+      const rate = goal.width > viewWidth ? zoomOutRate : K.followZoomInRate;
       viewWidth += (goal.width - viewWidth) * (1 - Math.exp(-rate * dt));
       applyFrustum();
       place();

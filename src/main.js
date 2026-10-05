@@ -13,6 +13,7 @@ import lineOfSight from './levels/line-of-sight.txt?raw';
 import fight from './levels/fight.txt?raw';
 import tut01 from './levels/tut01.txt?raw';
 import roundTheBend from './levels/round-the-bend.txt?raw';
+import floorIsLava from './levels/floor-is-lava.txt?raw';
 import enemytester01 from './levels/enemytester01.txt?raw';
 
 // The run, in order (design doc: "Levels"). Levels 4 and 5 arrive in M8.
@@ -21,6 +22,7 @@ const LEVELS = [
   // level editor slots in at the current place instead.
   // `message` (optional): shown in a panel at the bottom while you're on the level.
   { id: 'tut01', name: 'Tutorial 01', text: tut01, message: 'Press on the ball and drag to aim. Release to shoot. Reach the exit.' },
+  { id: 'floor-is-lava', name: 'The Floor is Lava', text: floorIsLava, message: 'Be careful! Sometimes full power is dangerous.' },
   { id: 'round-the-bend', name: 'Round the Bend', text: roundTheBend, message: 'Shoot straight ahead to bank around curves.' },
   { id: 'line-of-sight', name: 'Line of Sight', text: lineOfSight, message: 'Enemies only attack if they can see you.' },
   { id: 'fight', name: 'Fight!', text: fight, message: "You're tougher than you think." },

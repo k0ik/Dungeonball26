@@ -572,14 +572,16 @@ export function createGame(container, levels, startIndex = 0) {
     // Your ball becomes a bone-white skull that rolls on, bouncing off
     // everything but touching nothing: no hits, no barrels, chests or pickups.
     hero.inert = true;
-    heroView.setSkull(true);
+    // (Fallen in a pit or lava: no skull; your own ball drops in, its face
+    // turned to you with XX eyes.)
+    if (!fell) heroView.setSkull(true);
     // You lose your gear now; your artifacts stay on show while the skull
     // rolls and go when you come back (afterKnockout).
     hero.sword = 0;
     hero.shield = false;
     // Smaller and slippery (restored on respawn).
     const H = CONFIG.hero;
-    hero.radius = (CONFIG.ball.diameter / 2) * H.skullScale;
+    if (!fell) hero.radius = (CONFIG.ball.diameter / 2) * H.skullScale;
     hero.friction = H.skullFriction;
     // Flung on hard, the way it was going (any way at all if it was still);
     // unless it fell in a pit, when it's already gone.
@@ -1639,7 +1641,8 @@ export function createGame(container, levels, startIndex = 0) {
     hud.setDanger(hero.hp > 0 && hero.hp <= CONFIG.render.dangerHp && hero.maxHp > CONFIG.render.dangerHp && state.phase !== 'down');
     // Whose turn it is, always shown: yours while you aim and your shot rolls,
     // the enemies' from the first enemy move until it's back to you.
-    hud.setTurn(['enemyWait', 'enemyMove', 'down'].includes(state.phase) ? 'enemy' : 'player');
+    // (Not during your death scene: no "Enemy Turn" label pops up then.)
+    if (state.phase !== 'down') hud.setTurn(['enemyWait', 'enemyMove'].includes(state.phase) ? 'enemy' : 'player');
     overlay.setGear(hero, {
       sword: hero.sword ? 'whole' : null,
       shield: hero.shield,

@@ -11,9 +11,9 @@ export const CONFIG = {
     // Divots and bumps (tiles u and n): their slope's push, tiles/s², at its
     // steepest (partway out from the centre); it eases to nothing at the
     // centre and the rim.
-    divotPull: 4,
+    divotPull: 6,
     fallSlide: 14, // 1/s: how fast a ball that fell in slides to the middle of the hole as it drops
-    bumpPush: 4,
+    bumpPush: 6,
     wallRestitution: 0.9, // fraction of speed kept after a wall bounce
     bumperRestitution: 0.7, // barrels and chests (M5)
     // Barrels are pinball bumpers for every ball: bouncing off one adds this

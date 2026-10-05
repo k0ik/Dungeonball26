@@ -296,7 +296,7 @@ function tileContact(level, x, z, r, col, row) {
 
 /**
  * Solid tiles a circle could touch: every wall, door and half-wall tile, or
- * only doors and half-walls when the level has a rounded outline (its walls
+ * only doors when the level has a rounded outline (its walls and half-walls
  * are the outline). `ignoreHalf` leaves half-walls out (sight).
  */
 function nearbySolidTiles(level, x, z, r, ignoreHalf = false) {
@@ -304,12 +304,15 @@ function nearbySolidTiles(level, x, z, r, ignoreHalf = false) {
   for (let row = Math.floor(z - r); row <= Math.floor(z + r); row++) {
     for (let col = Math.floor(x - r); col <= Math.floor(x + r); col++) {
       const t = tileAt(level, col, row);
-      const solid = level.geometry ? t === 'door' || (t === 'half' && !ignoreHalf) : isSolid(level, col, row, ignoreHalf);
+      const solid = level.geometry ? t === 'door' : isSolid(level, col, row, ignoreHalf);
       if (solid) tiles.push({ col, row });
     }
   }
   return tiles;
 }
+
+/** A rounded level's outline: walls and half-walls for movement, walls alone for sight (`ignoreHalf`). */
+const outline = (level, ignoreHalf = false) => (ignoreHalf ? level.geometry : level.solidGeometry ?? level.geometry);
 
 function bounceOffWall(world, b, nx, nz, depth, col, row) {
   b.x += nx * depth;
@@ -324,7 +327,7 @@ function bounceOffWall(world, b, nx, nz, depth, col, row) {
 
 /** Rounded walls: push out of (and bounce off) each overlapped piece, deepest first, re-testing after each push. */
 function resolveOutline(world, b) {
-  const geom = world.level.geometry;
+  const geom = outline(world.level);
   const first = wallContacts(geom, b.x, b.z, b.radius);
   if (!first.length) return;
   first.sort((p, q) => q.depth - p.depth);
@@ -368,8 +371,10 @@ export function lineClear(level, a, b) {
 /** True if a circle at (x, z) overlaps any solid tile (or rounded wall). `ignoreHalf`: half-walls don't count (sight passes over them). */
 export function overlapsSolid(level, x, z, r, ignoreHalf = false) {
   if (level.geometry) {
-    if (insideWall(level.geometry, x, z, tileAt(level, Math.floor(x), Math.floor(z)) === 'wall')) return true;
-    if (wallContacts(level.geometry, x, z, r).length) return true;
+    const geom = outline(level, ignoreHalf);
+    const t = tileAt(level, Math.floor(x), Math.floor(z));
+    if (insideWall(geom, x, z, t === 'wall' || (t === 'half' && !ignoreHalf))) return true;
+    if (wallContacts(geom, x, z, r).length) return true;
   }
   return nearbySolidTiles(level, x, z, r, ignoreHalf).some(({ col, row }) => tileContact(level, x, z, r, col, row));
 }
@@ -409,7 +414,7 @@ function contactNormal(level, x, z, r, dx, dz, eps) {
   let nx = 0;
   let nz = 0;
   if (level.geometry) {
-    for (const c of wallContacts(level.geometry, px, pz, r)) {
+    for (const c of wallContacts(outline(level), px, pz, r)) {
       nx += c.nx * c.depth;
       nz += c.nz * c.depth;
     }

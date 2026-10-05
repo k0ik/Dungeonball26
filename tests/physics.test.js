@@ -327,3 +327,27 @@ test('a ball at rest near a divot centre stays put (the slope there is weaker th
   for (let i = 0; i < 120; i++) stepWorld(world);
   assert.equal(b.x, 5.52);
 });
+
+test('half-walls on a rounded level: balls bounce off their rounded outline, sight passes over', () => {
+  const level = parseLevel(`
+5#########
+#........#
+#........#
+#..====..#
+#..====..#
+#........#
+#...S....#
+##########`);
+  assert.notEqual(level.solidGeometry, level.geometry);
+  // Rounded like walls: a convex corner of the block is cut away.
+  assert.ok(!overlapsSolid(level, 3.02, 3.02, 0.01));
+  assert.ok(overlapsSolid(level, 4.5, 3.5, 0.01));
+  // Sight (ignoring half-walls) sees straight through the block.
+  assert.ok(!overlapsSolid(level, 4.5, 3.5, 0.01, true));
+  const world = createWorld(level);
+  const ball = createBall({ x: 4.5, z: 6.5 });
+  ball.vz = -4;
+  world.balls.push(ball);
+  run(world, 1.5);
+  assert.ok(ball.z > 5, `bounced back off the half-wall, z=${ball.z}`);
+});

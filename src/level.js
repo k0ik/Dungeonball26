@@ -169,7 +169,14 @@ export function parseLevel(text, name = 'level', { requireStart = true } = {}) {
   // Rounded walls: physics, sight and drawing use this outline instead of square tiles.
   const share = (curve - 1) / 4; // of each corner's biggest possible curve
   level.share = share;
-  if (share > 0) level.geometry = buildWallGeometry(level, share, CONFIG.walls.maxRound, placedSpots(level));
+  if (share > 0) {
+    level.geometry = buildWallGeometry(level, share, CONFIG.walls.maxRound, placedSpots(level));
+    // Half-walls round with the walls they join: balls bounce off one outline
+    // of walls and half-walls together, while sight uses the walls alone.
+    level.solidGeometry = tiles.some((r) => r.includes('half'))
+      ? buildWallGeometry(level, share, CONFIG.walls.maxRound, placedSpots(level), (t) => t === 'wall' || t === 'half')
+      : level.geometry;
+  }
   return level;
 }
 

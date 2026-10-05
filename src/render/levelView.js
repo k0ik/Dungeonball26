@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { tileAt, isHazard } from '../level.js';
-import { loopPolygons } from '../wallGeometry.js';
+import { loopPolygons, insideWall } from '../wallGeometry.js';
 import { outlineLineMaterial, markOccluder, seeThrough } from './materials.js';
 import { litByPools } from './lighting.js';
 import { stoneSurface, cornerShade, setCornerShade } from './textures.js';
@@ -121,6 +121,13 @@ function addHoles(group, level) {
  */
 function addHalfWalls(group, level) {
   const h = CONFIG.render.wallHeight * CONFIG.render.halfWallShare;
+  if (level.geometry) {
+    // Rounded: the outline of walls and half-walls together, extruded low,
+    // keeping only what's outside the full walls (so its faces don't fight
+    // theirs): half-walls round where walls do and blend into the walls they join.
+    if (level.solidGeometry !== level.geometry) addOutlineWalls(group, level, h, level.solidGeometry, true);
+    return;
+  }
   const pos = [];
   const col = [];
   const top = new THREE.Color(C.wallTop);
@@ -256,6 +263,38 @@ export function buildLevelView(level) {
   return group;
 }
 
+/**
+ * Remove the triangles of an extruded outline that lie in the full walls: a
+ * side face whose back is in a wall (it runs along the wall's own face), or a
+ * cap triangle centred in one.
+ */
+function dropInsideWalls(geo, level) {
+  const pos = geo.attributes.position;
+  const nrm = geo.attributes.normal;
+  const keep = [];
+  for (let i = 0; i < pos.count; i += 3) {
+    let x = (pos.getX(i) + pos.getX(i + 1) + pos.getX(i + 2)) / 3;
+    let z = (pos.getZ(i) + pos.getZ(i + 1) + pos.getZ(i + 2)) / 3;
+    const nx = nrm.getX(i);
+    const nz = nrm.getZ(i);
+    if (Math.abs(nrm.getY(i)) < 0.5) {
+      const len = Math.hypot(nx, nz) || 1;
+      x -= (nx / len) * 0.03;
+      z -= (nz / len) * 0.03;
+    }
+    if (!insideWall(level.geometry, x, z, tileAt(level, Math.floor(x), Math.floor(z)) === 'wall')) keep.push(i, i + 1, i + 2);
+  }
+  for (const name of Object.keys(geo.attributes)) {
+    const a = geo.attributes[name];
+    const out = new Float32Array(keep.length * a.itemSize);
+    keep.forEach((v, j) => {
+      for (let k = 0; k < a.itemSize; k++) out[j * a.itemSize + k] = a.array[v * a.itemSize + k];
+    });
+    geo.setAttribute(name, new THREE.BufferAttribute(out, a.itemSize));
+  }
+  geo.clearGroups();
+}
+
 function signedArea(poly) {
   let a = 0;
   for (let i = 0; i < poly.length; i++) {
@@ -290,8 +329,7 @@ function floorSample(prim) {
  * level's bounding rectangle when none is. Faces are coloured by which way
  * they face, blending on curves, like the block walls.
  */
-function addOutlineWalls(group, level, h) {
-  const geom = level.geometry;
+function addOutlineWalls(group, level, h, geom = level.geometry, outsideWalls = false) {
   const polys = loopPolygons(geom, (r) => Math.max(W.minChords, Math.ceil(r * W.chordsPerTile)));
   // A tiny fixed wobble on every point: grid-aligned outlines have many
   // exactly collinear points, and the triangulator can leave one sitting on
@@ -332,6 +370,7 @@ function addOutlineWalls(group, level, h) {
   }
   const geo = new THREE.ExtrudeGeometry([outer, ...shapes.map((s) => s.shape)], { depth: h, bevelEnabled: false });
   geo.rotateX(-Math.PI / 2);
+  if (outsideWalls) dropInsideWalls(geo, level);
 
   const top = new THREE.Color(C.wallTop);
   const front = new THREE.Color(C.wallFront); // +z

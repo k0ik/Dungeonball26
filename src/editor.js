@@ -279,15 +279,13 @@ export function createEditor({ getLevel, onPlay }) {
         g.fillText('S', cx, cy + 1);
         break;
       case '=': {
-        // A low wall: a band of stone with a brick joint, lower than a full wall tile.
+        // A low wall: a wall tile shrunk to a smaller square within the tile.
+        const m = s * 0.2;
         g.fillStyle = hex(C.wallTop);
-        g.fillRect(x + 1, y + s * 0.3, s - 2, s * 0.4);
-        g.strokeStyle = 'rgba(0,0,0,0.45)';
-        g.lineWidth = Math.max(1, s * 0.05);
-        g.beginPath();
-        g.moveTo(cx, y + s * 0.3);
-        g.lineTo(cx, y + s * 0.7);
-        g.stroke();
+        g.fillRect(x + m, y + m, s - 2 * m, s - 2 * m);
+        g.strokeStyle = '#2b2c2f';
+        g.lineWidth = 1.5;
+        g.strokeRect(x + m, y + m, s - 2 * m, s - 2 * m);
         break;
       }
       case '_':

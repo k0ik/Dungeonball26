@@ -19,8 +19,8 @@ const EPS = 1e-9;
 const NEAR = 2;
 
 /** Every boundary edge between a wall tile and an open one, with a consistent winding. */
-function boundaryEdges(level) {
-  const isWall = (c, r) => r < 0 || r >= level.height || c < 0 || c >= level.width || level.tiles[r][c] === 'wall';
+function boundaryEdges(level, solid) {
+  const isWall = (c, r) => r < 0 || r >= level.height || c < 0 || c >= level.width || solid(level.tiles[r][c]);
   const edges = [];
   for (let r = 0; r < level.height; r++) {
     for (let c = 0; c < level.width; c++) {
@@ -92,13 +92,17 @@ function touchesDoor(level, x, z) {
  * `spots` ({ x, z, clear }) are things placed in the level: an inside curve
  * shrinks until each keeps `clear` tiles between its centre and the wall, so
  * nothing starts buried in a room's rounded corner.
+ * `solid(tile)` says which tiles are wall: just walls by default (sight's
+ * outline), or walls and half-walls together (what balls bounce off).
  * Returns { loops, prims, bucket(x, z) } where each loop is a list of
  * primitives in order, and prims are:
  *   { type: 'seg', ax, az, bx, bz, nx, nz, len, capA, capB }  (n: floor normal)
  *   { type: 'arc', cx, cz, r, convex, a0, sweep, ... }          (quarter circle)
  */
-export function buildWallGeometry(level, share, maxRound, spots = []) {
-  const loops = traceLoops(boundaryEdges(level)).map((pts) => {
+export const isWallTile = (t) => t === 'wall';
+
+export function buildWallGeometry(level, share, maxRound, spots = [], solid = isWallTile) {
+  const loops = traceLoops(boundaryEdges(level, solid)).map((pts) => {
     const n = pts.length;
     const lenTo = (i) => {
       const a = pts[i];
@@ -110,7 +114,7 @@ export function buildWallGeometry(level, share, maxRound, spots = []) {
       const p = pts[i];
       p.convex = p.din.x * p.dout.z - p.din.z * p.dout.x > 0;
       p.r = touchesDoor(level, p.x, p.z) ? 0 : share * Math.min(maxRound, lenTo((i + n - 1) % n) / 2, lenTo(i) / 2);
-      if (!p.convex) p.r = clearOfSpots(p, Math.min(p.r, openSquare(level, p, p.r)), spots);
+      if (!p.convex) p.r = clearOfSpots(p, Math.min(p.r, openSquare(level, p, p.r, solid)), spots);
     }
     // Pieces: for each corner its arc (if rounded), then the straight run to the next corner.
     const prims = [];
@@ -163,13 +167,13 @@ const SHRINK_STEP = 0.05;
  * up to `limit`: the curve stays inside it, so it can't pinch a narrow bend
  * shut against the wall across from it (the inner corner of a corridor's turn).
  */
-function openSquare(level, p, limit) {
+function openSquare(level, p, limit, solid) {
   const open = (i, j) => {
     const x = p.x - p.din.x * (i + 0.5) + p.dout.x * (j + 0.5);
     const z = p.z - p.din.z * (i + 0.5) + p.dout.z * (j + 0.5);
     const c = Math.floor(x);
     const r = Math.floor(z);
-    return r >= 0 && r < level.height && c >= 0 && c < level.width && level.tiles[r][c] !== 'wall' && level.tiles[r][c] !== 'door';
+    return r >= 0 && r < level.height && c >= 0 && c < level.width && !solid(level.tiles[r][c]) && level.tiles[r][c] !== 'door';
   };
   let k = 0;
   while (k < limit) {

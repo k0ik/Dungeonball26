@@ -381,6 +381,8 @@ export const CONFIG = {
     // eases back to the resting width for your shot.
     enemyPhaseWidth: 13,
     enemyNearRadius: 5, // tiles: in the enemy turn the view also widens for enemies moving this close to you
+    enemyClosestCount: 2, // ...and always for the closest few enemies, moving or not,
+    enemyClosestRange: 12, // if they're within this many tiles
     // Back to your turn: the camera returns to you this many times faster than
     // it normally follows, until it has arrived (at most returnBoostSeconds).
     returnBoost: 3,

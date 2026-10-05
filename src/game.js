@@ -1558,6 +1558,15 @@ export function createGame(container, levels, startIndex = 0) {
             if (attacking || near(m.from)) points.push(m.from);
             if (m.enemy.hp > 0 && (attacking || near(m.enemy))) points.push(m.enemy);
           }
+          // ...and always the closest enemy or two, moving or not (within
+          // enemyClosestRange), so the turn never plays out off screen.
+          enemies()
+            .filter((e) => e.hp > 0 && !isTool(e))
+            .map((e) => ({ e, d: Math.hypot(e.x - hero.x, e.z - hero.z) }))
+            .filter((o) => o.d <= C.enemyClosestRange)
+            .sort((a, b) => a.d - b.d)
+            .slice(0, C.enemyClosestCount)
+            .forEach((o) => points.push(o.e));
         }
         const fast = Math.min(1, speedOf(hero) / CONFIG.aim.maxLaunchSpeed);
         const tight = CONFIG.ball.diameter / C.restFill;

@@ -46,6 +46,11 @@ function outlined(geo, color, scale = 1.12) {
   return g;
 }
 
+// Shadow radius per kind, in tiles (coins have none).
+const SHADOW_RADIUS = { potion: 0.2, superPotion: 0.24, shield: 0.18, sword: 0.12, key: 0.2, oneUp: 0.14 };
+const shadowGeo = new THREE.CircleGeometry(1, 24).rotateX(-Math.PI / 2);
+const shadowMaterial = new THREE.MeshBasicMaterial({ color: CONFIG.colors.shadow, transparent: true, opacity: 0.35, depthWrite: false });
+
 function itemMesh(item) {
   const { kind } = item;
   const g = new THREE.Group();
@@ -118,6 +123,17 @@ function itemMesh(item) {
       g.add(ball);
       break;
     }
+  }
+  // A soft shadow on the floor under it (not coins: there are too many), so
+  // you can tell which tile it sits on. It stays on the ground as the item
+  // bobs (see update).
+  const shadowR = SHADOW_RADIUS[kind];
+  if (shadowR) {
+    const shadow = new THREE.Mesh(shadowGeo, shadowMaterial);
+    shadow.scale.setScalar(shadowR / (kind === 'key' ? 1.5 : 1)); // the key group is scaled 1.5
+    shadow.renderOrder = 1;
+    g.add(shadow);
+    g.userData.shadow = shadow;
   }
   return g;
 }
@@ -245,6 +261,14 @@ export function createItemsView(scene) {
         g.position.z = item.z;
         g.position.y = item.fly ? flightHeight(item.fly) : 0.04 + Math.sin(t * 3 + kindPhase) * 0.03;
         if (item.kind === 'key') g.scale.setScalar(g.userData.baseScale * Math.max(1, zoom));
+        // Keep the shadow on the floor (the group bobs and flies), smaller and
+        // fainter the higher the item is.
+        const sh = g.userData.shadow;
+        if (sh) {
+          sh.position.y = (0.006 - g.position.y) / g.scale.y;
+          const lift = Math.max(0, g.position.y - 0.04);
+          sh.scale.setScalar((SHADOW_RADIUS[item.kind] / (item.kind === 'key' ? 1.5 : 1)) * Math.max(0.5, 1 - lift * 0.8));
+        }
       }
     },
   };

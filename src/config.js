@@ -344,7 +344,7 @@ export const CONFIG = {
     skullJiggleDamping: 12, // high: small, quick wobbles
     deathFadeSeconds: 0.4, // darken / lighten time, inside the 3 s
     runCompleteSeconds: 4, // the "Run Complete!" screen after the last level, before a new run
-    maxHp: 3, // TESTING: 3 HP (normally 10)
+    maxHp: 5, // TESTING: 5 HP (normally 10)
     atk: 1,
     lives: 3,
   },

@@ -77,12 +77,15 @@ function traceLoops(edges) {
   return loops;
 }
 
-function touchesDoor(level, x, z) {
+/** True if any of the four tiles meeting at grid point (x, z) is one of `kinds`. */
+function touches(level, x, z, kinds) {
   for (const [c, r] of [[x - 1, z - 1], [x, z - 1], [x - 1, z], [x, z]]) {
-    if (r >= 0 && r < level.height && c >= 0 && c < level.width && level.tiles[r][c] === 'door') return true;
+    if (r >= 0 && r < level.height && c >= 0 && c < level.width && kinds.includes(level.tiles[r][c])) return true;
   }
   return false;
 }
+
+const cornerKey = (p) => `${p.x},${p.z},${p.din.x},${p.din.z},${p.dout.x},${p.dout.z}`;
 
 /**
  * Build the rounded outline of a level's walls.
@@ -92,8 +95,11 @@ function touchesDoor(level, x, z) {
  * `spots` ({ x, z, clear }) are things placed in the level: an inside curve
  * shrinks until each keeps `clear` tiles between its centre and the wall, so
  * nothing starts buried in a room's rounded corner.
- * `solid(tile)` says which tiles are wall: just walls by default (sight's
- * outline), or walls and half-walls together (what balls bounce off).
+ * Options: `solid(tile)` says which tiles are wall: just walls by default
+ * (sight's outline), or walls and half-walls together (what balls bounce
+ * off). Corners touching a `square` tile stay square. `match`: another
+ * outline whose corner radii to reuse where both have the same corner (so
+ * a full wall's rounded corner and the walls-and-half-walls outline agree).
  * Returns { loops, prims, bucket(x, z) } where each loop is a list of
  * primitives in order, and prims are:
  *   { type: 'seg', ax, az, bx, bz, nx, nz, len, capA, capB }  (n: floor normal)
@@ -101,7 +107,8 @@ function touchesDoor(level, x, z) {
  */
 export const isWallTile = (t) => t === 'wall';
 
-export function buildWallGeometry(level, share, maxRound, spots = [], solid = isWallTile) {
+export function buildWallGeometry(level, share, maxRound, spots = [], { solid = isWallTile, square = ['door'], match = null } = {}) {
+  const corners = new Map(); // corner -> its radius
   const loops = traceLoops(boundaryEdges(level, solid)).map((pts) => {
     const n = pts.length;
     const lenTo = (i) => {
@@ -113,8 +120,11 @@ export function buildWallGeometry(level, share, maxRound, spots = [], solid = is
     for (let i = 0; i < n; i++) {
       const p = pts[i];
       p.convex = p.din.x * p.dout.z - p.din.z * p.dout.x > 0;
-      p.r = touchesDoor(level, p.x, p.z) ? 0 : share * Math.min(maxRound, lenTo((i + n - 1) % n) / 2, lenTo(i) / 2);
+      p.r = touches(level, p.x, p.z, square) ? 0 : share * Math.min(maxRound, lenTo((i + n - 1) % n) / 2, lenTo(i) / 2);
       if (!p.convex) p.r = clearOfSpots(p, Math.min(p.r, openSquare(level, p, p.r, solid)), spots);
+      const same = match?.corners.get(cornerKey(p));
+      if (same !== undefined) p.r = Math.min(p.r, same);
+      corners.set(cornerKey(p), p.r);
     }
     // Pieces: for each corner its arc (if rounded), then the straight run to the next corner.
     const prims = [];
@@ -152,6 +162,7 @@ export function buildWallGeometry(level, share, maxRound, spots = [], solid = is
   return {
     share,
     loops,
+    corners,
     prims,
     /** Pieces that could be within NEAR of a point in tile (floor(x), floor(z)). */
     near(x, z) {

@@ -170,11 +170,15 @@ export function parseLevel(text, name = 'level', { requireStart = true } = {}) {
   const share = (curve - 1) / 4; // of each corner's biggest possible curve
   level.share = share;
   if (share > 0) {
-    level.geometry = buildWallGeometry(level, share, CONFIG.walls.maxRound, placedSpots(level));
     // Half-walls round with the walls they join: balls bounce off one outline
-    // of walls and half-walls together, while sight uses the walls alone.
+    // of walls and half-walls together, while sight uses the walls alone. A
+    // wall corner touching a half-wall stays square (the low wall carries on
+    // from it), and the shared outline reuses the walls' corners, so the two
+    // never leave a low sliver round a tall corner.
+    const spots = placedSpots(level);
+    level.geometry = buildWallGeometry(level, share, CONFIG.walls.maxRound, spots, { square: ['door', 'half'] });
     level.solidGeometry = tiles.some((r) => r.includes('half'))
-      ? buildWallGeometry(level, share, CONFIG.walls.maxRound, placedSpots(level), (t) => t === 'wall' || t === 'half')
+      ? buildWallGeometry(level, share, CONFIG.walls.maxRound, spots, { solid: (t) => t === 'wall' || t === 'half', match: level.geometry })
       : level.geometry;
   }
   return level;

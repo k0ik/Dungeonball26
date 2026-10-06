@@ -263,25 +263,47 @@ export function buildLevelView(level) {
   return group;
 }
 
+/** A polygon with a point added wherever an edge crosses a tile line. */
+function splitAtTileLines(poly) {
+  const out = [];
+  poly.forEach((a, i) => {
+    const b = poly[(i + 1) % poly.length];
+    out.push(a);
+    const ts = [];
+    for (const [p, q] of [[a.x, b.x], [a.z, b.z]]) {
+      for (let k = Math.floor(Math.min(p, q)) + 1; k < Math.max(p, q); k++) {
+        const t = (k - p) / (q - p);
+        if (t > 1e-6 && t < 1 - 1e-6) ts.push(t);
+      }
+    }
+    ts.sort((u, v) => u - v).forEach((t) => out.push({ x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t }));
+  });
+  return out;
+}
+
 /**
- * Remove the triangles of an extruded outline that lie in the full walls: a
- * side face whose back is in a wall (it runs along the wall's own face), or a
- * cap triangle centred in one.
+ * Remove the side faces of an extruded outline that run along a full wall's
+ * own face (judged once per face, from the middle of its edge, so a face is
+ * never left half drawn). Caps stay: inside a full wall they're hidden.
  */
 function dropInsideWalls(geo, level) {
   const pos = geo.attributes.position;
   const nrm = geo.attributes.normal;
   const keep = [];
   for (let i = 0; i < pos.count; i += 3) {
-    let x = (pos.getX(i) + pos.getX(i + 1) + pos.getX(i + 2)) / 3;
-    let z = (pos.getZ(i) + pos.getZ(i + 1) + pos.getZ(i + 2)) / 3;
     const nx = nrm.getX(i);
     const nz = nrm.getZ(i);
-    if (Math.abs(nrm.getY(i)) < 0.5) {
-      const len = Math.hypot(nx, nz) || 1;
-      x -= (nx / len) * 0.03;
-      z -= (nz / len) * 0.03;
+    if (Math.abs(nrm.getY(i)) >= 0.5) {
+      keep.push(i, i + 1, i + 2);
+      continue;
     }
+    // Both triangles of a side face span the same edge: its middle is the
+    // middle of their x and z extents.
+    const xs = [pos.getX(i), pos.getX(i + 1), pos.getX(i + 2)];
+    const zs = [pos.getZ(i), pos.getZ(i + 1), pos.getZ(i + 2)];
+    const len = Math.hypot(nx, nz) || 1;
+    const x = (Math.min(...xs) + Math.max(...xs)) / 2 - (nx / len) * 0.03;
+    const z = (Math.min(...zs) + Math.max(...zs)) / 2 - (nz / len) * 0.03;
     if (!insideWall(level.geometry, x, z, tileAt(level, Math.floor(x), Math.floor(z)) === 'wall')) keep.push(i, i + 1, i + 2);
   }
   for (const name of Object.keys(geo.attributes)) {
@@ -330,7 +352,10 @@ function floorSample(prim) {
  * they face, blending on curves, like the block walls.
  */
 function addOutlineWalls(group, level, h, geom = level.geometry, outsideWalls = false) {
-  const polys = loopPolygons(geom, (r) => Math.max(W.minChords, Math.ceil(r * W.chordsPerTile)));
+  let polys = loopPolygons(geom, (r) => Math.max(W.minChords, Math.ceil(r * W.chordsPerTile)));
+  // Half-walls: split every edge at tile lines, so each side face lies along
+  // a single tile and is either all along a full wall (dropped) or not.
+  if (outsideWalls) polys = polys.map(splitAtTileLines);
   // A tiny fixed wobble on every point: grid-aligned outlines have many
   // exactly collinear points, and the triangulator can leave one sitting on
   // another triangle's long edge (a T-junction), which shows as a dotted

@@ -289,6 +289,7 @@ Each level is a plain text file with one character per tile. The screen shows ab
 | `u` | Divot (a shallow dish) |
 | `n` | Bump (a low mound) |
 | `=` | Half wall (one brick high) |
+| `i` `l` `p` `m` `g` `j` `k` `h` `d` | Enemy of a species: Ice ball, Sticky Icky, Rubber, Brute, Golem, Jekyll, Seeker, Ghost, Bomb. Level 1 unless a `levels:` line under the grid says otherwise: one level per species letter in reading order (row by row, left to right), e.g. `levels: 2 1 3`; Golems and Bombs have no level and get no entry. The level editor writes this line itself |
 | `1` to `5` in the top-left corner only | Curviness of the walls (1 square to 5 roundest); that corner is still a wall, not an enemy |
 
 An illustrative level in this format, with one enemy, two barrels, a chest, a red key and a red door in front of the exit, which sits in its alcove at the top:

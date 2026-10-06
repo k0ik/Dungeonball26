@@ -38,6 +38,15 @@ export const LEGEND = {
   '=': 'half', // a half-wall: blocks balls like a wall, but enemies see over it
 };
 
+// Enemy species, one letter each (a digit is a basic enemy of that level).
+// A species enemy is level 1 unless the level's `levels:` line, under the
+// grid, says otherwise: one level per species letter in reading order (row
+// by row, left to right), e.g. "levels: 2 1 3". Golems and Bombs have no
+// level, so they get no entry.
+export const SPECIES = { i: 'ice', l: 'sticky', p: 'rubber', m: 'brute', g: 'golem', d: 'bomb', j: 'jekyll', k: 'seeker', h: 'ghost' };
+export const LEVELLESS = ['golem', 'bomb'];
+for (const ch of Object.keys(SPECIES)) LEGEND[ch] = 'enemy';
+
 import { CONFIG } from './config.js';
 import { buildWallGeometry } from './wallGeometry.js';
 
@@ -55,6 +64,16 @@ export function parseLevel(text, name = 'level', { requireStart = true } = {}) {
   while (lines.length && lines[0] === '') lines.shift();
   while (lines.length && lines[lines.length - 1] === '') lines.pop();
   if (!lines.length) throw new Error(`${name}: level is empty`);
+  // The species enemies' levels, on a line under the grid (see SPECIES).
+  const speciesLevels = [];
+  if (/^levels:/i.test(lines[lines.length - 1])) {
+    for (const v of lines.pop().slice(7).trim().split(/\s+/).filter(Boolean)) {
+      const n = Number(v);
+      if (!(n >= 1 && n <= 5 && Number.isInteger(n))) throw new Error(`${name}: enemy levels must be 1 to 5, not '${v}'`);
+      speciesLevels.push(n);
+    }
+    while (lines.length && lines[lines.length - 1] === '') lines.pop();
+  }
 
   // Curviness digit in the top-left corner (see the top of this file).
   let curve = CONFIG.walls.defaultCurve;
@@ -112,7 +131,10 @@ export function parseLevel(text, name = 'level', { requireStart = true } = {}) {
           level.start = at;
           break;
         case 'enemy':
-          level.enemies.push({ ...at, level: Number(ch) });
+          if (SPECIES[ch]) {
+            const type = SPECIES[ch];
+            level.enemies.push({ ...at, level: LEVELLESS.includes(type) ? 1 : (speciesLevels.shift() ?? 1), type });
+          } else level.enemies.push({ ...at, level: Number(ch) });
           break;
         case 'key':
           level.keys.push({ ...at, color: KEY_COLORS[ch] });

@@ -9,7 +9,7 @@
 // then, Copy text gives the grid to paste into src/levels/.
 
 import { CONFIG } from './config.js';
-import { parseLevel } from './level.js';
+import { parseLevel, SPECIES, LEVELLESS } from './level.js';
 import { loopPolygons } from './wallGeometry.js';
 
 const C = CONFIG.colors;
@@ -25,11 +25,18 @@ const TOOLS = [
   { ch: 'O', name: 'Barrel' },
   { ch: 'E', name: 'Red barrel' },
   { ch: 'C', name: 'Chest' },
-  { ch: '1', name: 'Enemy 1' },
-  { ch: '2', name: 'Enemy 2' },
-  { ch: '3', name: 'Enemy 3' },
-  { ch: '4', name: 'Enemy 4' },
-  { ch: '5', name: 'Enemy 5' },
+  // Enemies, one tool per species: click a placed one with its own tool to
+  // raise its level (5 wraps round to 1).
+  { ch: '1', name: 'Enemy' },
+  { ch: 'i', name: 'Ice ball' },
+  { ch: 'l', name: 'Sticky Icky' },
+  { ch: 'p', name: 'Rubber' },
+  { ch: 'm', name: 'Brute' },
+  { ch: 'g', name: 'Golem' },
+  { ch: 'j', name: 'Jekyll' },
+  { ch: 'k', name: 'Seeker' },
+  { ch: 'h', name: 'Ghost' },
+  { ch: 'd', name: 'Bomb' },
   { ch: '$', name: 'Gold ball' },
   { ch: 'r', name: 'Red key' },
   { ch: 'b', name: 'Blue key' },
@@ -48,22 +55,37 @@ const SIZES = { small: [9, 12], medium: [13, 20], large: [17, 30] };
 const DEFAULT_CURVE = 3;
 const KEY_HEX = { r: C.keys.red, b: C.keys.blue, y: C.keys.yellow, R: C.keys.red, B: C.keys.blue, Y: C.keys.yellow };
 
-/** Text grid -> { grid: rows of chars, curve }. */
+/** A species letter whose enemy has a level (not a Golem or Bomb). */
+const levelled = (ch) => SPECIES[ch] && !LEVELLESS.includes(SPECIES[ch]);
+const isDigit = (ch) => ch >= '1' && ch <= '5';
+
+/** Text grid -> { grid: rows of chars, curve, levels: "col,row" -> level of each species enemy above 1 }. */
 function fromText(text) {
   const lines = text.replace(/\r/g, '').split('\n').map((l) => l.trimEnd()).filter((l) => l.length);
+  const given = /^levels:/i.test(lines[lines.length - 1]) ? lines.pop().slice(7).trim().split(/\s+/).map(Number) : [];
   let curve = CONFIG.walls.defaultCurve;
   if (/^\d/.test(lines[0])) {
     curve = Number(lines[0][0]);
     lines[0] = '#' + lines[0].slice(1);
   }
-  return { grid: lines.map((l) => [...l]), curve };
+  const grid = lines.map((l) => [...l]);
+  const levels = new Map();
+  grid.forEach((r, row) => r.forEach((ch, col) => {
+    if (!levelled(ch)) return;
+    const n = given.shift() ?? 1;
+    if (n > 1) levels.set(`${col},${row}`, n);
+  }));
+  return { grid, curve, levels };
 }
 
-/** The grid as level text, curviness in the corner. */
-function toText(grid, curve) {
+/** The grid as level text, curviness in the corner, species levels on a line underneath (when any is above 1). */
+function toText(grid, curve, levels) {
   const rows = grid.map((r) => r.join(''));
   rows[0] = String(curve) + rows[0].slice(1);
-  return rows.join('\n') + '\n';
+  const list = [];
+  grid.forEach((r, row) => r.forEach((ch, col) => levelled(ch) && list.push(levels.get(`${col},${row}`) ?? 1)));
+  const tail = list.some((n) => n > 1) ? `levels: ${list.join(' ')}\n` : '';
+  return rows.join('\n') + '\n' + tail;
 }
 
 function blankGrid(w, h) {
@@ -90,7 +112,7 @@ export function createEditor({ getLevel, onPlay }) {
       <div class="ed-palette"></div>
       <div class="ed-stage"><canvas></canvas></div>
     </div>
-    <div class="ed-help">Click or drag to paint · click a tile with its own brush (or right-drag) to erase · the outer wall stays put · E to close (your edits are kept until you Play or start a New level)</div>
+    <div class="ed-help">Click or drag to paint · click an enemy with its own tool to raise its level · click a tile with its own brush (or right-drag) to erase · the outer wall stays put · E to close (your edits are kept until you Play or start a New level)</div>
     <div class="ed-modal ed-ask" hidden><div><p></p><span class="ed-ask-buttons"><button class="ed-ask-yes primary"></button><button class="ed-ask-no"></button></span></div></div>
     <div class="ed-modal ed-text" hidden><div><p>Level text (copied, if your browser allowed it):</p><textarea readonly></textarea><button class="ed-modal-close">Done</button></div></div>
   `;
@@ -101,6 +123,7 @@ export function createEditor({ getLevel, onPlay }) {
 
   let grid = blankGrid(...SIZES.medium);
   let curve = DEFAULT_CURVE;
+  let levels = new Map(); // "col,row" -> level, for species enemies above level 1
   let name = 'New level';
   let id = 'draft';
   let tool = '#';
@@ -147,6 +170,7 @@ export function createEditor({ getLevel, onPlay }) {
       dirty = false;
       grid = blankGrid(...SIZES[b.dataset.new]);
       curve = DEFAULT_CURVE;
+      levels = new Map();
       name = 'New level';
       id = 'draft';
       elsewhere = getLevel()?.name ?? null;
@@ -157,12 +181,12 @@ export function createEditor({ getLevel, onPlay }) {
     dirty = false; // the run now holds these edits
     elsewhere = null;
     close();
-    onPlay({ id, name, text: toText(grid, curve) });
+    onPlay({ id, name, text: toText(grid, curve, levels) });
   };
   root.querySelector('.ed-close').onclick = () => close();
   const modal = root.querySelector('.ed-text');
   root.querySelector('.ed-copy').onclick = () => {
-    const text = toText(grid, curve);
+    const text = toText(grid, curve, levels);
     navigator.clipboard?.writeText(text).catch(() => {});
     modal.querySelector('textarea').value = text;
     modal.hidden = false;
@@ -203,15 +227,28 @@ export function createEditor({ getLevel, onPlay }) {
     // Only one start: placing it moves it.
     if (ch === 'S') for (const r of grid) for (let c = 0; c < r.length; c++) if (r[c] === 'S') r[c] = '.';
     grid[cell.row][cell.col] = ch;
+    levels.delete(`${cell.col},${cell.row}`);
     dirty = true;
     refresh();
   }
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   canvas.addEventListener('pointerdown', (e) => {
     const cell = cellAt(e);
+    const here = cell && grid[cell.row][cell.col];
+    // Clicking an enemy with its own species' tool raises its level (5 wraps
+    // round to 1).
+    if (e.button !== 2 && cell && !border(cell) && ((tool === '1' && isDigit(here)) || (levelled(tool) && here === tool))) {
+      const id = `${cell.col},${cell.row}`;
+      if (tool === '1') grid[cell.row][cell.col] = String((Number(here) % 5) + 1);
+      else levels.set(id, ((levels.get(id) ?? 1) % 5) + 1);
+      dirty = true;
+      painting = null;
+      refresh();
+      return;
+    }
     // Clicking a tile with its own brush clears it to floor (a drag that
     // starts there erases the same way); right-click always erases.
-    const same = cell && tool !== '.' && grid[cell.row][cell.col] === tool;
+    const same = cell && tool !== '.' && here === tool;
     painting = e.button === 2 || same ? '.' : tool;
     canvas.setPointerCapture(e.pointerId);
     paint(cellAt(e), painting);
@@ -238,14 +275,14 @@ export function createEditor({ getLevel, onPlay }) {
     outline = null;
     if (curve <= 1) return;
     try {
-      const level = parseLevel(toText(grid, curve), name, { requireStart: false });
+      const level = parseLevel(toText(grid, curve, levels), name, { requireStart: false });
       if (level.geometry) outline = loopPolygons(level.geometry, (r) => Math.max(4, Math.ceil(r * 12)));
     } catch {
       outline = null; // a grid the loader rejects: fall back to square walls
     }
   }
 
-  function drawTile(g, ch, x, y, s, icon = false) {
+  function drawTile(g, ch, x, y, s, icon = false, level = 1) {
     const cx = x + s / 2;
     const cy = y + s / 2;
     const circle = (r, fill, stroke) => {
@@ -345,8 +382,30 @@ export function createEditor({ getLevel, onPlay }) {
         g.font = `bold ${Math.round(s * 0.46)}px system-ui, sans-serif`;
         g.textAlign = 'center';
         g.textBaseline = 'middle';
-        g.fillText(ch, cx, cy + 1);
+        g.fillText(icon ? '1' : ch, cx, cy + 1);
         break;
+      case 'i':
+      case 'l':
+      case 'p':
+      case 'm':
+      case 'g':
+      case 'j':
+      case 'k':
+      case 'h':
+      case 'd': {
+        // A species enemy: a ball in its own colour, with its level (none for a Golem or Bomb).
+        const color = CONFIG.enemy.types[SPECIES[ch]].color;
+        circle(s * 0.4, hex(color), '#1e1f21');
+        if (levelled(ch)) {
+          const lum = (((color >> 16) & 255) * 0.3 + ((color >> 8) & 255) * 0.59 + (color & 255) * 0.11) / 255;
+          g.fillStyle = lum > 0.6 ? '#1e1f21' : '#fff';
+          g.font = `bold ${Math.round(s * 0.46)}px system-ui, sans-serif`;
+          g.textAlign = 'center';
+          g.textBaseline = 'middle';
+          g.fillText(String(level), cx, cy + 1);
+        }
+        break;
+      }
       case '$':
         circle(s * 0.4, '#f2c230', '#7a5a10');
         g.fillStyle = '#7a5a10';
@@ -444,7 +503,7 @@ export function createEditor({ getLevel, onPlay }) {
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
         const ch = grid[row][col];
-        if (ch !== '#' && ch !== '.') drawTile(ctx, ch, col * tile, row * tile, tile);
+        if (ch !== '#' && ch !== '.') drawTile(ctx, ch, col * tile, row * tile, tile, false, levels.get(`${col},${row}`) ?? 1);
       }
     }
 
@@ -473,7 +532,7 @@ export function createEditor({ getLevel, onPlay }) {
   new ResizeObserver(() => !root.hidden && refresh()).observe(stage);
 
   function load(def) {
-    ({ grid, curve } = fromText(def.text));
+    ({ grid, curve, levels } = fromText(def.text));
     name = def.name;
     id = def.id;
     dirty = false;

@@ -111,3 +111,17 @@ test('coins that touch side by side form one strip; diagonal or separate ones do
   // the row of 4, the column of 3, and two lone diagonal coins
   assert.deepEqual(sizes, [1, 1, 3, 4]);
 });
+
+test('species letters place typed enemies; the levels line under the grid sets their levels in reading order', () => {
+  const level = parseLevel(`
+#######
+#i.g.k#
+#.1.h.#
+#..S..#
+#######
+levels: 3 2`);
+  const types = level.enemies.map((e) => `${e.type ?? 'basic'}${e.level}`);
+  // i (3), golem (no level, no entry), k (2), then h with no entry left (1).
+  assert.deepEqual(types, ['ice3', 'golem1', 'seeker2', 'basic1', 'ghost1']);
+  assert.throws(() => parseLevel('#####\n#iS.#\n#####\nlevels: 7'), /1 to 5/);
+});

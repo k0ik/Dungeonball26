@@ -256,7 +256,7 @@ export function createGame(container, levels, startIndex = 0) {
       const E = CONFIG.enemy;
       const testing = E.testLevels.includes(def.id);
       // On the test levels: the type under test, with every other one a test tool ball.
-      let type = testing && E.testTool && n % 2 ? E.testTool : testing ? E.testType : null;
+      let type = testing && E.testTool && n % 2 ? E.testTool : testing ? E.testType : (e.type ?? null);
       if (type === 'random') {
         const types = Object.keys(E.types); // every built type, tool balls included
         type = types[Math.floor(Math.random() * types.length)];

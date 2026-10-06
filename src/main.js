@@ -6,6 +6,7 @@ import warrens from './levels/warrens.txt?raw';
 import crawlspace from './levels/crawlspace.txt?raw';
 import gauntlet02 from './levels/gauntlet02.txt?raw';
 import pitfalls from './levels/pitfalls.txt?raw';
+import tombRaider from './levels/tomb-raider.txt?raw';
 import barracks from './levels/barracks.txt?raw';
 import billiards from './levels/billiards.txt?raw';
 import barrelRun from './levels/barrel-run.txt?raw';
@@ -27,6 +28,7 @@ const LEVELS = [
   { id: 'line-of-sight', name: 'Line of Sight', text: lineOfSight, message: 'Enemies only attack if they can see you.' },
   { id: 'fight', name: 'Fight!', text: fight, message: "You're tougher than you think." },
   { id: 'barrel-run', name: 'Barrel Run', text: barrelRun, message: 'Wooden barrels contain loot. Red barrels contain explosives.' },
+  { id: 'tomb-raider', name: 'Tomb Raider', text: tombRaider },
   { id: 'pitfalls', name: 'Pitfalls', text: pitfalls, message: 'Knock enemies into the pits and lava. Divots pull, bumps push.' },
   { id: 'barracks', name: 'Barracks', text: barracks }, // work in progress
   { id: 'billiards', name: 'Billiards', text: billiards },

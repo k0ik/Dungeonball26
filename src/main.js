@@ -44,16 +44,18 @@ const LEVELS = [
 const fromHash = LEVELS.findIndex((l) => `#${l.id}` === location.hash);
 // If anything breaks (above all, the browser refusing to start WebGL), say so
 // on screen instead of leaving a blank page, so it can be reported.
-function showFatal(err) {
+function showFatal(err, lost = false) {
   if (document.querySelector('.fatal')) return;
   const box = document.createElement('div');
   box.className = 'fatal';
   const webgl = /webgl|context/i.test(String(err?.message ?? err));
   box.innerHTML = '<strong></strong><p></p><code></code>';
-  box.querySelector('strong').textContent = webgl ? "The game couldn't start its 3D graphics" : 'Something went wrong';
-  box.querySelector('p').textContent = webgl
-    ? 'Your browser refused to create a WebGL context (this can happen after many reloads). Try reloading the page, or opening it in a new tab.'
-    : 'Reload the page to try again. If it keeps happening, send a screenshot of this message.';
+  box.querySelector('strong').textContent = lost ? 'The 3D graphics were switched off' : webgl ? "The game couldn't start its 3D graphics" : 'Something went wrong';
+  box.querySelector('p').textContent = lost
+    ? 'The browser took the WebGL context away (phones do this when short of memory or when the graphics stall), so the screen went black. Reload the page to carry on, and send a screenshot of this with what had just happened.'
+    : webgl
+      ? 'Your browser refused to create a WebGL context (this can happen after many reloads). Try reloading the page, or opening it in a new tab.'
+      : 'Reload the page to try again. If it keeps happening, send a screenshot of this message.';
   box.querySelector('code').textContent = String(err?.stack ?? err?.message ?? err).split('\n').slice(0, 4).join('\n');
   document.body.appendChild(box);
 }
@@ -66,6 +68,14 @@ try {
   showFatal(err);
   throw err;
 }
+
+// A black screen with no error is the browser taking the WebGL context away:
+// say so, with where the game was, instead of leaving it black.
+document.querySelector('#game canvas')?.addEventListener('webglcontextlost', () => {
+  const g = window.game;
+  const where = `level ${g.levelDef?.name ?? '?'}, phase ${g.state?.phase ?? '?'}, view ${g.rig?.viewWidth?.toFixed(1) ?? '?'} tiles, pixel ratio ${g.renderer?.getPixelRatio?.().toFixed(2) ?? "?"}`;
+  showFatal(new Error(`WebGL context lost (${where})`), true);
+});
 
 // The level editor (desktop): E opens the current level in it.
 const editor = createEditor({ getLevel: () => window.game.levelDef, onPlay: (def) => window.game.playLevel(def) });

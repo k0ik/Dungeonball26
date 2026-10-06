@@ -1695,6 +1695,7 @@ export function createGame(container, levels, startIndex = 0) {
     effects,
     state,
     rig,
+    renderer,
     respawn,
     loadLevel,
     /** The level being played, as { id, name, text } (the level editor opens it). */

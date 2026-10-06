@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { parseLevel, isSolid, LEGEND, coinStrips } from '../src/level.js';
+import { parseLevel, isSolid, isHazard, tileAt, LEGEND, coinStrips } from '../src/level.js';
 
 const levelsDir = new URL('../src/levels/', import.meta.url);
 
@@ -61,14 +61,14 @@ test('rejects bad levels with a useful message', () => {
   assert.throws(() => parseLevel('###\n#.#\n###'), /no hero start/);
 });
 
-/** Tiles reachable from the start by 4-way moves over non-solid tiles. */
+/** Tiles reachable from the start by 4-way moves over non-solid tiles (not into pits or lava: a ball falls in). */
 function reachable(level) {
   const seen = new Set();
   const queue = [[level.start.col, level.start.row]];
   while (queue.length) {
     const [c, r] = queue.pop();
     const id = `${c},${r}`;
-    if (seen.has(id) || isSolid(level, c, r)) continue;
+    if (seen.has(id) || isSolid(level, c, r) || isHazard(tileAt(level, c, r))) continue;
     seen.add(id);
     queue.push([c + 1, r], [c - 1, r], [c, r + 1], [c, r - 1]);
   }

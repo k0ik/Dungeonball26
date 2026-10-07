@@ -26,7 +26,7 @@ test('a door stays shut without its key', () => {
   assert.deepEqual(keys, ['blue'], 'a non-matching key is kept');
 });
 
-test('the matching key opens a door within reach, for good, and is used up', () => {
+test('the matching key opens a door within reach, for good, and stays on the key ring', () => {
   const level = parseLevel(TEXT);
   const keys = ['red'];
   assert.deepEqual(openDoors(level, hero(3.5, 5.2), keys), [], 'too far: 1.2 tiles');
@@ -34,8 +34,22 @@ test('the matching key opens a door within reach, for good, and is used up', () 
   assert.equal(opened.length, 1);
   assert.equal(opened[0].color, 'red');
   assert.ok(!isSolid(level, 3, 3), 'an open door is floor');
-  assert.deepEqual(keys, []);
+  assert.deepEqual(keys, ['red']);
   assert.deepEqual(openDoors(level, hero(3.5, 4.4), ['red']), [], 'already open');
+});
+
+test('one key opens every door of its colour', () => {
+  const level = parseLevel(`
+#######
+###R###
+#.....#
+###R###
+#..S..#
+#######`);
+  const keys = ['red'];
+  assert.equal(openDoors(level, hero(3.5, 3.4), keys).length, 1, 'the near one');
+  assert.equal(openDoors(level, hero(3.5, 2.5), keys).length, 1, 'then the far one, with the same key');
+  assert.deepEqual(keys, ['red']);
 });
 
 test('noKeys (the Locksmith card) opens any door without using a key', () => {

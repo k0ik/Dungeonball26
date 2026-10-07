@@ -2,8 +2,9 @@
 //
 // A door is a solid, sight-blocking tile until the hero comes within
 // `doorReach` of it holding the matching key; then it opens for good (its
-// tile becomes floor, so physics, sight and patrols all see it open) and the
-// key is used up. With `noKeys` (the Locksmith card, M7) any door opens.
+// tile becomes floor, so physics, sight and patrols all see it open). The key
+// stays on your key ring and opens every other door of its colour too. With
+// `noKeys` (the Locksmith card, M7) any door opens.
 
 import { CONFIG } from './config.js';
 
@@ -16,17 +17,15 @@ function distToTile(x, z, col, row) {
 
 /**
  * Open every closed door the hero is close enough to and can unlock. `keys`
- * is the list of key colours held; a used key is removed from it. Returns the
- * doors opened this call.
+ * is the list of key colours held (kept: a key opens every door of its
+ * colour). Returns the doors opened this call.
  */
 export function openDoors(level, hero, keys, { noKeys = false } = {}) {
   const opened = [];
   for (const door of level.doors) {
     if (door.open) continue;
     if (distToTile(hero.x, hero.z, door.col, door.row) > CONFIG.objects.doorReach) continue;
-    const k = keys.indexOf(door.color);
-    if (!noKeys && k < 0) continue;
-    if (!noKeys) keys.splice(k, 1);
+    if (!noKeys && !keys.includes(door.color)) continue;
     door.open = true;
     level.tiles[door.row][door.col] = 'floor';
     opened.push(door);

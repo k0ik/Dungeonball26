@@ -9,6 +9,7 @@ import pitfalls from './levels/pitfalls.txt?raw';
 import tombRaider from './levels/tomb-raider.txt?raw';
 import village from './levels/village.txt?raw';
 import facilities from './levels/facilities.txt?raw';
+import theOnion from './levels/the-onion.txt?raw';
 import barracks from './levels/barracks.txt?raw';
 import billiards from './levels/billiards.txt?raw';
 import barrelRun from './levels/barrel-run.txt?raw';
@@ -33,6 +34,7 @@ const LEVELS = [
   { id: 'tomb-raider', name: 'Tomb Raider', text: tombRaider },
   { id: 'village', name: 'Village', text: village },
   { id: 'facilities', name: 'Facilities', text: facilities },
+  { id: 'the-onion', name: 'The Onion', text: theOnion },
   { id: 'pitfalls', name: 'Pitfalls', text: pitfalls, message: 'Knock enemies into the pits and lava. Divots pull, bumps push.' },
   { id: 'barracks', name: 'Barracks', text: barracks }, // work in progress
   { id: 'billiards', name: 'Billiards', text: billiards },

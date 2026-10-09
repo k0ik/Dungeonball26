@@ -173,7 +173,7 @@ export function parseLevel(text, name = 'level', { requireStart = true } = {}) {
   if (!level.start && requireStart) throw new Error(`${name}: no hero start 'S'`);
   // Each door is a slab across its tile, running the way the wall runs:
   // along x between walls to its left and right, else along z.
-  const blocks = (c, r) => ['wall', 'door'].includes(tileAt(level, c, r));
+  const blocks = (c, r) => ['wall', 'door', 'half'].includes(tileAt(level, c, r)); // half-walls frame doors too
   const half = CONFIG.objects.doorThickness / 2;
   level.doorShapes = new Map();
   for (const d of level.doors) {

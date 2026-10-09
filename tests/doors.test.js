@@ -96,3 +96,15 @@ test('a closed door is a thin slab: a ball rolls into its indent before stopping
   assert.ok(reach > 2.2, `got past the tile edge (z 2) into the indent: ${reach}`);
   assert.ok(reach < 2.5 - CONFIG.objects.doorThickness / 2 + 0.01, `but not through the slab: ${reach}`);
 });
+
+test('a door between half-walls runs the way they do', () => {
+  const level = parseLevel(`
+#######
+#..=..#
+#..B..#
+#..=..#
+#..S..#
+#######`);
+  const shape = level.doorShapes.get(2 * level.width + 3);
+  assert.ok(shape.halfZ > shape.halfX, 'north-south, in line with the half-walls above and below');
+});

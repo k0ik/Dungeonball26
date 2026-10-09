@@ -53,8 +53,10 @@ export function stepWorld(world, dt = P.step) {
     b.z += (b.fallTo.z - b.z) * k;
   }
 
+  const eventsBefore = world.events.length;
   for (const b of balls) {
     if (b.fallen) continue;
+    if (b.crawl && crawl(b, dt)) continue;
     const speed = speedOf(b);
     if (speed === 0) continue;
     // A ball can carry its own friction scale (the Athletic card lowers the hero's).
@@ -88,6 +90,37 @@ export function stepWorld(world, dt = P.step) {
       world.events.push({ type: 'fall', ball: b, kind: t });
     }
   }
+  // A creeping ball that touched anything this step is just a ball again.
+  for (let i = eventsBefore; i < world.events.length; i++) {
+    const ev = world.events[i];
+    for (const b of [ev.ball, ev.a, ev.b]) if (b?.crawl) b.crawl = null;
+  }
+}
+
+/**
+ * A ball creeping under its own power (a Sticky Icky's move): it heads
+ * straight for `crawl.x, crawl.z` at a pulsing pace, friction aside, and
+ * stops when it gets there (or runs out of time). Returns true while it's
+ * still creeping.
+ */
+function crawl(b, dt) {
+  const c = b.crawl;
+  c.t += dt;
+  const dx = c.x - b.x;
+  const dz = c.z - b.z;
+  const d = Math.hypot(dx, dz);
+  if (d < 0.03 || c.t > c.maxT) {
+    b.crawl = null;
+    b.vx = b.vz = 0;
+    return true;
+  }
+  const pace = c.speed * (1 + c.pulse * Math.sin(c.t * c.hz * Math.PI * 2));
+  const step = Math.min(d, Math.max(0.05, pace) * dt);
+  b.vx = (dx / d) * (step / dt);
+  b.vz = (dz / d) * (step / dt);
+  b.x += b.vx * dt;
+  b.z += b.vz * dt;
+  return true;
 }
 
 /**

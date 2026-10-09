@@ -559,6 +559,16 @@ export function createGame(container, levels, startIndex = 0) {
     let lunged = false;
     for (const m of state.moves) {
       if (m.enemy.hp <= 0) continue;
+      if (m.enemy.type === 'sticky') {
+        // It creeps there instead of launching: to its patrol spot, or to
+        // where its target is now (it hits it on the way and stops creeping).
+        const S = CONFIG.enemy.types.sticky;
+        const to = m.kind === 'lunge' ? (m.target ?? hero) : m.target;
+        const d = Math.hypot(to.x - m.enemy.x, to.z - m.enemy.z);
+        m.enemy.crawl = { x: to.x, z: to.z, speed: S.crawlSpeed, pulse: S.crawlPulse, hz: S.crawlPulseHz, t: 0, maxT: d / (S.crawlSpeed * (1 - S.crawlPulse * 0.5)) + 1 };
+        if (m.kind === 'lunge') lunged = true;
+        continue;
+      }
       if (m.kind === 'lunge') {
         Object.assign(m.enemy, lungeVelocity(m.enemy, m.target ?? hero));
         lunged = true;

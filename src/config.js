@@ -122,7 +122,14 @@ export const CONFIG = {
         // Sticky Icky: the Ice ball's opposite. A slowish ball that leaves a
         // trail of goop (src/ice.js, the same puddles with kind 'goop');
         // anything rolling over goop drags as if through glue.
-        friction: 1.4, // of normal friction: it doesn't roll far itself
+        // It doesn't launch like other enemies: it creeps, blob-like, under its
+        // own power toward where it's going (a lunge heads for where you are),
+        // inching along at a pulsing pace. The moment it touches anything (you,
+        // a ball, a wall, a barrel) it's just a ball again, a very draggy one.
+        crawlSpeed: 1.6, // tiles/s on average while creeping
+        crawlPulse: 0.6, // how much the pace swells and shrinks (0 steady .. 1 stop-start)
+        crawlPulseHz: 2.2, // inches per second
+        friction: 3, // of normal friction, once it's knocked out of its creep: it soon stops
         patrolRadius: 3,
         color: 0x8fbf3a, // sickly green, with drips of goop as its shape cue
         goopDrag: 6, // tiles/s² of extra deceleration while a ball is on goop (normal friction is ~1.3)

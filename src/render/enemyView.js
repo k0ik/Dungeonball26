@@ -118,6 +118,16 @@ export function createEnemyView(ball, toCamera) {
         // body it would read as a dark blob, so it goes while faded.
         outline.visible = !see;
       }
+      if (ball.type === 'sticky' && dying < 0) {
+        // Creeping: it heaves along like a blob, squashing and stretching in
+        // time with its pace; it settles back round once it stops.
+        const c = ball.crawl;
+        const s = c ? Math.sin(c.t * c.hz * Math.PI * 2) : 0;
+        const k = Math.min(1, dt * 12);
+        group.scale.x += (1 + 0.1 * s - group.scale.x) * k;
+        group.scale.z += (1 + 0.1 * s - group.scale.z) * k;
+        group.scale.y += (1 - 0.16 * s - group.scale.y) * k;
+      }
       if (ball.type === 'jekyll' && dying < 0) {
         // Enraged (or mid-attack): dark plum and swollen; calm: sage green.
         const J = CONFIG.enemy.types.jekyll;

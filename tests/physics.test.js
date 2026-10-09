@@ -351,3 +351,24 @@ test('half-walls on a rounded level: balls bounce off their rounded outline, sig
   run(world, 1.5);
   assert.ok(ball.z > 5, `bounced back off the half-wall, z=${ball.z}`);
 });
+
+test('a creeping ball heads for its spot friction aside, and is just a (draggy) ball again once it touches something', () => {
+  const world = createWorld(room);
+  const blob = createBall({ x: 2.5, z: 2.5 });
+  blob.friction = 3;
+  blob.crawl = { x: 6.5, z: 2.5, speed: 1.6, pulse: 0.6, hz: 2.2, t: 0, maxT: 5 };
+  world.balls.push(blob);
+  run(world, 4);
+  assert.ok(Math.abs(blob.x - 6.5) < 0.05 && blob.crawl === null && blob.vx === 0, `crept to its spot and stopped, x=${blob.x}`);
+
+  const world2 = createWorld(room);
+  const blob2 = createBall({ x: 2.5, z: 2.5 });
+  blob2.friction = 3;
+  blob2.crawl = { x: 7.5, z: 2.5, speed: 1.6, pulse: 0.6, hz: 2.2, t: 0, maxT: 5 };
+  const other = createBall({ x: 4.5, z: 2.5 });
+  world2.balls.push(blob2, other);
+  run(world2, 4);
+  assert.equal(blob2.crawl, null, 'the bump ended its creep');
+  assert.ok(blob2.x < 4.5, `it stopped short instead of creeping on, x=${blob2.x}`);
+  assert.ok(other.x > 4.5, 'and it nudged the other ball');
+});

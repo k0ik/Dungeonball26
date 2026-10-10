@@ -146,6 +146,16 @@ export function createCombat() {
     hasHitHero(enemy) {
       return !!actors && haveHit.has(enemy);
     },
+    /** This shot's records (combo pairs used, enemies damaged, kills), for a look-ahead copy (src/killPredict.js). */
+    shotState() {
+      return { pairs: new Set(pairsThisShot), damaged: [...damagedThisShot], kills: killsThisShot };
+    },
+    /** Carry on from `s` (shotState), mapping its balls with `map` (to a look-ahead's copies). */
+    loadShotState(s, map = (b) => b) {
+      pairsThisShot = new Set(s.pairs);
+      damagedThisShot = new Set(s.damaged.map(map).filter(Boolean));
+      killsThisShot = s.kills;
+    },
     /** Call at each launch: the once-per-pair combo rule resets per shot. */
     beginShot() {
       pairsThisShot = new Set();

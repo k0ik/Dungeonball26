@@ -13,9 +13,10 @@ import { createCombat } from './combat.js';
  * Run `world` forward up to `seconds` of game time on a copy. Returns the
  * first predicted kill, { target (the real enemy), x, z, t (seconds from
  * now), index (kills predicted before it in this look) }, or null.
- * `kicked` is the live per-move bumper kick record (copied, not changed).
+ * `kicked` is the live per-move bumper kick record (copied, not changed);
+ * `shot` is the live combat's shotState().
  */
-export function predictKill(world, hero, seconds, kicked = new Map(), elastic = null) {
+export function predictKill(world, hero, seconds, kicked = new Map(), elastic = null, shot = null) {
   const real = new Map(); // copy -> original
   const copy = new Map(); // original -> copy
   const balls = world.balls.map((b) => {
@@ -30,6 +31,10 @@ export function predictKill(world, hero, seconds, kicked = new Map(), elastic = 
   for (const [b, m] of kicked) if (copy.has(b)) kicks.set(copy.get(b), new Map(m));
   const combat = createCombat();
   combat.beginShot();
+  // Carry on from this shot so far: two enemies that already collided this
+  // shot don't hurt each other again (a fresh record predicted kills that
+  // never came).
+  if (shot) combat.loadShotState(shot, (b) => copy.get(b));
   const R = CONFIG.enemy.types.rubber;
   const step = CONFIG.physics.step;
   let kills = 0;

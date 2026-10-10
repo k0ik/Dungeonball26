@@ -206,26 +206,26 @@ export function createGame(container, levels, startIndex = 0) {
   }
 
   /**
-   * Bomb fuses run on your shots: a bomb lit at any point is armed when your
-   * next shot starts (its fuse burns shorter), and goes off when that shot
-   * comes to rest. Bombs lit during that shot wait for the one after.
+   * A lit bomb (the first hit lights it, whoever's: red and blinking) goes
+   * off where it comes to rest: once it has stood still for restDelay, its
+   * fuse shortened to show it's about to blow. Every physics step.
    */
-  function armBombs() {
+  function tickBombs(step) {
+    const B = CONFIG.enemy.types.bomb;
     for (const bomb of enemies()) {
-      if (bomb.type === 'bomb' && bomb.fuse === 1) bomb.fuse = 0;
+      if (bomb.type !== 'bomb' || bomb.fuse == null || !world.balls.includes(bomb)) continue;
+      if (bomb.vx !== 0 || bomb.vz !== 0) {
+        bomb.restT = 0;
+        continue;
+      }
+      bomb.fuse = 0; // burning down
+      bomb.restT = (bomb.restT ?? 0) + step;
+      if (bomb.restT >= B.restDelay) handleOutcomes(combat.bombBlast(world, bomb, hero));
     }
   }
 
-  /** Your shot came to rest: armed bombs go off. Returns true if any did. */
-  function detonateArmed() {
-    let boom = false;
-    for (const bomb of enemies().filter((e) => e.type === 'bomb' && e.fuse === 0)) {
-      if (!world.balls.includes(bomb)) continue; // already gone in another's blast
-      boom = true;
-      handleOutcomes(combat.bombBlast(world, bomb, hero));
-    }
-    return boom;
-  }
+  /** A lit bomb still waiting to go off: the shot (or enemy move) isn't over until it has. */
+  const bombsPending = () => enemies().some((e) => e.type === 'bomb' && e.fuse != null && world.balls.includes(e));
 
   function loadLevel(i) {
     levelIndex = (i + levels.length) % levels.length;
@@ -433,7 +433,6 @@ export function createGame(container, levels, startIndex = 0) {
     state.contacts = [{ x: hero.x, z: hero.z }]; // debugging: where the real shot touched things
     nextMove();
     combat.beginShot();
-    armBombs(); // bombs lit before this shot go off when it comes to rest
     // A new shot: the coin streak and the coin tick's pitch start over.
     state.shotCoins = 0;
     sfx.play('launch', 0.4 + 0.6 * shot.fill, { pitch: 0.9 + 0.2 * shot.fill });
@@ -575,8 +574,13 @@ export function createGame(container, levels, startIndex = 0) {
         // It creeps there instead of launching: to its patrol spot, or to
         // where its target is now (it hits it on the way and stops creeping).
         const S = CONFIG.enemy.types.sticky;
-        const to = m.kind === 'lunge' ? (m.target ?? hero) : m.target;
-        const d = Math.hypot(to.x - m.enemy.x, to.z - m.enemy.z);
+        let to = m.kind === 'lunge' ? (m.target ?? hero) : m.target;
+        let d = Math.hypot(to.x - m.enemy.x, to.z - m.enemy.z);
+        if (d > S.crawlMax) {
+          // Half as far as other enemies go: it creeps crawlMax toward you and stops.
+          to = { x: m.enemy.x + ((to.x - m.enemy.x) / d) * S.crawlMax, z: m.enemy.z + ((to.z - m.enemy.z) / d) * S.crawlMax };
+          d = S.crawlMax;
+        }
         m.enemy.crawl = { x: to.x, z: to.z, speed: S.crawlSpeed, pulse: S.crawlPulse, hz: S.crawlPulseHz, t: 0, maxT: d / (S.crawlSpeed * (1 - S.crawlPulse * 0.5)) + 1 };
         if (m.kind === 'lunge') lunged = true;
         continue;
@@ -1247,7 +1251,7 @@ export function createGame(container, levels, startIndex = 0) {
     if (!C.killCut || state.phase !== 'shot' || state.killCut || hero.inert) return;
     if (++predictTick % C.killCutEvery) return;
     const elastic = card('elasticity') ? { kick: CONFIG.cards.elasticityKick, perBumper: CONFIG.cards.elasticityKicksPerBumper } : null;
-    const p = predictKill(world, hero, C.killCutLook, state.kicked, elastic);
+    const p = predictKill(world, hero, C.killCutLook, state.kicked, elastic, combat.shotState());
     if (!p || p.t > C.killCutLead) return;
     if (C.killCutWhich === 'combo' && combat.shotKills + p.index < 1) return;
     // Jump cut: to a spot that sees your ball and the impact. With none,
@@ -1453,6 +1457,7 @@ export function createGame(container, levels, startIndex = 0) {
         bleedSkull();
       }
       stepIce(world, level, ice, state.move ?? 0);
+      if (state.phase === 'shot' || state.phase === 'enemyMove') tickBombs(step);
       looks.noteHits(world.events, hasFace);
       rollGold(step);
       settleGhosts();
@@ -1490,9 +1495,9 @@ export function createGame(container, levels, startIndex = 0) {
     if (state.phase === 'exiting') updateExit(dt);
     switch (state.phase) {
       case 'shot':
-        // Your shot came to rest: armed bombs go off first, and the shot
+        // Your shot came to rest: lit bombs go off first, and the shot
         // carries on (their blast counts toward it) until everything settles.
-        if (isAtRest(world) && detonateArmed()) break;
+        if (isAtRest(world) && bombsPending()) break;
         if (isAtRest(world)) {
           endMoveForGold();
           // A sword breaks as the shot in which it hit an enemy comes to rest.
@@ -1525,7 +1530,7 @@ export function createGame(container, levels, startIndex = 0) {
         if (state.timer <= 0) launchEnemies();
         break;
       case 'enemyMove':
-        if (isAtRest(world)) {
+        if (isAtRest(world) && !bombsPending()) {
           state.moves = [];
           endMoveForGold();
           state.phase = 'aim';

@@ -54,3 +54,18 @@ test('a camera low behind a wall cannot see over it; a high one can', () => {
   assert.equal(seesOver(level, { x: 3.5, z: 1.5 }, 0.4, { x: 3.5, z: 3.5 }), false);
   assert.equal(seesOver(level, { x: 3.5, z: 1.5 }, 3, { x: 3.5, z: 3.5 }), true);
 });
+
+test('two enemies that already collided this shot are not predicted to hurt each other again', () => {
+  const world = createWorld(room);
+  const hero = createBall({ x: 1.5, z: 1.5, kind: 'hero', id: 'hero' });
+  hero.atk = 1;
+  const a = createEnemy({ x: 3.5, z: 3.5, level: 1, id: 'a' });
+  const b = createEnemy({ x: 6.5, z: 3.5, level: 1, id: 'b' });
+  a.hp = 1;
+  b.hp = 1;
+  a.vx = 6; // a rolls into b: a combo, 1 damage each, would kill both
+  world.balls.push(hero, a, b);
+  assert.ok(predictKill(world, hero, 1), 'a fresh shot: the combo kill is predicted');
+  const used = { pairs: new Set(['a|b']), damaged: [], kills: 0 };
+  assert.equal(predictKill(world, hero, 1, new Map(), null, used), null, 'that pair already met this shot: no kill');
+});

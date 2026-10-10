@@ -130,7 +130,8 @@ export const CONFIG = {
         crawlPulse: 0.6, // how much the pace swells and shrinks (0 steady .. 1 stop-start)
         crawlPulseHz: 2.2, // inches per second
         friction: 3, // of normal friction, once it's knocked out of its creep: it soon stops
-        patrolRadius: 3,
+        patrolRadius: 1.5, // tiles (half a basic enemy's): it doesn't get far in a move
+        crawlMax: 3, // tiles at most it creeps in one move, attacking included (it may stop short of you)
         color: 0x8fbf3a, // sickly green, with drips of goop as its shape cue
         goopDrag: 6, // tiles/s² of extra deceleration while a ball is on goop (normal friction is ~1.3)
         puddleMoves: 1, // goop lasts the move it's laid in and this many more, like ice
@@ -159,10 +160,11 @@ export const CONFIG = {
         color: 0x7a5a9c, // dark lilac
       },
       bomb: {
-        // Hits don't hurt it: the first one lights its fuse and turns it red.
-        // It goes off where it lies when your next shot comes to rest (one
-        // lit during a shot waits for the end of the shot after).
-        fuse: 1, // fuse steps when lit: armed (0) when your next shot starts
+        // Hits don't hurt it: the first one (anyone's, or a blast) lights its
+        // fuse and turns it red and blinking. It goes off where it comes to
+        // rest, once it has stood still for restDelay (its fuse burns short).
+        fuse: 1, // 1 lit and rolling; 0 at rest and about to blow
+        restDelay: 0.5, // seconds of game time at rest before it explodes
         blastRadius: 1.6, // tiles, centre to centre; walls shield
         blastDamage: 1, // to every ball caught (a held shield takes it instead)
         blastPush: 5, // tiles/s outward at the centre, falling off to 0 at the edge

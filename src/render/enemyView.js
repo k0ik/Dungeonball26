@@ -141,11 +141,13 @@ export function createEnemyView(ball, toCamera) {
         spark.visible = lit;
         sparkT += dt;
         spark.scale.setScalar(1 + 0.35 * Math.sin(sparkT * 18)); // a steady flicker, not a flash
-        // Full length until lit, shorter once lit, a stub once armed (it goes off as your shot stops).
+        // Full length until lit, shorter once lit, a stub once it has come to rest (about to blow).
         fuse.scale.y = !lit ? 1 : ball.fuse > 0 ? 0.6 : 0.3;
         spark.position.set(0, FUSE_LEN, 0);
         spark.scale.y /= fuse.scale.y; // keep the spark round on the squashed fuse
-        body.material.color.setHex(lit ? CONFIG.enemy.types.bomb.litColor : color);
+        // Lit: blinking red, faster once it has stopped and is about to go off.
+        const blink = !lit || Math.sin(sparkT * (ball.fuse > 0 ? 10 : 26)) > -0.3;
+        body.material.color.setHex(lit && blink ? CONFIG.enemy.types.bomb.litColor : color);
       }
       if (dying >= 0 && falling) {
         // Fell in a pit or lava: it slides on into the middle of the hole

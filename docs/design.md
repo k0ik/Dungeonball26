@@ -130,7 +130,7 @@ You have 3 lives. Reaching 0 HP costs one life and puts you back at the level st
 - **Board state persists:** dead enemies stay dead, damaged enemies stay damaged, broken barrels stay broken, opened chests and doors stay open, and keys you hold stay with you.
 - **Respawn is safe:** enemies only act after your shot, so you always get the first move after respawning.
 - **Extra lives** come only from a rare barrel drop (a 1-up).
-- **Game over** at 0 lives restarts the current level from scratch with 3 lives and the HP you entered it with, but no sword, shield or artifacts.
+- **Game over** at 0 lives restarts the current level from scratch with 3 lives and full HP (like any respawn; it used to be the HP you entered the level with, which could leave you restarting on 1 HP), but no sword, shield or artifacts.
 - **Between levels:** reaching the exit loads the next level at once (even mid-roll), with a short banner naming it ("One Key, Level 3 of 3"). HP, gear bonuses, lives and score carry over. Unused keys do not.
 - **Run complete:** the exit of the last level darkens the screen with "Run Complete!" and your gold for 4 seconds, then a fresh run starts at level 1 (full HP, no gear, 3 lives, no gold).
 

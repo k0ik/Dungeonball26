@@ -707,9 +707,12 @@ export function createGame(container, levels, startIndex = 0) {
     if (state.lives > 0) {
       respawn({ heal: true });
     } else {
-      // Game over: the level starts from scratch, with the HP and gold you
-      // entered it with, but no gear or artifacts (the knockout took them).
-      const { hp, gold } = state.entry;
+      // Game over: the level starts from scratch, at full HP (as any respawn
+      // is: you could have entered on 1 HP and been doomed to die again on
+      // the first hit) and with the gold you entered it with, but no gear or
+      // artifacts (the knockout took them).
+      const { gold } = state.entry;
+      const hp = hero.maxHp;
       state.cards = [];
       applyCards();
       // Doppleganger: +1 to the lives a game over restores.

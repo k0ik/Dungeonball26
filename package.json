@@ -1,0 +1,20 @@
+{
+  "name": "dungeonball",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "host": "vite --host",
+    "build": "vite build",
+    "build:page": "node scripts/build-web-page.mjs",
+    "preview": "vite preview",
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "vite": "^8.3.1"
+  }
+}

@@ -23,6 +23,7 @@ import { freeSpawn } from './spawn.js';
 import { createWorld, createBall, stepWorld, isAtRest, speedOf, overlapsSolid, applyBumperKicks, applyRubberRebound } from './physics.js';
 import { predictKill } from './killPredict.js';
 import { chooseVantage } from './killCutVantage.js';
+import { setFaceView } from './render/faces.js';
 import { createCombat, createEnemy } from './combat.js';
 import { canSee, lungeClear } from './sight.js';
 import { lungeVelocity, patrolMove, pickPatrollers, walkDistances, seekerMove } from './turns.js';
@@ -1429,6 +1430,9 @@ export function createGame(container, levels, startIndex = 0) {
     // state.timeScale; the camera keeps real time so it stays smooth.
     watchForKills();
     const dt = realDt * updateDrama(realDt);
+    // Faces turn to the active camera: the kill cam's while it's on.
+    if (state.killCut?.cam) setFaceView(rig.toCamera, cutCam.position);
+    else setFaceView(rig.toCamera);
 
     const step = CONFIG.physics.step;
     acc += dt;

@@ -246,6 +246,21 @@ export function skullTexture() {
 
 export const heroFaces = { confident: confidentFace, determined: determinedFace, ouch: ouchFace, worried: worriedFace, dead: deadFace };
 
+// Which way faces turn: toward the active camera. The usual camera is
+// orthographic, so one direction serves every ball; the kill cam's close
+// perspective camera sets `from` (its position), and each face turns to it
+// from its own ball.
+const faceView = { dir: null, from: null };
+const tmpPos = new THREE.Vector3();
+const tmpDir = new THREE.Vector3();
+const UP = new THREE.Vector3(0, 1, 0);
+
+/** Point every face at a camera: a fixed direction (`dir`, toward the camera), or, with `from`, the camera's position. */
+export function setFaceView(dir, from = null) {
+  (faceView.dir ??= new THREE.Vector3()).copy(dir);
+  faceView.from = from ? (faceView.fromV ??= new THREE.Vector3()).copy(from) : null;
+}
+
 /** A camera-facing face sprite for a ball of radius `r`. */
 export function faceSprite(texture, r, toCamera) {
   // alphaTest: the sprite's empty corners must not write depth, or a wall
@@ -269,14 +284,26 @@ export function faceSprite(texture, r, toCamera) {
  */
 export function faceLook(face, r, toCamera) {
   const L = CONFIG.look;
-  const base = face.position.clone();
+  if (!faceView.dir) setFaceView(toCamera);
+  const base = new THREE.Vector3();
   const size = face.scale.x;
-  const forward = toCamera.clone().negate();
-  const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
-  const up = new THREE.Vector3().crossVectors(right, forward).normalize();
+  const forward = new THREE.Vector3();
+  const right = new THREE.Vector3();
+  const up = new THREE.Vector3();
   let cx = 0;
   let cy = 0;
   return (look, dt) => {
+    // Toward the active camera, from this ball (see setFaceView).
+    let toCam = faceView.dir;
+    if (faceView.from && face.parent) {
+      face.parent.getWorldPosition(tmpPos);
+      tmpPos.y += r;
+      toCam = tmpDir.subVectors(faceView.from, tmpPos).normalize();
+    }
+    forward.copy(toCam).negate();
+    right.crossVectors(forward, UP).normalize();
+    up.crossVectors(right, forward).normalize();
+    base.set(0, r, 0).addScaledVector(toCam, r * 1.02);
     let tx = 0;
     let ty = 0;
     if (look) {

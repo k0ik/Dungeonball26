@@ -21,6 +21,7 @@ import { CONFIG } from './config.js';
 import { parseLevel, tileCenter, tileAt } from './level.js';
 import { freeSpawn } from './spawn.js';
 import { createWorld, createBall, stepWorld, isAtRest, speedOf, overlapsSolid, applyBumperKicks, applyRubberRebound } from './physics.js';
+import { predictKill } from './killPredict.js';
 import { createCombat, createEnemy } from './combat.js';
 import { canSee, lungeClear } from './sight.js';
 import { lungeVelocity, patrolMove, pickPatrollers, walkDistances, seekerMove } from './turns.js';
@@ -226,6 +227,7 @@ export function createGame(container, levels, startIndex = 0) {
     // Any death scene in progress ends with the old level (respawn heals you).
     hud.hideScreen();
     state.killCam = null;
+    state.killCut = null;
     state.deathShown = false;
     level = parseLevel(def.text, def.name);
     if (levelView) scene.remove(levelView);
@@ -1156,8 +1158,12 @@ export function createGame(container, levels, startIndex = 0) {
       } else if (o.type === 'kill') {
         sfx.play('kill', 0.9);
         // Kill cam: hold tight on it in slow motion (longer for a combo).
-        if (state.phase === 'shot' || state.phase === 'enemyMove') {
-          const K = CONFIG.camera;
+        const K = CONFIG.camera;
+        // During your shot the kill cam (killCut) already slowed time ahead
+        // of the impact; the kill starts its hold. (Without one, the old
+        // zoom-in kill cam still runs in the enemy move.)
+        if (state.killCut && state.killCut.hold == null) state.killCut.hold = K.killCutHold;
+        if ((state.phase === 'shot' && !K.killCut) || state.phase === 'enemyMove') {
           state.killCam = { x: o.target.x, z: o.target.z, left: (o.shotKills ?? 1) >= 2 ? K.comboSeconds : K.killSeconds };
         }
         if (!o.fell) {
@@ -1212,6 +1218,23 @@ export function createGame(container, levels, startIndex = 0) {
    * either is on. Runs on real time; returns the time scale for this frame.
    */
   /** Hit-stop: freeze the action for a beat on a big hit (the camera keeps moving). */
+  /**
+   * The kill cam's look-ahead: during your shot, every few frames, run a
+   * copy of the world a little way ahead; if a kill is coming within
+   * killCutLead, slow time now so the impact plays out in slow motion.
+   */
+  let predictTick = 0;
+  function watchForKills() {
+    const C = CONFIG.camera;
+    if (!C.killCut || state.phase !== 'shot' || state.killCut || hero.inert) return;
+    if (++predictTick % C.killCutEvery) return;
+    const elastic = card('elasticity') ? { kick: CONFIG.cards.elasticityKick, perBumper: CONFIG.cards.elasticityKicksPerBumper } : null;
+    const p = predictKill(world, hero, C.killCutLook, state.kicked, elastic);
+    if (!p || p.t > C.killCutLead) return;
+    if (C.killCutWhich === 'combo' && combat.shotKills + p.index < 1) return;
+    state.killCut = { target: p.target, x: p.x, z: p.z, at: world.time + p.t, hold: null };
+  }
+
   function hitStop(seconds) {
     state.hitStop = Math.max(state.hitStop ?? 0, seconds);
   }
@@ -1226,6 +1249,16 @@ export function createGame(container, levels, startIndex = 0) {
     } else if (state.killCam) {
       state.killCam.left -= realDt;
       if (state.killCam.left <= 0 || !live) state.killCam = null;
+    }
+    // The kill cam's slow motion: from just before a predicted kill until
+    // killCutHold after it (or a moment past when it was due, if it never came).
+    if (state.killCut) {
+      const k = state.killCut;
+      if (!live) state.killCut = null;
+      else if (k.hold != null) {
+        k.hold -= realDt;
+        if (k.hold <= 0) state.killCut = null;
+      } else if (world.time > k.at + 0.3) state.killCut = null;
     }
     // A close call: you and an enemy about to meet (whichever is moving).
     let best = null;
@@ -1247,7 +1280,7 @@ export function createGame(container, levels, startIndex = 0) {
       if (state.closeCall.left <= 0 || !live) state.closeCall = null;
     }
     // (Your own kill cam at a knockout runs at full speed.)
-    const target = state.killCam && !state.killCam.hero ? C.killSlow : state.closeCall ? C.closeSlow : 1;
+    const target = state.killCut || (state.killCam && !state.killCam.hero) ? C.killSlow : state.closeCall ? C.closeSlow : 1;
     state.timeScale = (state.timeScale ?? 1) + (target - (state.timeScale ?? 1)) * (1 - Math.exp(-C.timeEaseRate * realDt));
     if (Math.abs(state.timeScale - 1) < 0.01 && target === 1) state.timeScale = 1;
     if (state.hitStop > 0) {
@@ -1353,6 +1386,7 @@ export function createGame(container, levels, startIndex = 0) {
     fps += (1 / Math.max(realDt, 1e-3) - fps) * 0.05;
     // Slow motion (close calls and the kill cam): game time runs at
     // state.timeScale; the camera keeps real time so it stays smooth.
+    watchForKills();
     const dt = realDt * updateDrama(realDt);
 
     const step = CONFIG.physics.step;

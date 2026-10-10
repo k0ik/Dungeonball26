@@ -431,6 +431,17 @@ export const CONFIG = {
     // kill (2+ in one shot) holds comboSeconds.
     killSeconds: 0.7,
     comboSeconds: 1.1,
+    // The new kill cam (design doc: "Kill cam"), stage 1: during your shot
+    // the game looks a little ahead (src/killPredict.js); when a kill is
+    // coming, time slows *before* the impact, so you see it land, and stays
+    // slow for killCutHold after. No zoom (the camera follows as usual);
+    // the jump cut to a close-up view comes next.
+    killCut: true,
+    killCutWhich: 'all', // 'all' kills (for testing) or 'combo' (only a shot's 2nd kill on)
+    killCutLead: 0.45, // seconds of game time before the impact that slow motion starts
+    killCutLook: 0.6, // seconds of game time the prediction looks ahead
+    killCutEvery: 3, // frames between predictions
+    killCutHold: 0.6, // real seconds it stays slow after the kill
     killSlow: 0.3,
     killWidth: 2.8,
     timeEaseRate: 9, // 1/s: how quickly time slows and comes back

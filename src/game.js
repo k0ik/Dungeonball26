@@ -19,6 +19,7 @@
 import * as THREE from 'three';
 import { CONFIG } from './config.js';
 import { parseLevel, tileCenter, tileAt } from './level.js';
+import { freeSpawn } from './spawn.js';
 import { createWorld, createBall, stepWorld, isAtRest, speedOf, overlapsSolid, applyBumperKicks, applyRubberRebound } from './physics.js';
 import { createCombat, createEnemy } from './combat.js';
 import { canSee, lungeClear } from './sight.js';
@@ -286,8 +287,10 @@ export function createGame(container, levels, startIndex = 0) {
 
   /** Put the hero back at the start. The board is left exactly as it is. */
   function respawn({ heal = false } = {}) {
-    hero.x = start.x;
-    hero.z = start.z;
+    // At the start, or the nearest free tile if something has come to rest on it.
+    const spot = freeSpawn(world, start, CONFIG.ball.diameter / 2, hero);
+    hero.x = spot.x;
+    hero.z = spot.z;
     hero.vx = hero.vz = 0;
     // Never come back at 0 HP: an enemy can't hurt a ball with none left, so
     // you'd be stuck unkillable (skipping a level mid-death used to do it).

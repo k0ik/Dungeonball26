@@ -395,10 +395,15 @@ export const CONFIG = {
     // enemies about to move (where they stand), up to this width; then it
     // eases back to the resting width for your shot.
     enemyPhaseWidth: 13,
-    enemyNearRadius: 5, // tiles: in the enemy turn the view also widens for enemies moving this close to you
-    enemyClosestCount: 2, // ...and always for the closest few enemies, moving or not, however far
-    enemyClosestRange: 40, // (tiles: effectively no limit; the view still stops at maxFrameWidth)
-    enemyZoomOutRate: 7, // 1/s: in the enemy turn the view widens this fast (followZoomOutRate otherwise)
+    // The enemy turn: the view leaves you and frames what's moving (or about
+    // to move: during the wait, the enemies whose move is coming), as tight
+    // as it can, centred on them; a ball drops out enemyLinger after it
+    // stops. Enemies coming for you always count; any other enemy's move
+    // only within enemyFrameRange of you (far patrols play out off screen).
+    // Your ball counts once it's moving (knocked). Nothing moving: back to you.
+    enemyFrameRange: 8, // tiles
+    enemyLinger: 0.35, // real seconds a ball stays framed after it stops
+    enemyMaxWidth: 14, // tiles across at most
     // Back to your turn: the camera returns to you this many times faster than
     // it normally follows, until it has arrived (at most returnBoostSeconds).
     returnBoost: 3,

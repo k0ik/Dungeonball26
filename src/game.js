@@ -1171,14 +1171,14 @@ export function createGame(container, levels, startIndex = 0) {
         // Kill cam: hold tight on it in slow motion (longer for a combo).
         const K = CONFIG.camera;
         // During your shot the kill cam (killCut) already slowed time ahead
-        // of the impact; the kill starts its hold. (Without one, the old
-        // zoom-in kill cam still runs in the enemy move.)
+        // of the impact; the kill starts its hold.
         if (state.killCut && state.killCut.hold == null) {
           state.killCut.hold = K.killCutHold;
           state.killCut.kx = o.target.x; // the jump cut turns to follow the burst
           state.killCut.kz = o.target.z;
         }
-        if ((state.phase === 'shot' && !K.killCut) || state.phase === 'enemyMove') {
+        // (No kill cam in the enemy turn: its camera is busy framing the movers.)
+        if (state.phase === 'shot' && !K.killCut) {
           state.killCam = { x: o.target.x, z: o.target.z, left: (o.shotKills ?? 1) >= 2 ? K.comboSeconds : K.killSeconds };
         }
         if (!o.fell) {
@@ -1238,6 +1238,37 @@ export function createGame(container, levels, startIndex = 0) {
    * copy of the world a little way ahead; if a kill is coming within
    * killCutLead, slow time now so the impact plays out in slow motion.
    */
+  /**
+   * What the camera frames in the enemy turn (design doc: "Camerawork"):
+   * during the wait, the enemies about to move; then every ball that's
+   * moving (knocked balls, bombs and you included), each kept for
+   * enemyLinger after it stops so the view doesn't lurch. Enemies coming for
+   * you always count; any other move only within enemyFrameRange of you.
+   */
+  const framed = new Map(); // ball -> real seconds it stays framed
+  function enemyFraming(realDt) {
+    const C = CONFIG.camera;
+    const attackers = new Set(state.moves.filter((m) => (m.kind === 'lunge' && (!m.target || m.target === hero)) || m.hunting).map((m) => m.enemy));
+    const counts = (b) => b === hero || attackers.has(b) || Math.hypot(b.x - hero.x, b.z - hero.z) <= C.enemyFrameRange;
+    if (state.phase === 'enemyWait') {
+      framed.clear();
+      return state.moves.filter((m) => m.enemy.hp > 0 && counts(m.enemy)).map((m) => m.enemy);
+    }
+    for (const b of world.balls) {
+      if ((b.vx !== 0 || b.vz !== 0) && !b.fallen && counts(b)) framed.set(b, C.enemyLinger);
+    }
+    const points = [];
+    for (const [b, left] of framed) {
+      if (left <= 0 || !world.balls.includes(b)) {
+        framed.delete(b);
+        continue;
+      }
+      if (b.vx === 0 && b.vz === 0) framed.set(b, left - realDt);
+      points.push(b);
+    }
+    return points;
+  }
+
   // The jump cut's camera: a perspective view from a spot near the impact
   // (chooseVantage), turning to follow your ball and then the kill.
   const cutCam = new THREE.PerspectiveCamera(CONFIG.camera.killCutFov, 9 / 16, 0.05, 200);
@@ -1706,37 +1737,10 @@ export function createGame(container, levels, startIndex = 0) {
         // aiming zooms out from here with power.
         rig.focus(hero, CONFIG.ball.diameter / C.restFill, realDt, C.restZoomRate, boost);
       } else {
-        // Shots, enemy moves and the rest: centred on you, widening (fast)
-        // to keep every moving ball in view, narrowing (slowly) after. In the
-        // enemy phase also where the movers started and whatever a lunge is
-        // going for. Speed pulls it out a little too, as before.
-        let points = world.balls.filter((b) => b !== hero && (b.vx !== 0 || b.vz !== 0));
-        if (state.phase === 'enemyWait' || state.phase === 'enemyMove') {
-          // The enemy turn: still on you, out only as far as the enemies
-          // coming at you (where they start and where they are now), and any
-          // other enemy moving within enemyNearRadius of you, so the action
-          // stays central; far-off patrols aren't chased.
-          points = [];
-          const near = (p) => Math.hypot(p.x - hero.x, p.z - hero.z) <= C.enemyNearRadius;
-          for (const m of state.moves) {
-            const attacking = (m.kind === 'lunge' && (!m.target || m.target === hero)) || m.hunting;
-            if (!attacking && !near(m.from) && !near(m.enemy)) continue;
-            if (attacking || near(m.from)) points.push(m.from);
-            if (m.enemy.hp > 0 && (attacking || near(m.enemy))) points.push(m.enemy);
-          }
-          // ...and always the closest enemy or two, moving or not (within
-          // enemyClosestRange), so the turn never plays out off screen.
-          enemies()
-            .filter((e) => e.hp > 0 && !isTool(e))
-            .map((e) => ({ e, d: Math.hypot(e.x - hero.x, e.z - hero.z) }))
-            .filter((o) => o.d <= C.enemyClosestRange)
-            .sort((a, b) => a.d - b.d)
-            .slice(0, C.enemyClosestCount)
-            .forEach((o) => points.push(o.e));
-        }
         const fast = Math.min(1, speedOf(hero) / CONFIG.aim.maxLaunchSpeed);
         const tight = CONFIG.ball.diameter / C.restFill;
-        if (state.killCam) {
+        const enemyTurn = state.phase === 'enemyWait' || state.phase === 'enemyMove';
+        if (state.killCam && !enemyTurn) {
           // Kill cam: tight on the kill (and you, if you're close by).
           const k = state.killCam;
           const d = Math.hypot(hero.x - k.x, hero.z - k.z);
@@ -1747,10 +1751,20 @@ export function createGame(container, levels, startIndex = 0) {
           const e = state.closeCall.enemy;
           const d = Math.hypot(hero.x - e.x, hero.z - e.z);
           rig.focus({ x: (hero.x + e.x) / 2, z: (hero.z + e.z) / 2 }, Math.max(C.closeWidth, d * 1.3 + 1.2), realDt, C.closeZoomRate);
-        } else {
+        } else if (enemyTurn) {
+          // The enemy turn: frame what's moving (enemyFraming), as tight as
+          // it can; nothing moving, back to you.
+          const points = enemyFraming(realDt);
           state.framePoints = points; // debugging: what the camera is fitting
-          const enemyTurn = state.phase === 'enemyWait' || state.phase === 'enemyMove';
-          rig.follow(hero, points, tight + (C.maxViewWidth - tight) * fast, C.maxFrameWidth, realDt, enemyTurn ? C.enemyZoomOutRate : C.followZoomOutRate);
+          if (points.length) rig.frame(points, tight, realDt, 1, C.enemyMaxWidth);
+          else rig.focus(hero, tight, realDt, C.restZoomRate);
+        } else {
+          // Your shot (and the rest): centred on you, widening (fast) to keep
+          // every moving ball in view, narrowing (slowly) after; speed pulls
+          // it out a little too.
+          const points = world.balls.filter((b) => b !== hero && (b.vx !== 0 || b.vz !== 0));
+          state.framePoints = points; // debugging: what the camera is fitting
+          rig.follow(hero, points, tight + (C.maxViewWidth - tight) * fast, C.maxFrameWidth, realDt, C.followZoomOutRate);
         }
       }
       if (state.returnBoost > 0) state.returnBoost = rig.settled ? 0 : state.returnBoost - dt;

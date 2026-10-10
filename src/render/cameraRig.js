@@ -244,11 +244,8 @@ export function createCameraRig() {
      * (the speed-based zoom); the framing only ever widens beyond it.
      */
     /** `boost` multiplies the follow and zoom rates (the snappy return to your turn). */
-    frame(points, minWidth, dt, boost = 1) {
-      Object.assign(
-        goal,
-        computeFraming(points, { yaw, elevation, aspect, minWidth, maxWidth: K.maxFrameWidth, padding: K.framePadding }),
-      );
+    frame(points, minWidth, dt, boost = 1, maxWidth = K.maxFrameWidth) {
+      Object.assign(goal, computeFraming(points, { yaw, elevation, aspect, minWidth, maxWidth, padding: K.framePadding }));
       clampGoal();
       const k = 1 - Math.exp(-K.followRate * boost * dt);
       target.x += (goal.x - target.x) * k;

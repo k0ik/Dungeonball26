@@ -1761,6 +1761,7 @@ export function createGame(container, levels, startIndex = 0) {
     lighting.setCut(cutting);
     if (cutting) aimCutCam(realDt);
     renderer.render(scene, cutting ? cutCam : rig.camera);
+    overlay.setCamera(cutting ? cutCam : rig.camera); // your sword and shield stay beside you in the cut
     overlay.update();
     trackPerf(Math.min(0.25, realDtRaw), performance.now() - frameStart);
     hud.setGold(state.gold);

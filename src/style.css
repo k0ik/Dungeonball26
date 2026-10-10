@@ -1157,9 +1157,9 @@ body {
   visibility: hidden; /* keeps its place, so the message below doesn't jump */
 }
 
-/* The kill cam's jump cut: the HP bars and labels are placed for the usual
-   camera, so they hide while the close-up view is on. */
-.kill-cut .overlay {
+/* The kill cam's jump cut: only your sword and shield stay (placed through
+   the cut's camera); HP bars, labels and alerts hide while it's on. */
+.kill-cut .overlay > :not(.gear-icon) {
   visibility: hidden;
 }
 

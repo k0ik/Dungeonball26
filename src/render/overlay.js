@@ -148,6 +148,10 @@ export function createOverlay(container, camera) {
         floats.delete(f);
       });
     },
+    /** Place things through this camera from now on (the kill cam's, while its cut is on). */
+    setCamera(c) {
+      camera = c;
+    },
     /** Show the hero's gear: sword 'whole' | null, shield true/false. */
     setGear(ball, { sword, shield }) {
       gear.ball = ball;

@@ -32,20 +32,20 @@ const LEVELS = [
   { id: 'line-of-sight', name: 'Line of Sight', text: lineOfSight, message: 'Enemies only attack if they can see you.' },
   { id: 'fight', name: 'Fight!', text: fight, message: "You're tougher than you think." },
   { id: 'barrel-run', name: 'Barrel Run', text: barrelRun, message: 'Wooden barrels contain loot. Red barrels contain explosives.' },
-  { id: 'room-raider', name: 'Room Raider', text: roomRaider },
-  { id: 'village', name: 'Village', text: village },
-  { id: 'facilities', name: 'Facilities', text: facilities },
-  { id: 'the-onion', name: 'The Onion', text: theOnion },
-  { id: 'pitfalls', name: 'Pitfalls', text: pitfalls, message: 'Knock enemies into the pits and lava. Divots pull, bumps push.' },
-  { id: 'barracks', name: 'Barracks', text: barracks }, // work in progress
   { id: 'billiards', name: 'Billiards', text: billiards },
   { id: 'long-hall', name: 'Long Hall', text: longHall },
   { id: 'one-key', name: 'One Key', text: oneKey },
   { id: 'warrens', name: 'Warrens', text: warrens },
-  { id: 'crawlspace', name: 'Crawlspace', text: crawlspace },
   { id: 'gauntlet02', name: 'Gauntlet 02', text: gauntlet02 },
   { id: 'enemytester01', name: 'Enemy Tester 01', text: enemytester01 },
+  { id: 'room-raider', name: 'Room Raider', text: roomRaider },
   { id: 'arena', name: 'Arena', text: arena },
+  { id: 'the-onion', name: 'The Onion', text: theOnion },
+  { id: 'facilities', name: 'Facilities', text: facilities },
+  { id: 'pitfalls', name: 'Pitfalls', text: pitfalls, message: 'Knock enemies into the pits and lava. Divots pull, bumps push.' },
+  { id: 'barracks', name: 'Barracks', text: barracks }, // work in progress
+  { id: 'crawlspace', name: 'Crawlspace', text: crawlspace },
+  { id: 'village', name: 'Village', text: village },
 ];
 
 // Start on a level with the URL hash, e.g. #one-key.

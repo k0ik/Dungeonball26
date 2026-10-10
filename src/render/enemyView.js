@@ -103,11 +103,27 @@ export function createEnemyView(ball, toCamera) {
     rim.position.y = hr * Math.cos(R.helmetCover);
     helmet.add(hull, shell, rim);
     helmet.position.y = r;
-    // Tilted back, away from the camera, so the brim clears the brow.
-    const back = new THREE.Vector3(-toCamera.x, 0, -toCamera.z).normalize();
-    const up = new THREE.Vector3(0, 1, 0).multiplyScalar(Math.cos(R.helmetTilt)).addScaledVector(back, Math.sin(R.helmetTilt));
-    helmet.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), up.normalize());
     group.add(helmet);
+  }
+  // Rocks the helmet back, away from wherever the face sits on the ball now
+  // (toward the camera, slid by where it looks), easing so it wobbles rather
+  // than snaps. The first call places it outright.
+  const UP = new THREE.Vector3(0, 1, 0);
+  const helmetUp = new THREE.Vector3();
+  const helmetGoal = new THREE.Quaternion();
+  let helmetPlaced = false;
+  function rockHelmet(dt) {
+    if (!helmet || helmetFly || !face) return;
+    const R = CONFIG.render;
+    // The face's direction from the ball's centre, flattened: the helmet tips the other way.
+    const fx = face.position.x;
+    const fz = face.position.z;
+    const len = Math.hypot(fx, fz) || 1;
+    helmetUp.set(-fx / len, 0, -fz / len).multiplyScalar(Math.sin(R.helmetTilt)).addScaledVector(UP, Math.cos(R.helmetTilt)).normalize();
+    helmetGoal.setFromUnitVectors(UP, helmetUp);
+    if (!helmetPlaced || dt <= 0) helmet.quaternion.copy(helmetGoal);
+    else helmet.quaternion.slerp(helmetGoal, 1 - Math.exp(-R.helmetRockRate * dt));
+    helmetPlaced = true;
   }
   let ghostOpacity = ball.phased ? CONFIG.enemy.types.ghost.fadedOpacity : 1;
 
@@ -119,6 +135,7 @@ export function createEnemyView(ball, toCamera) {
     update(dt) {
       group.position.set(ball.x, 0, ball.z);
       lookFace?.(ball.look, dt);
+      rockHelmet(dt);
       if (ball.type === 'gold' && dying < 0) {
         // It shrinks as it wears down (its physics radius shrinks with it).
         const s = group.scale.x + (ball.radius / r - group.scale.x) * Math.min(1, dt * 6);

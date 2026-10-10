@@ -529,14 +529,16 @@ export const CONFIG = {
     wallHeight: 0.55,
     heroFinish: 'ivory', // your ball: 'ivory' (a cue ball) or 'silver' (the old chrome)
     // Basic enemies wear a simple helmet: a grey cap (the top of a sphere a
-    // little bigger than the ball) tilted back off the brow, with a darker
-    // rim. It pops off and tumbles away when the enemy dies.
+    // little bigger than the ball) with a darker rim, rocked back away from
+    // the face (following it as it looks around, and to the kill cam), so
+    // the two never fight. It pops off and tumbles away when the enemy dies.
     helmet: true,
     helmetColor: 0x5f646d, // steel grey (lighter greys read beige under the torch)
     helmetRimColor: 0x3b3f46,
     helmetScale: 1.1, // of the ball's radius
-    helmetCover: 1.25, // radians of sphere from the top (a little over the top third)
-    helmetTilt: 0.42, // radians tilted back, away from the camera
+    helmetCover: 1.15, // radians of sphere from the top (about the top third)
+    helmetTilt: 0.8, // radians it rocks back, away from wherever the face is (so it never covers it)
+    helmetRockRate: 10, // 1/s: how fast it rocks to follow the face (a wobble, not a snap)
     wallOutlines: false, // the mockup's walls read by shading alone
     outlineScale: 1.08, // inverted-hull outline thickness for balls
     // Enemy HP bars get one notch per HP and grow with max HP, so a tougher

@@ -162,19 +162,8 @@ export function createHud(container) {
       shownTurn = who;
       turn.textContent = who === 'enemy' ? 'Enemy Turn' : 'Player Turn';
       turn.dataset.who = who;
-      if (who === 'enemy') {
-        // The enemy turn: the big label pops up just below your ball, holds
-        // and fades there; no small label at the bottom (hidden in CSS).
-        turn.classList.remove('show', 'landing');
-        toast.classList.remove('show', 'stay');
-        if (!first && !reducedMotion?.matches) {
-          toast.textContent = turn.textContent;
-          toast.dataset.who = who;
-          void toast.offsetWidth; // restart the animation
-          toast.classList.add('stay');
-        }
-        return;
-      }
+      // Both turns alike: the big label pops up, then flies down to the small
+      // label at the bottom, which stays for the whole turn.
       turn.classList.remove('show');
       void turn.offsetWidth;
       turn.classList.add('show');

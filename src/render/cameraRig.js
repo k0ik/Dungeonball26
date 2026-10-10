@@ -320,6 +320,10 @@ export function createCameraRig() {
       const all = [center, ...points.flatMap((p) => [p, { x: 2 * center.x - p.x, z: 2 * center.z - p.z }])];
       return computeFraming(all, { yaw, elevation, aspect, minWidth, maxWidth, padding: K.framePadding }).width;
     },
+    /** How wide a view framing `points` (with the usual padding) would need to be, uncapped. */
+    widthFor(points) {
+      return computeFraming(points, { yaw, elevation, aspect, minWidth: 0, maxWidth: Infinity, padding: K.framePadding }).width;
+    },
     speedWidth(speed) {
       const t = Math.min(1, speed / CONFIG.aim.maxLaunchSpeed);
       return K.baseViewWidth + (K.maxViewWidth - K.baseViewWidth) * t;

@@ -1152,6 +1152,7 @@ export function createGame(container, levels, startIndex = 0) {
         sfx.play('crack', 0.8, { pitch: 1.6 }); // the fuse catches
       } else if (o.type === 'boom') {
         sfx.play('explode', 1);
+        if (state.phase === 'enemyMove' || state.phase === 'enemyWait') blasts.push({ x: o.target.x, z: o.target.z, left: CONFIG.camera.enemyBlastBeat }); // the camera holds on it a beat
         objectsView.blast(o.target.x, o.target.z, CONFIG.enemy.types.bomb.blastRadius / 1.4);
         lighting.flash(o.target.x, o.target.z);
         effects.explosion(o.target.x, o.target.z, 1.4);
@@ -1243,28 +1244,47 @@ export function createGame(container, levels, startIndex = 0) {
    * during the wait, the enemies about to move; then every ball that's
    * moving (knocked balls, bombs and you included), each kept for
    * enemyLinger after it stops so the view doesn't lurch. Enemies coming for
-   * you always count; any other move only within enemyFrameRange of you.
+   * you always count, and so do you while they are; any other move only
+   * within enemyFrameRange of you. A lit bomb stays framed until it goes
+   * off, and its blast for enemyBlastBeat after. With nothing else to show,
+   * the closest enemy (with you, if you both fit): there's always an enemy
+   * in view on the enemy turn.
    */
   const framed = new Map(); // ball -> real seconds it stays framed
+  const blasts = []; // { x, z, left }: bomb blasts kept in frame a beat
   function enemyFraming(realDt) {
     const C = CONFIG.camera;
     const attackers = new Set(state.moves.filter((m) => (m.kind === 'lunge' && (!m.target || m.target === hero)) || m.hunting).map((m) => m.enemy));
     const counts = (b) => b === hero || attackers.has(b) || Math.hypot(b.x - hero.x, b.z - hero.z) <= C.enemyFrameRange;
+    const points = [];
     if (state.phase === 'enemyWait') {
       framed.clear();
-      return state.moves.filter((m) => m.enemy.hp > 0 && counts(m.enemy)).map((m) => m.enemy);
-    }
-    for (const b of world.balls) {
-      if ((b.vx !== 0 || b.vz !== 0) && !b.fallen && counts(b)) framed.set(b, C.enemyLinger);
-    }
-    const points = [];
-    for (const [b, left] of framed) {
-      if (left <= 0 || !world.balls.includes(b)) {
-        framed.delete(b);
-        continue;
+      for (const m of state.moves) if (m.enemy.hp > 0 && counts(m.enemy)) points.push(m.enemy);
+    } else {
+      for (const b of world.balls) {
+        const litBomb = b.type === 'bomb' && b.fuse != null;
+        if (((b.vx !== 0 || b.vz !== 0) && !b.fallen && counts(b)) || litBomb) framed.set(b, C.enemyLinger);
       }
-      if (b.vx === 0 && b.vz === 0) framed.set(b, left - realDt);
-      points.push(b);
+      for (const [b, left] of framed) {
+        if (left <= 0 || !world.balls.includes(b)) {
+          framed.delete(b);
+          continue;
+        }
+        if (b.vx === 0 && b.vz === 0) framed.set(b, left - realDt);
+        points.push(b);
+      }
+      for (let i = blasts.length - 1; i >= 0; i--) {
+        if ((blasts[i].left -= realDt) <= 0) blasts.splice(i, 1);
+        else points.push(blasts[i]);
+      }
+    }
+    // You, while an enemy is coming for you.
+    if (points.length && [...attackers].some((e) => e.hp > 0) && !points.includes(hero)) points.push(hero);
+    if (!points.length) {
+      const closest = enemies()
+        .filter((e) => e.hp > 0 && !isTool(e))
+        .reduce((a, e) => (!a || Math.hypot(e.x - hero.x, e.z - hero.z) < Math.hypot(a.x - hero.x, a.z - hero.z) ? e : a), null);
+      if (closest) points.push(closest, ...(rig.widthFor([closest, hero]) <= C.enemyMaxWidth ? [hero] : []));
     }
     return points;
   }
@@ -1561,7 +1581,8 @@ export function createGame(container, levels, startIndex = 0) {
         if (state.timer <= 0) launchEnemies();
         break;
       case 'enemyMove':
-        if (isAtRest(world) && !bombsPending()) {
+        // (And a bomb's blast gets its beat on screen before your turn comes.)
+        if (isAtRest(world) && !bombsPending() && !blasts.length) {
           state.moves = [];
           endMoveForGold();
           state.phase = 'aim';

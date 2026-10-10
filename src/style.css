@@ -1127,35 +1127,6 @@ body {
 .death[data-variant='death'] span {
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85), 0 0 2px rgba(0, 0, 0, 0.9);
 }
-/* The enemy turn: the big label pops up in the same place, holds, and
-   fades where it is (no small label at the bottom for the enemy turn). */
-.turn-toast.stay {
-  animation: turn-toast-stay 1.05s ease-in-out forwards;
-}
-@keyframes turn-toast-stay {
-  0% {
-    opacity: 0;
-    scale: 0.6;
-  }
-  15% {
-    opacity: 1;
-    scale: 1.08;
-  }
-  25% {
-    scale: 1;
-  }
-  70% {
-    opacity: 1;
-    scale: 1;
-  }
-  100% {
-    opacity: 0;
-    scale: 0.95;
-  }
-}
-.turn-label[data-who='enemy'] {
-  visibility: hidden; /* keeps its place, so the message below doesn't jump */
-}
 
 /* The kill cam's jump cut: only your sword and shield stay (placed through
    the cut's camera); HP bars, labels and alerts hide while it's on. */

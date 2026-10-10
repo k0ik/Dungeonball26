@@ -404,6 +404,7 @@ export const CONFIG = {
     enemyFrameRange: 8, // tiles
     enemyLinger: 0.35, // real seconds a ball stays framed after it stops
     enemyMaxWidth: 14, // tiles across at most
+    enemyBlastBeat: 0.8, // real seconds a bomb's blast stays framed after it goes off
     // Back to your turn: the camera returns to you this many times faster than
     // it normally follows, until it has arrived (at most returnBoostSeconds).
     returnBoost: 3,

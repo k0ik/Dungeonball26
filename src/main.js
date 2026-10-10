@@ -10,6 +10,7 @@ import roomRaider from './levels/room-raider.txt?raw';
 import village from './levels/village.txt?raw';
 import facilities from './levels/facilities.txt?raw';
 import theOnion from './levels/the-onion.txt?raw';
+import arena from './levels/arena.txt?raw';
 import barracks from './levels/barracks.txt?raw';
 import billiards from './levels/billiards.txt?raw';
 import barrelRun from './levels/barrel-run.txt?raw';
@@ -44,6 +45,7 @@ const LEVELS = [
   { id: 'crawlspace', name: 'Crawlspace', text: crawlspace },
   { id: 'gauntlet02', name: 'Gauntlet 02', text: gauntlet02 },
   { id: 'enemytester01', name: 'Enemy Tester 01', text: enemytester01 },
+  { id: 'arena', name: 'Arena', text: arena },
 ];
 
 // Start on a level with the URL hash, e.g. #one-key.

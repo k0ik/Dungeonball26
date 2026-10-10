@@ -455,12 +455,6 @@ export const CONFIG = {
     killCutFov: 55, // degrees across the screen (the narrow way, on a phone)
     killCutTrack: 7, // 1/s: how fast the view turns to follow (your ball and the impact, then the kill)
     killCutLeadShare: 0.5, // before the impact, look this far from your ball toward the impact point
-    // Close calls (the same cut and slow motion): your ball shaving past an
-    // enemy without touching it.
-    closeCallCut: true,
-    closeCallGap: 0.12, // tiles between the two balls' surfaces at most (a hair's breadth)
-    closeCallSpeed: 2.5, // tiles/s your ball must be going at least
-    closeCallHold: 0.6, // real seconds it stays on after the pass
     killSlow: 0.3,
     killWidth: 2.8,
     timeEaseRate: 9, // 1/s: how quickly time slows and comes back

@@ -69,20 +69,3 @@ test('two enemies that already collided this shot are not predicted to hurt each
   const used = { pairs: new Set(['a|b']), damaged: [], kills: 0 };
   assert.equal(predictKill(world, hero, 1, new Map(), null, used), null, 'that pair already met this shot: no kill');
 });
-
-test('a close call: your ball shaving past an enemy without touching it', () => {
-  const world = createWorld(room);
-  const hero = createBall({ x: 2.5, z: 3.5, kind: 'hero', id: 'hero' });
-  hero.atk = 1;
-  const enemy = createEnemy({ x: 6.5, z: 3.5 + 0.325 * 2 + 0.06, level: 1, id: 'e' }); // passes 0.06 tiles apart
-  enemy.hp = 2;
-  world.balls.push(hero, enemy);
-  hero.vx = 6;
-  const near = { gap: 0.12, speed: 2.5 };
-  const p = predictKill(world, hero, 1, new Map(), null, null, near);
-  assert.equal(p?.kind, 'near');
-  assert.equal(p.target, enemy);
-  assert.ok(p.gap < 0.12 && p.t > 0.4 && p.t < 0.9, JSON.stringify(p));
-  enemy.z += 0.3; // a wide miss: nothing
-  assert.equal(predictKill(world, hero, 1, new Map(), null, null, near), null);
-});

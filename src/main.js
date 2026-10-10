@@ -25,7 +25,7 @@ const LEVELS = [
   // The tutorials first, in order (see CLAUDE.md); a level played from the
   // level editor slots in at the current place instead.
   // `message` (optional): shown in a panel at the bottom while you're on the level.
-  { id: 'tut01', name: 'Tutorial 01', text: tut01, message: 'Press on the ball and drag to aim. Release to shoot. Reach the exit.' },
+  { id: 'tut01', name: 'Welcome to Dungeonball', text: tut01, message: 'Press on the ball and drag to aim. Release to shoot. Reach the exit.' },
   { id: 'floor-is-lava', name: 'The Floor is Lava', text: floorIsLava, message: 'Be careful! Sometimes full power is dangerous.' },
   { id: 'round-the-bend', name: 'Round the Bend', text: roundTheBend, message: 'Shoot straight ahead to bank around curves.' },
   { id: 'line-of-sight', name: 'Line of Sight', text: lineOfSight, message: 'Enemies only attack if they can see you.' },
@@ -35,8 +35,8 @@ const LEVELS = [
   { id: 'long-hall', name: 'Long Hall', text: longHall },
   { id: 'one-key', name: 'One Key', text: oneKey },
   { id: 'warrens', name: 'Warrens', text: warrens },
-  { id: 'gauntlet02', name: 'Gauntlet 02', text: gauntlet02 },
-  { id: 'enemytester01', name: 'Enemy Tester 01', text: enemytester01 },
+  { id: 'gauntlet02', name: 'The Gauntlet', text: gauntlet02 },
+  { id: 'enemytester01', name: 'The Hallway', text: enemytester01 },
   { id: 'room-raider', name: 'Room Raider', text: roomRaider },
   { id: 'arena', name: 'Arena', text: arena },
   { id: 'the-onion', name: 'The Onion', text: theOnion },

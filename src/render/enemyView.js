@@ -115,11 +115,16 @@ export function createEnemyView(ball, toCamera) {
   function rockHelmet(dt) {
     if (!helmet || helmetFly || !face) return;
     const R = CONFIG.render;
-    // The face's direction from the ball's centre, flattened: the helmet tips the other way.
+    // The face's direction from the ball's centre: the helmet tips the other
+    // way, as far as it takes to keep helmetClear between the face's middle
+    // and its crown, so the higher the face (looking up), the further back.
     const fx = face.position.x;
+    const fy = face.position.y - r;
     const fz = face.position.z;
     const len = Math.hypot(fx, fz) || 1;
-    helmetUp.set(-fx / len, 0, -fz / len).multiplyScalar(Math.sin(R.helmetTilt)).addScaledVector(UP, Math.cos(R.helmetTilt)).normalize();
+    const faceAngle = Math.atan2(len, fy); // from straight up
+    const tilt = Math.min(R.helmetTiltMax, Math.max(R.helmetTiltMin, R.helmetClear - faceAngle));
+    helmetUp.set(-fx / len, 0, -fz / len).multiplyScalar(Math.sin(tilt)).addScaledVector(UP, Math.cos(tilt)).normalize();
     helmetGoal.setFromUnitVectors(UP, helmetUp);
     if (!helmetPlaced || dt <= 0) helmet.quaternion.copy(helmetGoal);
     else helmet.quaternion.slerp(helmetGoal, 1 - Math.exp(-R.helmetRockRate * dt));

@@ -537,7 +537,9 @@ export const CONFIG = {
     helmetRimColor: 0x3b3f46,
     helmetScale: 1.1, // of the ball's radius
     helmetCover: 1.15, // radians of sphere from the top (about the top third)
-    helmetTilt: 0.8, // radians it rocks back, away from wherever the face is (so it never covers it)
+    helmetClear: 1.85, // radians kept between the face's middle and the helmet's crown: it rocks back as far as that takes (further when the face looks up)
+    helmetTiltMin: 0.35, // radians it always rocks back at least...
+    helmetTiltMax: 1.35, // ...and at most
     helmetRockRate: 10, // 1/s: how fast it rocks to follow the face (a wobble, not a snap)
     wallOutlines: false, // the mockup's walls read by shading alone
     outlineScale: 1.08, // inverted-hull outline thickness for balls

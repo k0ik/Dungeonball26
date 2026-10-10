@@ -244,3 +244,15 @@ test('Seeker: without sight, its patrols close the walking distance to you, roun
   }
   assert.ok(toHero(Math.floor(s.x), Math.floor(s.z)) <= start - 8, `closed in: ${toHero(Math.floor(s.x), Math.floor(s.z))} of ${start}`);
 });
+
+test('a fractional patrol radius (a Sticky Icky patrols 1.5 tiles) still finds whole tiles to go to', async () => {
+  const { patrolMove } = await import('../src/turns.js');
+  const { parseLevel } = await import('../src/level.js');
+  const { createEnemy } = await import('../src/combat.js');
+  const level = parseLevel('#######\n#.....#\n#..S..#\n#.....#\n#######');
+  const slime = createEnemy({ x: 3.5, z: 2.5, level: 1, id: 's', type: 'sticky' });
+  const move = patrolMove(level, slime, [slime], () => 0.5);
+  assert.ok(move, 'found a spot');
+  assert.ok(Number.isInteger(move.target.x - 0.5) && Number.isInteger(move.target.z - 0.5), JSON.stringify(move.target));
+  assert.ok(Math.hypot(move.target.x - 3.5, move.target.z - 2.5) <= 1.5);
+});

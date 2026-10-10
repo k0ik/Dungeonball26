@@ -70,8 +70,9 @@ export function patrolMove(level, enemy, balls, rng = Math.random, statics = [])
   const col0 = Math.floor(enemy.x);
   const row0 = Math.floor(enemy.z);
   const options = [];
-  for (let row = row0 - R; row <= row0 + R; row++) {
-    for (let col = col0 - R; col <= col0 + R; col++) {
+  const span = Math.ceil(R); // whole tiles to search (the radius can be fractional: a Sticky Icky's 1.5)
+  for (let row = row0 - span; row <= row0 + span; row++) {
+    for (let col = col0 - span; col <= col0 + span; col++) {
       if (col === col0 && row === row0) continue;
       if (!isFloorLike(tileAt(level, col, row)) || tileAt(level, col, row) === 'exit') continue;
       const x = col + 0.5;

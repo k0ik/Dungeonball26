@@ -1252,18 +1252,26 @@ export function createGame(container, levels, startIndex = 0) {
   }
 
   // --- Debug overlay -----------------------------------------------------------
-  // Performance readout: tap the gold counter three times quickly (or press p).
+  // Performance readout: press p.
   const perfView = document.createElement('pre');
   perfView.className = 'perf';
   perfView.hidden = true;
   container.appendChild(perfView);
+
+  /** Skip to the next level (n, or three quick taps on the gold counter); not mid-death or between levels. */
+  function skipLevel() {
+    if (['won', 'pick', 'exiting', 'down'].includes(state.phase)) return;
+    loadLevel(levelIndex + 1);
+    levelBanner();
+  }
   let goldTaps = [];
   container.querySelector('.hud-left').addEventListener('pointerdown', (e) => {
     e.stopPropagation();
-    goldTaps = [...goldTaps.filter((t) => e.timeStamp - t < 800), e.timeStamp];
+    e.preventDefault(); // no double-tap zoom or text selection eating the taps
+    goldTaps = [...goldTaps.filter((t) => e.timeStamp - t < 900), e.timeStamp];
     if (goldTaps.length >= 3) {
-      perfView.hidden = !perfView.hidden;
       goldTaps = [];
+      skipLevel();
     }
   });
 
@@ -1277,10 +1285,7 @@ export function createGame(container, levels, startIndex = 0) {
     if (e.key === 'd' || e.key === '`') debug.hidden = !debug.hidden;
     if (e.key === 'p') perfView.hidden = !perfView.hidden;
     if (e.key === 'r' && state.phase === 'aim') respawn();
-    if (e.key === 'n' && state.phase !== 'won' && state.phase !== 'pick' && state.phase !== 'exiting' && state.phase !== 'down') {
-      loadLevel(levelIndex + 1);
-      levelBanner();
-    }
+    if (e.key === 'n') skipLevel();
   });
 
   // --- Layout ------------------------------------------------------------------

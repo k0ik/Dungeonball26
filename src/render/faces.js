@@ -183,7 +183,7 @@ function drawDead(g) {
     }
     g.stroke();
 }
-const deadFace = () => faceTexture('dead', drawDead);
+export const deadFace = () => faceTexture('dead', drawDead);
 
 let skullTex = null;
 /**

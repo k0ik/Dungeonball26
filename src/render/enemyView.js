@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { toonMaterial, outlineHullMaterial, clearOccluder } from './materials.js';
-import { calmFace, angryFace, ouchFace, faceSprite, faceLook } from './faces.js';
+import { calmFace, angryFace, ouchFace, deadFace, faceSprite, faceLook } from './faces.js';
 
 const shadowMaterial = new THREE.MeshBasicMaterial({
   color: CONFIG.colors.shadow,
@@ -259,10 +259,10 @@ export function createEnemyView(ball, toCamera) {
     },
     die() {
       if (dying < 0) dying = 0;
-      // Killed: it winces as it pops (>.<), which the kill cam's slow motion shows.
+      // Killed: it wears your death face (XX eyes) as it pops, which the kill cam's slow motion shows.
       if (face && !falling) {
         ouchLeft = Infinity;
-        showFace(ouchFace());
+        showFace(deadFace());
       }
       // The helmet pops off (into the scene, so it outlives the shrinking ball).
       if (helmet && !helmetFly && !falling && group.parent) {

@@ -11,12 +11,16 @@ import { createCombat } from './combat.js';
 
 /**
  * Run `world` forward up to `seconds` of game time on a copy. Returns the
- * first predicted kill, { target (the real enemy), x, z, t (seconds from
- * now), index (kills predicted before it in this look) }, or null.
+ * first predicted kill, { kind: 'kill', target (the real enemy), x, z, t
+ * (seconds from now), index (kills predicted before it in this look) };
+ * failing that, with `near` ({ gap, speed }), the closest near miss: your
+ * ball shaving past an enemy within `gap` tiles, at `speed` tiles/s or more,
+ * without touching it in the look ({ kind: 'near', target, x, z, t, gap });
+ * or null.
  * `kicked` is the live per-move bumper kick record (copied, not changed);
  * `shot` is the live combat's shotState().
  */
-export function predictKill(world, hero, seconds, kicked = new Map(), elastic = null, shot = null) {
+export function predictKill(world, hero, seconds, kicked = new Map(), elastic = null, shot = null, near = null) {
   const real = new Map(); // copy -> original
   const copy = new Map(); // original -> copy
   const balls = world.balls.map((b) => {
@@ -38,19 +42,39 @@ export function predictKill(world, hero, seconds, kicked = new Map(), elastic = 
   const R = CONFIG.enemy.types.rubber;
   const step = CONFIG.physics.step;
   let kills = 0;
+  const shaves = new Map(); // enemy copy -> closest pass { gap, t, x, z }, or 'touched'
   for (let t = 0; t < seconds; t += step) {
     stepWorld(w, step);
     const outcomes = combat.resolve(w, h);
     applyRubberRebound(w, h, R.rebound, R.maxRebound);
     applyBumperKicks(w, kicks, CONFIG.aim.maxLaunchSpeed, elastic && { ...elastic, ball: h });
+    if (near) {
+      for (const ev of w.events) {
+        if (ev.type === 'ball' && (ev.a === h || ev.b === h)) shaves.set(ev.a === h ? ev.b : ev.a, 'touched');
+      }
+      const v = Math.hypot(h.vx, h.vz);
+      if (v >= near.speed) {
+        for (const e of w.balls) {
+          if (e.kind !== 'enemy' || e.hp <= 0 || e.phased || e.type === 'bomb' || e.type === 'gold' || shaves.get(e) === 'touched') continue;
+          const gap = Math.hypot(e.x - h.x, e.z - h.z) - e.radius - h.radius;
+          const best = shaves.get(e);
+          if (gap > 0 && gap <= near.gap && (!best || gap < best.gap)) shaves.set(e, { gap, t, x: e.x, z: e.z });
+        }
+      }
+    }
     w.events.length = 0;
     for (const o of outcomes) {
       if (o.type !== 'kill') continue;
       const target = real.get(o.target);
-      if (target) return { target, x: o.target.x, z: o.target.z, t, index: kills };
+      if (target) return { kind: 'kill', target, x: o.target.x, z: o.target.z, t, index: kills };
       kills++; // a golem piece born in the prediction: counts toward a combo, no cam
     }
     if (w.balls.every((b) => b.vx === 0 && b.vz === 0)) break;
   }
-  return null;
+  let best = null;
+  for (const [e, s] of shaves) {
+    if (s === 'touched' || !real.has(e)) continue;
+    if (!best || s.gap < best.gap) best = { kind: 'near', target: real.get(e), x: s.x, z: s.z, t: s.t, gap: s.gap };
+  }
+  return best;
 }

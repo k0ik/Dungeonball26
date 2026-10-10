@@ -1251,9 +1251,10 @@ export function createGame(container, levels, startIndex = 0) {
     if (!C.killCut || state.phase !== 'shot' || state.killCut || hero.inert) return;
     if (++predictTick % C.killCutEvery) return;
     const elastic = card('elasticity') ? { kick: CONFIG.cards.elasticityKick, perBumper: CONFIG.cards.elasticityKicksPerBumper } : null;
-    const p = predictKill(world, hero, C.killCutLook, state.kicked, elastic, combat.shotState());
+    const near = C.closeCallCut ? { gap: C.closeCallGap, speed: C.closeCallSpeed } : null;
+    const p = predictKill(world, hero, C.killCutLook, state.kicked, elastic, combat.shotState(), near);
     if (!p || p.t > C.killCutLead) return;
-    if (C.killCutWhich === 'combo' && combat.shotKills + p.index < 1) return;
+    if (p.kind === 'kill' && C.killCutWhich === 'combo' && combat.shotKills + p.index < 1) return;
     // Jump cut: to a spot that sees your ball and the impact. With none,
     // no kill cam at all: slow motion on the usual view, unframed, just
     // reads as a glitch. (It keeps looking: a spot may open up as you close in.)
@@ -1261,7 +1262,7 @@ export function createGame(container, levels, startIndex = 0) {
     const toward = { x: rig.toCamera.x, z: rig.toCamera.z };
     const spot = chooseVantage(level, world.balls, hero, { x: p.x, z: p.z }, { x: hero.vx, z: hero.vz }, toward);
     if (!spot) return;
-    state.killCut = { target: p.target, x: p.x, z: p.z, at: world.time + p.t, hold: null, cam: spot };
+    state.killCut = { target: p.target, x: p.x, z: p.z, at: world.time + p.t, hold: null, cam: spot, near: p.kind === 'near' };
     cutCam.position.set(spot.x, spot.y, spot.z);
     const s = C.killCutLeadShare;
     cutLook.set(hero.x + (p.x - hero.x) * s, BALL_Y, hero.z + (p.z - hero.z) * s);
@@ -1303,7 +1304,8 @@ export function createGame(container, levels, startIndex = 0) {
       else if (k.hold != null) {
         k.hold -= realDt;
         if (k.hold <= 0) state.killCut = null;
-      } else if (world.time > k.at + 0.3) state.killCut = null;
+      } else if (k.near && world.time >= k.at) k.hold = C.closeCallHold; // a close call: no kill to wait for, just the pass
+      else if (world.time > k.at + 0.3) state.killCut = null;
     }
     // A close call: you and an enemy about to meet (whichever is moving).
     let best = null;

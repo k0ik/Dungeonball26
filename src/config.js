@@ -441,7 +441,18 @@ export const CONFIG = {
     killCutLead: 0.45, // seconds of game time before the impact that slow motion starts
     killCutLook: 0.6, // seconds of game time the prediction looks ahead
     killCutEvery: 3, // frames between predictions
-    killCutHold: 0.6, // real seconds it stays slow after the kill
+    killCutHold: 0.9, // real seconds it stays slow after the kill
+    // Stage 2: the jump cut (src/killCutVantage.js). A perspective camera on
+    // a ring round the impact, on the usual camera's side of the board.
+    killCutJump: true,
+    killCutRadius: 4, // tiles from the impact
+    killCutHeight: 4.2, // tiles up (walls are 0.55): looking down steeply, so the floor fills a tall phone screen
+    killCutSpread: 45, // degrees either side of the usual camera's direction (faces are drawn facing it)
+    killCutSpots: 13, // spots tried on that arc
+    killCutClear: 1.8, // tiles a spot keeps from every ball (on the ground), so none looms in front of the lens
+    killCutFov: 55, // degrees across the screen (the narrow way, on a phone)
+    killCutTrack: 7, // 1/s: how fast the view turns to follow (your ball and the impact, then the kill)
+    killCutLeadShare: 0.5, // before the impact, look this far from your ball toward the impact point
     killSlow: 0.3,
     killWidth: 2.8,
     timeEaseRate: 9, // 1/s: how quickly time slows and comes back

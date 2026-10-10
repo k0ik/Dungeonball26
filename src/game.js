@@ -22,6 +22,7 @@ import { parseLevel, tileCenter, tileAt } from './level.js';
 import { freeSpawn } from './spawn.js';
 import { createWorld, createBall, stepWorld, isAtRest, speedOf, overlapsSolid, applyBumperKicks, applyRubberRebound } from './physics.js';
 import { predictKill } from './killPredict.js';
+import { chooseVantage } from './killCutVantage.js';
 import { createCombat, createEnemy } from './combat.js';
 import { canSee, lungeClear } from './sight.js';
 import { lungeVelocity, patrolMove, pickPatrollers, walkDistances, seekerMove } from './turns.js';
@@ -1162,7 +1163,11 @@ export function createGame(container, levels, startIndex = 0) {
         // During your shot the kill cam (killCut) already slowed time ahead
         // of the impact; the kill starts its hold. (Without one, the old
         // zoom-in kill cam still runs in the enemy move.)
-        if (state.killCut && state.killCut.hold == null) state.killCut.hold = K.killCutHold;
+        if (state.killCut && state.killCut.hold == null) {
+          state.killCut.hold = K.killCutHold;
+          state.killCut.kx = o.target.x; // the jump cut turns to follow the burst
+          state.killCut.kz = o.target.z;
+        }
         if ((state.phase === 'shot' && !K.killCut) || state.phase === 'enemyMove') {
           state.killCam = { x: o.target.x, z: o.target.z, left: (o.shotKills ?? 1) >= 2 ? K.comboSeconds : K.killSeconds };
         }
@@ -1223,6 +1228,12 @@ export function createGame(container, levels, startIndex = 0) {
    * copy of the world a little way ahead; if a kill is coming within
    * killCutLead, slow time now so the impact plays out in slow motion.
    */
+  // The jump cut's camera: a perspective view from a spot near the impact
+  // (chooseVantage), turning to follow your ball and then the kill.
+  const cutCam = new THREE.PerspectiveCamera(CONFIG.camera.killCutFov, 9 / 16, 0.05, 200);
+  const cutLook = new THREE.Vector3();
+  const BALL_Y = CONFIG.ball.diameter / 2;
+
   let predictTick = 0;
   function watchForKills() {
     const C = CONFIG.camera;
@@ -1233,6 +1244,31 @@ export function createGame(container, levels, startIndex = 0) {
     if (!p || p.t > C.killCutLead) return;
     if (C.killCutWhich === 'combo' && combat.shotKills + p.index < 1) return;
     state.killCut = { target: p.target, x: p.x, z: p.z, at: world.time + p.t, hold: null };
+    // Jump cut: to a spot that sees your ball and the impact (or none: the
+    // slow motion plays on the usual camera).
+    if (C.killCutJump) {
+      const toward = { x: rig.toCamera.x, z: rig.toCamera.z };
+      const spot = chooseVantage(level, world.balls, hero, { x: p.x, z: p.z }, { x: hero.vx, z: hero.vz }, toward);
+      if (spot) {
+        state.killCut.cam = spot;
+        cutCam.position.set(spot.x, spot.y, spot.z);
+        const s = C.killCutLeadShare;
+        cutLook.set(hero.x + (p.x - hero.x) * s, BALL_Y, hero.z + (p.z - hero.z) * s);
+        cutCam.lookAt(cutLook);
+      }
+    }
+  }
+
+  /** The jump cut's view this frame: on your ball until the kill, then on where it died (the loot bursting). */
+  function aimCutCam(realDt) {
+    const k = state.killCut;
+    const s = CONFIG.camera.killCutLeadShare;
+    const on = k.kx != null ? { x: k.kx, z: k.kz } : { x: hero.x + (k.x - hero.x) * s, z: hero.z + (k.z - hero.z) * s };
+    const f = 1 - Math.exp(-CONFIG.camera.killCutTrack * realDt);
+    cutLook.x += (on.x - cutLook.x) * f;
+    cutLook.z += (on.z - cutLook.z) * f;
+    cutLook.y = BALL_Y;
+    cutCam.lookAt(cutLook);
   }
 
   function hitStop(seconds) {
@@ -1338,6 +1374,11 @@ export function createGame(container, levels, startIndex = 0) {
     if (!w || !h) return;
     renderer.setSize(w, h);
     rig.setAspect(w / h);
+    // killCutFov is the angle across the screen: the vertical one follows from the shape.
+    const across = THREE.MathUtils.degToRad(CONFIG.camera.killCutFov);
+    cutCam.aspect = w / h;
+    cutCam.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(across / 2) / Math.min(1, w / h)));
+    cutCam.updateProjectionMatrix();
   }
   new ResizeObserver(resize).observe(container);
   resize();
@@ -1699,7 +1740,12 @@ export function createGame(container, levels, startIndex = 0) {
     }
     rig.updateShake(realDt);
     lighting.update(realDt, hero, world.balls, world.statics, level.exits, level.lavas ?? []);
-    renderer.render(scene, rig.camera);
+    // The kill cam's jump cut renders from its own camera; the HP bars and
+    // labels (placed for the usual camera) hide meanwhile.
+    const cutting = !!state.killCut?.cam;
+    container.classList.toggle('kill-cut', cutting);
+    if (cutting) aimCutCam(realDt);
+    renderer.render(scene, cutting ? cutCam : rig.camera);
     overlay.update();
     trackPerf(Math.min(0.25, realDtRaw), performance.now() - frameStart);
     hud.setGold(state.gold);

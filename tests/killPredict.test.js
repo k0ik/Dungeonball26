@@ -35,3 +35,22 @@ test('no kill predicted when the hit would not kill, or it is too far ahead', ()
   const { world, hero } = setup(1);
   assert.equal(predictKill(world, hero, 0.2), null, 'the impact is beyond the look-ahead');
 });
+
+import { chooseVantage, seesOver } from '../src/killCutVantage.js';
+
+test('the jump cut picks a spot on the usual camera side that sees your ball and the impact, clear of the balls', () => {
+  const level = parseLevel('#############\n#...........#\n#...........#\n#...........#\n#.....S.....#\n#...........#\n#...........#\n#...........#\n#############');
+  const hero = { x: 2.5, z: 4.5 };
+  const impact = { x: 8.5, z: 4.5 };
+  const toward = { x: 0.5, z: 0.866 }; // the usual camera looks from +z (down the screen)
+  const spot = chooseVantage(level, [{ ...hero, radius: 0.3 }, { ...impact, radius: 0.3 }], hero, impact, { x: 1, z: 0 }, toward);
+  assert.ok(spot, 'found one');
+  assert.ok(spot.z > impact.z, `on the camera's side of the board, got ${JSON.stringify(spot)}`);
+  assert.ok(seesOver(level, spot, spot.y, hero) && seesOver(level, spot, spot.y, impact));
+});
+
+test('a camera low behind a wall cannot see over it; a high one can', () => {
+  const level = parseLevel('#######\n#.....#\n#..#..#\n#..S..#\n#######');
+  assert.equal(seesOver(level, { x: 3.5, z: 1.5 }, 0.4, { x: 3.5, z: 3.5 }), false);
+  assert.equal(seesOver(level, { x: 3.5, z: 1.5 }, 3, { x: 3.5, z: 3.5 }), true);
+});

@@ -1156,3 +1156,9 @@ body {
 .turn-label[data-who='enemy'] {
   visibility: hidden; /* keeps its place, so the message below doesn't jump */
 }
+
+/* The kill cam's jump cut: the HP bars and labels are placed for the usual
+   camera, so they hide while the close-up view is on. */
+.kill-cut .overlay {
+  visibility: hidden;
+}

@@ -246,10 +246,11 @@ export function skullTexture() {
 
 export const heroFaces = { confident: confidentFace, determined: determinedFace, ouch: ouchFace, worried: worriedFace, dead: deadFace };
 
-// Which way faces turn: toward the active camera. The usual camera is
-// orthographic, so one direction serves every ball; the kill cam's close
-// perspective camera sets `from` (its position), and each face turns to it
-// from its own ball.
+// Which way faces turn: toward the active camera, along its view direction
+// (the usual camera's, or the kill cam's while it's on). `from` (a camera
+// position, each face turning to it from its own ball) is supported but
+// unused: a face sprite lies flat to the screen, so off the middle of a
+// close perspective view it would tilt into its own sphere.
 const faceView = { dir: null, from: null };
 const tmpPos = new THREE.Vector3();
 const tmpDir = new THREE.Vector3();

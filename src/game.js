@@ -1233,6 +1233,7 @@ export function createGame(container, levels, startIndex = 0) {
   // (chooseVantage), turning to follow your ball and then the kill.
   const cutCam = new THREE.PerspectiveCamera(CONFIG.camera.killCutFov, 9 / 16, 0.05, 200);
   const cutLook = new THREE.Vector3();
+  const faceDir = new THREE.Vector3();
   const BALL_Y = CONFIG.ball.diameter / 2;
 
   let predictTick = 0;
@@ -1430,8 +1431,12 @@ export function createGame(container, levels, startIndex = 0) {
     // state.timeScale; the camera keeps real time so it stays smooth.
     watchForKills();
     const dt = realDt * updateDrama(realDt);
-    // Faces turn to the active camera: the kill cam's while it's on.
-    if (state.killCut?.cam) setFaceView(rig.toCamera, cutCam.position);
+    // Faces turn to the active camera: the kill cam's while it's on. Along
+    // its view direction (not toward its position from each ball): a face
+    // sprite always lies flat to the screen, so only then does it sit flat
+    // on its ball, instead of tilting into the sphere off the middle of a
+    // wide close view.
+    if (state.killCut?.cam) setFaceView(cutCam.getWorldDirection(faceDir).negate());
     else setFaceView(rig.toCamera);
 
     const step = CONFIG.physics.step;

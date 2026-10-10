@@ -88,7 +88,7 @@ export function createEnemyView(ball, toCamera) {
   // A basic enemy wears a helmet (render.helmet): its shape cue.
   let helmet = null;
   let helmetFly = null; // once it pops off: { vx, vy, vz, spin, t }
-  if (!ball.type && CONFIG.render.helmet) {
+  if (!ball.type && CONFIG.render.helmet && ball.hp >= 2) {
     const R = CONFIG.render;
     const hr = r * R.helmetScale;
     const cap = new THREE.SphereGeometry(hr, 28, 10, 0, Math.PI * 2, 0, R.helmetCover);
@@ -130,6 +130,13 @@ export function createEnemyView(ball, toCamera) {
     else helmet.quaternion.slerp(helmetGoal, 1 - Math.exp(-R.helmetRockRate * dt));
     helmetPlaced = true;
   }
+  /** The helmet pops off (into the scene, so it outlives a shrinking ball): up, away and tumbling. */
+  function popHelmet() {
+    if (!helmet || helmetFly || !group.parent) return;
+    group.parent.attach(helmet);
+    const a = Math.random() * Math.PI * 2;
+    helmetFly = { vx: Math.cos(a) * 1.2, vy: 3.2, vz: Math.sin(a) * 1.2, spin: 9 + Math.random() * 5, axis: new THREE.Vector3(Math.sin(a), 0, -Math.cos(a)), t: 0 };
+  }
   let ouchLeft = 0; // seconds left on the ouch face
   function showFace(tex) {
     if (face.material.map === tex) return;
@@ -146,6 +153,9 @@ export function createEnemyView(ball, toCamera) {
     update(dt) {
       group.position.set(ball.x, 0, ball.z);
       lookFace?.(ball.look, dt);
+      // Down to its last HP: the helmet is knocked off, so you can tell at a
+      // glance it goes down to one more hit.
+      if (helmet && !helmetFly && ball.hp <= 1 && ball.hp > 0 && dying < 0) popHelmet();
       rockHelmet(dt);
       if (ouchLeft > 0 && (ouchLeft -= dt) <= 0) showFace(angry ? angryFace() : calmFace());
       if (ball.type === 'gold' && dying < 0) {
@@ -230,6 +240,7 @@ export function createEnemyView(ball, toCamera) {
         if (fade <= 0) {
           helmet.parent?.remove(helmet);
           helmetFly = null;
+          helmet = null; // gone for good
         }
       }
       if (dying >= 0 && !falling) {
@@ -264,12 +275,7 @@ export function createEnemyView(ball, toCamera) {
         ouchLeft = Infinity;
         showFace(deadFace());
       }
-      // The helmet pops off (into the scene, so it outlives the shrinking ball).
-      if (helmet && !helmetFly && !falling && group.parent) {
-        group.parent.attach(helmet);
-        const a = Math.random() * Math.PI * 2;
-        helmetFly = { vx: Math.cos(a) * 1.2, vy: 3.2, vz: Math.sin(a) * 1.2, spin: 9 + Math.random() * 5, axis: new THREE.Vector3(Math.sin(a), 0, -Math.cos(a)), t: 0 };
-      }
+      if (!falling) popHelmet();
     },
     /** Fell in a pit or lava: drops out of sight (CONFIG.render.fallSeconds). */
     fall() {

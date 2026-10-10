@@ -85,6 +85,8 @@ export function createLighting(scene) {
   const tmp = new THREE.Color();
   let flashes = [];
   let clock = 0;
+  let cut = 0; // 0 normal .. 1 the kill cam's darkness
+  let cutOn = false;
   const chestGlow = new WeakMap(); // chest -> its glow, 1 lit .. 0 out
   const candidates = [];
 
@@ -93,6 +95,10 @@ export function createLighting(scene) {
   }
 
   return {
+    /** The kill cam's cut: the room's baseline light sinks (eased), leaving the pools. */
+    setCut(on) {
+      cutOn = on;
+    },
     flash(x, z) {
       flashes.push({ x, z, t: 0 });
       flashLight.position.set(x, 1.2, z);
@@ -100,6 +106,8 @@ export function createLighting(scene) {
     },
     update(dt, hero, balls, statics, exits = [], lavas = []) {
       candidates.length = 0;
+      cut = cutOn ? Math.min(1, cut + dt / L.cutDarkenSeconds) : Math.max(0, cut - dt / L.cutDarkenSeconds);
+      uniforms.uAmbient.value.setScalar(L.ambient + (L.cutAmbient - L.ambient) * cut);
       flashes = flashes.filter((f) => (f.t += dt) < L.flashSeconds);
       for (const f of flashes) {
         const k = 1 - f.t / L.flashSeconds;

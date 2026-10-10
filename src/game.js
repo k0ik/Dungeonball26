@@ -67,6 +67,11 @@ export function createGame(container, levels, startIndex = 0) {
 
   const rig = createCameraRig();
   const overlay = createOverlay(container, rig.camera);
+  // The kill cam's frame: a vignette and letterbox bars, shown while the cut is on (CSS, .kill-cut).
+  const cutFrame = document.createElement('div');
+  cutFrame.className = 'cut-frame';
+  cutFrame.innerHTML = '<div class="cut-vignette"></div><div class="cut-bar top"></div><div class="cut-bar bottom"></div>';
+  container.appendChild(cutFrame);
   const hud = createHud(container);
   const sfx = createAudio(rig.camera);
 
@@ -1753,6 +1758,7 @@ export function createGame(container, levels, startIndex = 0) {
     // labels (placed for the usual camera) hide meanwhile.
     const cutting = !!state.killCut?.cam;
     container.classList.toggle('kill-cut', cutting);
+    lighting.setCut(cutting);
     if (cutting) aimCutCam(realDt);
     renderer.render(scene, cutting ? cutCam : rig.camera);
     overlay.update();

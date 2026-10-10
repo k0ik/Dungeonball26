@@ -556,6 +556,8 @@ export const CONFIG = {
   // walls, plus a few real lights for the round objects.
   lighting: {
     ambient: 0.36, // the floor and walls away from any pool (1 = their full colour)
+    cutAmbient: 0.06, // during the kill cam's cut: the room sinks into darkness; the light pools (your torch, enemies) keep the action lit
+    cutDarkenSeconds: 0.25, // how long it takes to darken (and to come back)
     maxPools: 24, // pools drawn at once: flashes, your torch, then the nearest
     torchColor: 0xffb46a, // warm
     torchPool: 2.8, // added light at your ball's centre

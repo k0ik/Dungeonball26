@@ -1162,3 +1162,43 @@ body {
 .kill-cut .overlay {
   visibility: hidden;
 }
+
+/* The kill cam's frame: the edges darken (a soft iris) and letterbox bars
+   slide in while the cut is on; both go again as it cuts back. Under the
+   HUD, over the board. */
+.cut-frame {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+.cut-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 75% 60% at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.55) 75%, rgba(0, 0, 0, 0.9) 100%);
+  opacity: 0;
+  transition: opacity 0.25s ease-out;
+}
+.cut-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 10%;
+  background: #000;
+  transition: transform 0.25s ease-out;
+}
+.cut-bar.top {
+  top: 0;
+  transform: translateY(-100%);
+}
+.cut-bar.bottom {
+  bottom: 0;
+  transform: translateY(100%);
+}
+.kill-cut .cut-vignette {
+  opacity: 1;
+}
+.kill-cut .cut-bar {
+  transform: none;
+}

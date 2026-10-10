@@ -1250,20 +1250,18 @@ export function createGame(container, levels, startIndex = 0) {
     const p = predictKill(world, hero, C.killCutLook, state.kicked, elastic);
     if (!p || p.t > C.killCutLead) return;
     if (C.killCutWhich === 'combo' && combat.shotKills + p.index < 1) return;
-    state.killCut = { target: p.target, x: p.x, z: p.z, at: world.time + p.t, hold: null };
-    // Jump cut: to a spot that sees your ball and the impact (or none: the
-    // slow motion plays on the usual camera).
-    if (C.killCutJump) {
-      const toward = { x: rig.toCamera.x, z: rig.toCamera.z };
-      const spot = chooseVantage(level, world.balls, hero, { x: p.x, z: p.z }, { x: hero.vx, z: hero.vz }, toward);
-      if (spot) {
-        state.killCut.cam = spot;
-        cutCam.position.set(spot.x, spot.y, spot.z);
-        const s = C.killCutLeadShare;
-        cutLook.set(hero.x + (p.x - hero.x) * s, BALL_Y, hero.z + (p.z - hero.z) * s);
-        cutCam.lookAt(cutLook);
-      }
-    }
+    // Jump cut: to a spot that sees your ball and the impact. With none,
+    // no kill cam at all: slow motion on the usual view, unframed, just
+    // reads as a glitch. (It keeps looking: a spot may open up as you close in.)
+    if (!C.killCutJump) return;
+    const toward = { x: rig.toCamera.x, z: rig.toCamera.z };
+    const spot = chooseVantage(level, world.balls, hero, { x: p.x, z: p.z }, { x: hero.vx, z: hero.vz }, toward);
+    if (!spot) return;
+    state.killCut = { target: p.target, x: p.x, z: p.z, at: world.time + p.t, hold: null, cam: spot };
+    cutCam.position.set(spot.x, spot.y, spot.z);
+    const s = C.killCutLeadShare;
+    cutLook.set(hero.x + (p.x - hero.x) * s, BALL_Y, hero.z + (p.z - hero.z) * s);
+    cutCam.lookAt(cutLook);
   }
 
   /** The jump cut's view this frame: on your ball until the kill, then on where it died (the loot bursting). */

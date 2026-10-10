@@ -444,7 +444,7 @@ export const CONFIG = {
     killCutHold: 0.9, // real seconds it stays slow after the kill
     // Stage 2: the jump cut (src/killCutVantage.js). A perspective camera on
     // a ring round the impact, on the usual camera's side of the board.
-    killCutJump: true,
+    killCutJump: true, // the jump cut; without it (or with no workable camera spot) there is no kill cam slow motion either
     killCutRadius: 4, // tiles from the impact
     killCutHeight: 4.2, // tiles up (walls are 0.55): looking down steeply, so the floor fills a tall phone screen
     killCutSpread: 45, // degrees either side of the usual camera's direction (faces are drawn facing it)

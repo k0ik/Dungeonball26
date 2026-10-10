@@ -527,6 +527,7 @@ export const CONFIG = {
     // The mockup's walls stand a bit taller than the ball; kept lower here so a
     // ball just behind a wall stays visible. Raise toward 0.8 for the mockup look.
     wallHeight: 0.55,
+    heroFinish: 'ivory', // your ball: 'ivory' (a cue ball) or 'silver' (the old chrome)
     wallOutlines: false, // the mockup's walls read by shading alone
     outlineScale: 1.08, // inverted-hull outline thickness for balls
     // Enemy HP bars get one notch per HP and grow with max HP, so a tougher
@@ -615,11 +616,11 @@ export const CONFIG = {
     ringRadius: 2.2, // tiles a blast's shockwave ring grows to
     ringSeconds: 0.45,
     scorchSize: 1.8, // tiles across; scorch marks stay for the level
-    // Your knockout: the ball sheds its metal skin in a big spray of silver
-    // flakes, and the skull leaves a trail of grey metal smears as it rolls.
+    // Your knockout: the ball sheds its skin in a big spray of ivory chips,
+    // and the skull leaves a trail of dark smears as it rolls.
     shedFlakes: 120,
-    metalColor: 0xc9ccd2,
-    metalDarkColor: 0x6e7279,
+    metalColor: 0xf2ead8, // the chips (ivory, to match the cue ball)
+    metalDarkColor: 0xb8aa8c,
     maxBlood: 160,
     bloodColor: 0x2b2d31, // the trail: one dark grey, like oil
     bloodOpacity: 0.85,
@@ -660,7 +661,7 @@ export const CONFIG = {
     enemyFace: 0x111111,
     hpFill: 0xe8336f,
     hpTrack: 0x2a2b2e,
-    hero: 0xffffff, // tint over the hero's chrome (silver) shading
+    hero: 0xffffff, // tint over the hero's finish (render.heroFinish)
     skull: 0xf1ede2, // your ball once knocked out: bone white
     aim: 0xffffff,
     turnRing: 0x5ad16a, // matches the hero's HP bar

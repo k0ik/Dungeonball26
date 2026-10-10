@@ -1,11 +1,11 @@
 // A toon ball with an inverted-hull outline, a blob shadow, and a stripe so
-// rolling reads visually (`silver` swaps the toon shading for polished
-// chrome). It can flash red when hit. Given `toCamera`, it also
+// rolling reads visually (`finish` swaps the toon shading for polished
+// chrome, 'silver', or a glossy ivory cue ball, 'ivory'). It can flash red when hit. Given `toCamera`, it also
 // wears a camera-facing face (the hero's expressions, see faces.js).
 
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
-import { toonMaterial, silverMaterial, outlineHullMaterial, clearOccluder } from './materials.js';
+import { toonMaterial, silverMaterial, ivoryMaterial, outlineHullMaterial, clearOccluder } from './materials.js';
 import { heroFaces, faceSprite, faceLook, skullTexture } from './faces.js';
 
 const shadowMaterial = new THREE.MeshBasicMaterial({
@@ -29,14 +29,14 @@ function stripedSphere(radius, base, stripe) {
   return geo;
 }
 
-export function createBallView(ball, { color, stripe, silver = false, toCamera = null }) {
+export function createBallView(ball, { color, stripe, silver = false, finish = silver ? 'silver' : 'toon', toCamera = null }) {
   const r = ball.radius;
   const group = new THREE.Group();
 
   const body = new THREE.Mesh(
     stripe != null ? stripedSphere(r, color, stripe) : new THREE.SphereGeometry(r, 32, 20),
     // A ball hides pickups behind it for real: it clears the x-ray mask.
-    clearOccluder((silver ? silverMaterial : toonMaterial)(stripe != null ? 0xffffff : color, { vertexColors: stripe != null })),
+    clearOccluder(({ silver: silverMaterial, ivory: ivoryMaterial }[finish] ?? toonMaterial)(stripe != null ? 0xffffff : color, { vertexColors: stripe != null })),
   );
   body.position.y = r;
   // Tilt the stripe so it doesn't start edge-on to the camera.

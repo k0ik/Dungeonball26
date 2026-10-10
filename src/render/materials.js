@@ -130,6 +130,60 @@ export const outlineHullMaterial = new THREE.MeshBasicMaterial({
 });
 
 let silverMatcap = null;
+let ivoryMatcap = null;
+
+/**
+ * A cue ball: warm ivory, glossy but not metallic. A hand-drawn matcap of
+ * soft light from the upper left falling off to a warm shadow, a faint warm
+ * bounce from the floor along the bottom, and a small crisp highlight (the
+ * polish), with no chrome horizon. `color` tints it.
+ */
+export function ivoryMaterial(color = 0xffffff, extra = {}) {
+  if (!ivoryMatcap) {
+    const size = 256;
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size;
+    const g = canvas.getContext('2d');
+    g.beginPath();
+    g.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+    g.clip();
+    // Body: lit from the upper left, shading to a warm, darker ivory.
+    const body = g.createRadialGradient(size * 0.38, size * 0.32, size * 0.05, size * 0.5, size * 0.5, size * 0.62);
+    body.addColorStop(0, '#fffaee');
+    body.addColorStop(0.45, '#f1e8d4');
+    body.addColorStop(0.8, '#d6c9ab');
+    body.addColorStop(1, '#b3a483');
+    g.fillStyle = body;
+    g.fillRect(0, 0, size, size);
+    // Bounced light: a faint warm glow up from the floor along the bottom edge.
+    const bounce = g.createRadialGradient(size * 0.55, size * 1.05, size * 0.1, size * 0.55, size * 1.05, size * 0.55);
+    bounce.addColorStop(0, 'rgba(255,214,160,0.35)');
+    bounce.addColorStop(1, 'rgba(255,214,160,0)');
+    g.fillStyle = bounce;
+    g.fillRect(0, 0, size, size);
+    // A soft rim, so the edge turns away.
+    const rim = g.createRadialGradient(size / 2, size / 2, size * 0.36, size / 2, size / 2, size / 2);
+    rim.addColorStop(0, 'rgba(0,0,0,0)');
+    rim.addColorStop(1, 'rgba(70,52,30,0.28)');
+    g.fillStyle = rim;
+    g.fillRect(0, 0, size, size);
+    // The polish: a small, crisp highlight with a softer halo.
+    const halo = g.createRadialGradient(size * 0.35, size * 0.29, 0, size * 0.35, size * 0.29, size * 0.2);
+    halo.addColorStop(0, 'rgba(255,255,255,0.55)');
+    halo.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = halo;
+    g.fillRect(0, 0, size, size);
+    const hot = g.createRadialGradient(size * 0.34, size * 0.28, 0, size * 0.34, size * 0.28, size * 0.065);
+    hot.addColorStop(0, 'rgba(255,255,255,1)');
+    hot.addColorStop(0.6, 'rgba(255,255,255,0.9)');
+    hot.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = hot;
+    g.fillRect(0, 0, size, size);
+    ivoryMatcap = new THREE.CanvasTexture(canvas);
+    ivoryMatcap.colorSpace = THREE.SRGBColorSpace;
+  }
+  return new THREE.MeshMatcapMaterial({ color, matcap: ivoryMatcap, ...extra });
+}
 
 /**
  * Stylized chrome: a hand-drawn matcap (bright sky above a hard horizon, dark

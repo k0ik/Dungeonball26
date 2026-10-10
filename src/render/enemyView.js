@@ -259,6 +259,11 @@ export function createEnemyView(ball, toCamera) {
     },
     die() {
       if (dying < 0) dying = 0;
+      // Killed: it winces as it pops (>.<), which the kill cam's slow motion shows.
+      if (face && !falling) {
+        ouchLeft = Infinity;
+        showFace(ouchFace());
+      }
       // The helmet pops off (into the scene, so it outlives the shrinking ball).
       if (helmet && !helmetFly && !falling && group.parent) {
         group.parent.attach(helmet);

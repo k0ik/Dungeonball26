@@ -7,7 +7,6 @@ import crawlspace from './levels/crawlspace.txt?raw';
 import gauntlet02 from './levels/gauntlet02.txt?raw';
 import pitfalls from './levels/pitfalls.txt?raw';
 import roomRaider from './levels/room-raider.txt?raw';
-import village from './levels/village.txt?raw';
 import facilities from './levels/facilities.txt?raw';
 import theOnion from './levels/the-onion.txt?raw';
 import arena from './levels/arena.txt?raw';
@@ -45,7 +44,6 @@ const LEVELS = [
   { id: 'pitfalls', name: 'Pitfalls', text: pitfalls, message: 'Knock enemies into the pits and lava. Divots pull, bumps push.' },
   { id: 'barracks', name: 'Barracks', text: barracks }, // work in progress
   { id: 'crawlspace', name: 'Crawlspace', text: crawlspace },
-  { id: 'village', name: 'Village', text: village },
 ];
 
 // Start on a level with the URL hash, e.g. #one-key.

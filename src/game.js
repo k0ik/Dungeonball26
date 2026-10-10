@@ -1140,6 +1140,7 @@ export function createGame(container, levels, startIndex = 0) {
           comboSounded = true;
         }
         if (o.amount) floatAt(o.target, `-${o.amount}`, o.type === 'combo' ? 'combo' : ''); // (a golem's split does no damage)
+        if (o.amount && o.target.hp > 0) enemyViews.get(o.target)?.ouch(CONFIG.render.enemyOuchSeconds); // >.<
         // Every enemy after the first one damaged this shot is a combo.
         if (o.chain >= 2) floatAt(o.target, 'Combo!', 'combo-label', 0.8);
       } else if (o.type === 'split') {
@@ -1165,8 +1166,10 @@ export function createGame(container, levels, startIndex = 0) {
         // A Jekyll's attack on another enemy: no "Combo!", it isn't yours.
         sfx.play('hit', 0.9, { pitch: 0.8 });
         floatAt(o.target, `-${o.amount}`, 'hurt');
+        if (o.target.hp > 0) enemyViews.get(o.target)?.ouch(CONFIG.render.enemyOuchSeconds);
       } else if (o.type === 'blast') {
         if (o.amount) floatAt(o.target, `-${o.amount}`, 'hurt');
+        if (o.amount && o.target !== hero && o.target.hp > 0) enemyViews.get(o.target)?.ouch(CONFIG.render.enemyOuchSeconds);
       } else if (o.type === 'kill') {
         sfx.play('kill', 0.9);
         // Kill cam: hold tight on it in slow motion (longer for a combo).
@@ -1851,6 +1854,7 @@ export function createGame(container, levels, startIndex = 0) {
     state,
     rig,
     renderer,
+    enemyViews, // debugging
     respawn,
     loadLevel,
     /** The level being played, as { id, name, text } (the level editor opens it). */

@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { toonMaterial, outlineHullMaterial, clearOccluder } from './materials.js';
-import { calmFace, angryFace, faceSprite, faceLook } from './faces.js';
+import { calmFace, angryFace, ouchFace, faceSprite, faceLook } from './faces.js';
 
 const shadowMaterial = new THREE.MeshBasicMaterial({
   color: CONFIG.colors.shadow,
@@ -130,6 +130,12 @@ export function createEnemyView(ball, toCamera) {
     else helmet.quaternion.slerp(helmetGoal, 1 - Math.exp(-R.helmetRockRate * dt));
     helmetPlaced = true;
   }
+  let ouchLeft = 0; // seconds left on the ouch face
+  function showFace(tex) {
+    if (face.material.map === tex) return;
+    face.material.map = tex;
+    face.material.needsUpdate = true;
+  }
   let ghostOpacity = ball.phased ? CONFIG.enemy.types.ghost.fadedOpacity : 1;
 
   let dying = -1;
@@ -141,6 +147,7 @@ export function createEnemyView(ball, toCamera) {
       group.position.set(ball.x, 0, ball.z);
       lookFace?.(ball.look, dt);
       rockHelmet(dt);
+      if (ouchLeft > 0 && (ouchLeft -= dt) <= 0) showFace(angry ? angryFace() : calmFace());
       if (ball.type === 'gold' && dying < 0) {
         // It shrinks as it wears down (its physics radius shrinks with it).
         const s = group.scale.x + (ball.radius / r - group.scale.x) * Math.min(1, dt * 6);
@@ -238,8 +245,17 @@ export function createEnemyView(ball, toCamera) {
     setAngry(on) {
       if (on === angry || !face) return;
       angry = on;
-      face.material.map = on ? angryFace() : calmFace();
-      face.material.needsUpdate = true;
+      if (ouchLeft <= 0) showFace(on ? angryFace() : calmFace());
+    },
+    /** Seconds left on the ouch face (debugging). */
+    get ouching() {
+      return ouchLeft;
+    },
+    /** Hurt: the ouch face (>.<) for `seconds`, then back to calm or angry. */
+    ouch(seconds) {
+      if (!face) return;
+      ouchLeft = seconds;
+      showFace(ouchFace());
     },
     die() {
       if (dying < 0) dying = 0;

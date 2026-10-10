@@ -115,8 +115,8 @@ const determinedFace = () =>
     g.stroke();
   });
 
-/** Hit: ouch: eyes squeezed shut, mouth open in a yelp. */
-const ouchFace = () =>
+/** Hit: ouch: eyes squeezed shut, mouth open in a yelp (you, and enemies when they're hurt). */
+export const ouchFace = () =>
   faceTexture('ouch', (g) => {
     g.lineWidth = 7;
     g.beginPath();

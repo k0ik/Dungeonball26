@@ -85,6 +85,30 @@ export function createEnemyView(ball, toCamera) {
       group.add(blob);
     }
   }
+  // A basic enemy wears a helmet (render.helmet): its shape cue.
+  let helmet = null;
+  let helmetFly = null; // once it pops off: { vx, vy, vz, spin, t }
+  if (!ball.type && CONFIG.render.helmet) {
+    const R = CONFIG.render;
+    const hr = r * R.helmetScale;
+    const cap = new THREE.SphereGeometry(hr, 28, 10, 0, Math.PI * 2, 0, R.helmetCover);
+    helmet = new THREE.Group();
+    const shell = new THREE.Mesh(cap, toonMaterial(R.helmetColor, { side: THREE.DoubleSide }));
+    // The outline: a slightly bigger back-faced copy, which also darkens the inside of the cap.
+    const hull = new THREE.Mesh(cap, outlineHullMaterial);
+    hull.scale.setScalar(CONFIG.render.outlineScale);
+    const rimR = hr * Math.sin(R.helmetCover);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(rimR, hr * 0.07, 6, 28), toonMaterial(R.helmetRimColor));
+    rim.rotation.x = Math.PI / 2;
+    rim.position.y = hr * Math.cos(R.helmetCover);
+    helmet.add(hull, shell, rim);
+    helmet.position.y = r;
+    // Tilted back, away from the camera, so the brim clears the brow.
+    const back = new THREE.Vector3(-toCamera.x, 0, -toCamera.z).normalize();
+    const up = new THREE.Vector3(0, 1, 0).multiplyScalar(Math.cos(R.helmetTilt)).addScaledVector(back, Math.sin(R.helmetTilt));
+    helmet.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), up.normalize());
+    group.add(helmet);
+  }
   let ghostOpacity = ball.phased ? CONFIG.enemy.types.ghost.fadedOpacity : 1;
 
   let dying = -1;
@@ -162,7 +186,24 @@ export function createEnemyView(ball, toCamera) {
         group.position.y = -t * t * 1.2;
         group.scale.setScalar(Math.max(0.001, 1 - t * 0.6));
         if (t >= 1) group.visible = false;
-      } else if (dying >= 0) {
+      }
+      if (helmetFly) {
+        // The helmet, knocked off: up, away and tumbling, then it drops and fades.
+        const f = helmetFly;
+        f.t += dt;
+        f.vy -= 9 * dt;
+        helmet.position.x += f.vx * dt;
+        helmet.position.y = Math.max(0.05, helmet.position.y + f.vy * dt);
+        helmet.position.z += f.vz * dt;
+        helmet.rotateOnWorldAxis(f.axis, f.spin * dt);
+        const fade = Math.max(0, 1 - Math.max(0, f.t - 0.6) / 0.4);
+        helmet.scale.setScalar(fade);
+        if (fade <= 0) {
+          helmet.parent?.remove(helmet);
+          helmetFly = null;
+        }
+      }
+      if (dying >= 0 && !falling) {
         // Pop: a quick swell, then shrink away.
         dying += dt;
         const t = dying / 0.25;
@@ -180,6 +221,12 @@ export function createEnemyView(ball, toCamera) {
     },
     die() {
       if (dying < 0) dying = 0;
+      // The helmet pops off (into the scene, so it outlives the shrinking ball).
+      if (helmet && !helmetFly && !falling && group.parent) {
+        group.parent.attach(helmet);
+        const a = Math.random() * Math.PI * 2;
+        helmetFly = { vx: Math.cos(a) * 1.2, vy: 3.2, vz: Math.sin(a) * 1.2, spin: 9 + Math.random() * 5, axis: new THREE.Vector3(Math.sin(a), 0, -Math.cos(a)), t: 0 };
+      }
     },
     /** Fell in a pit or lava: drops out of sight (CONFIG.render.fallSeconds). */
     fall() {
@@ -187,13 +234,14 @@ export function createEnemyView(ball, toCamera) {
       if (dying < 0) dying = 0;
     },
     get gone() {
-      return dying >= 0.25;
+      return dying >= 0.25 && !helmetFly; // (its knocked-off helmet still flying: not yet)
     },
     dispose() {
       body.geometry.dispose();
       body.material.dispose();
       outline.geometry.dispose();
       face?.material.dispose();
+      helmet?.parent?.remove(helmet);
     },
   };
 }

@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { tileAt, isHazard } from '../level.js';
+import { cornerFill, cornerGeometry, cornerArc, roundedTile } from '../hazardShape.js';
 import { loopPolygons, insideWall } from '../wallGeometry.js';
 import { outlineLineMaterial, markOccluder, seeThrough } from './materials.js';
 import { litByPools } from './lighting.js';
@@ -18,6 +19,14 @@ function pushQuad(pos, col, a, b, c, d, color) {
   // Two triangles a-b-c, a-c-d, wound counter-clockwise seen from outside.
   for (const v of [a, b, c, a, c, d]) pos.push(v[0], v[1], v[2]);
   for (let i = 0; i < 6; i++) col.push(color.r, color.g, color.b);
+}
+
+/** Floor triangles (lists of {x, z} points), each turned to face up. */
+function pushTris(pos, col, tris, color) {
+  for (const tri of tris) {
+    for (const v of upward(tri)) pos.push(v.x, 0, v.z);
+    for (let i = 0; i < 3; i++) col.push(color.r, color.g, color.b);
+  }
 }
 
 // Flagstones and corner shading (textures.js), lit by the light pools.
@@ -72,11 +81,11 @@ function addHoles(group, level) {
   const pos = [];
   const col = [];
   const lava = [];
-  const lavaCol = [];
   const black = new THREE.Color(0x000000);
   const pitTop = new THREE.Color(C.pitRim);
   const lavaTop = new THREE.Color(C.lavaRim);
   const lavaLow = new THREE.Color(C.lava).multiplyScalar(0.45);
+  const look = (t) => (t === 'lava' ? { depth: R.lavaDepth, top: lavaTop, bottom: lavaLow } : { depth: R.pitDepth, top: pitTop, bottom: black });
   const wall = (a, b, depth, top, bottom) => {
     // A side from the floor's edge a-b straight down to depth: top colour at the rim.
     for (const v of [[a, 0], [b, 0], [b, -depth], [a, 0], [b, -depth], [a, -depth]]) pos.push(v[0][0], v[1], v[0][1]);
@@ -85,26 +94,56 @@ function addHoles(group, level) {
       col.push(c.r, c.g, c.b);
     }
   };
+  // The hole's floor (lava glows; a pit's is black), as a fan of triangles.
+  const bottom = (t, pts, depth, from = null) => {
+    const tris = from ? fanFrom(from, pts) : fanCentred(pts);
+    const out = t === 'lava' ? lava : pos;
+    for (const tri of tris) {
+      for (const v of upward(tri)) out.push(v.x, -depth, v.z);
+      if (t !== 'lava') for (let i = 0; i < 3; i++) col.push(0, 0, 0);
+    }
+  };
+  const arcWall = (pts, l) => {
+    for (let k = 0; k + 1 < pts.length; k++) wall([pts[k].x, pts[k].z], [pts[k + 1].x, pts[k + 1].z], l.depth, l.top, l.bottom);
+  };
+  // Edges: [neighbour step, from corner, to corner] round the tile.
+  const EDGES = [[0, -1, 0, 1], [1, 0, 1, 2], [0, 1, 2, 3], [-1, 0, 3, 0]];
+  const rHole = level.holeRadius ?? 0;
   for (let row = 0; row < level.height; row++) {
     for (let c = 0; c < level.width; c++) {
       const t = tileAt(level, c, row);
-      if (!isHazard(t)) continue;
-      const depth = t === 'lava' ? R.lavaDepth : R.pitDepth;
-      const top = t === 'lava' ? lavaTop : pitTop;
-      const bottom = t === 'lava' ? lavaLow : black;
-      const x0 = c;
-      const x1 = c + 1;
-      const z0 = row;
-      const z1 = row + 1;
-      // A side wherever the neighbour isn't the same kind of hole.
-      if (tileAt(level, c, row - 1) !== t) wall([x0, z0], [x1, z0], depth, top, bottom);
-      if (tileAt(level, c, row + 1) !== t) wall([x1, z1], [x0, z1], depth, top, bottom);
-      if (tileAt(level, c - 1, row) !== t) wall([x0, z1], [x0, z0], depth, top, bottom);
-      if (tileAt(level, c + 1, row) !== t) wall([x1, z0], [x1, z1], depth, top, bottom);
-      const floor = t === 'lava' ? lava : pos;
-      const floorC = t === 'lava' ? lavaCol : col;
-      for (const v of [[x0, z1], [x1, z1], [x1, z0], [x0, z1], [x1, z0], [x0, z0]]) floor.push(v[0], -depth, v[1]);
-      if (t !== 'lava') for (let i = 0; i < 6; i++) floorC.push(0, 0, 0);
+      if (!isHazard(t)) {
+        // A floor tile's corner rounded off into a hole: the hole fills it (a fillet).
+        if (!level.holeCorners) continue;
+        for (let i = 0; i < 4; i++) {
+          const fill = cornerFill(level, c, row, i);
+          if (!fill || fill === 'floor') continue;
+          const { pts, px, pz } = cornerArc(level, c, row, i, HOLE_CHORDS);
+          const l = look(fill);
+          bottom(fill, pts, l.depth, { x: px, z: pz });
+          arcWall(pts, l);
+        }
+        continue;
+      }
+      const l = look(t);
+      const floorCorner = (i) => cornerFill(level, c, row, i) === 'floor';
+      // Its floor: the tile, with corners sticking out into the floor rounded off.
+      bottom(t, roundedTile(level, c, row, floorCorner, HOLE_CHORDS), l.depth);
+      // A side wherever the neighbour isn't the same kind of hole, trimmed
+      // where a corner curves (this tile's, or a fillet in the floor tile
+      // across the edge), and a curved side round each rounded corner.
+      for (const [dx, dz, i, j] of EDGES) {
+        if (tileAt(level, c + dx, row + dz) === t) continue;
+        const a = cornerGeometry(level, c, row, i);
+        const b = cornerGeometry(level, c, row, j);
+        const ux = Math.sign(b.px - a.px);
+        const uz = Math.sign(b.pz - a.pz);
+        const trimmed = (k, g) => floorCorner(k) || filletAcross(level, c + dx, row + dz, g.px, g.pz);
+        const ta = trimmed(i, a) ? rHole : 0;
+        const tb = trimmed(j, b) ? rHole : 0;
+        wall([a.px + ux * ta, a.pz + uz * ta], [b.px - ux * tb, b.pz - uz * tb], l.depth, l.top, l.bottom);
+      }
+      for (let i = 0; i < 4; i++) if (floorCorner(i)) arcWall(cornerArc(level, c, row, i, HOLE_CHORDS).pts, l);
     }
   }
   if (pos.length) group.add(meshFrom(pos, col, holeMaterial));
@@ -113,6 +152,44 @@ function addHoles(group, level) {
     geo.setAttribute('position', new THREE.Float32BufferAttribute(lava, 3));
     group.add(new THREE.Mesh(geo, lavaMaterial));
   }
+}
+
+// Rounded holes (hazardShape.js): chords per rounded corner.
+const HOLE_CHORDS = 8;
+
+/** Is the corner of floor tile (col, row) at grid point (px, pz) a fillet (rounded off into a hole)? */
+function filletAcross(level, col, row, px, pz) {
+  for (let i = 0; i < 4; i++) {
+    const g = cornerGeometry(level, col, row, i);
+    if (g.px === px && g.pz === pz) {
+      const fill = cornerFill(level, col, row, i);
+      return !!fill && fill !== 'floor';
+    }
+  }
+  return false;
+}
+
+/** Triangles fanning a convex polygon from its centre. */
+function fanCentred(pts) {
+  const m = { x: 0, z: 0 };
+  for (const p of pts) {
+    m.x += p.x / pts.length;
+    m.z += p.z / pts.length;
+  }
+  return pts.map((p, k) => [m, p, pts[(k + 1) % pts.length]]);
+}
+
+/** Triangles fanning from point `o` along the chain `pts` (a rounded-off corner: o is the corner). */
+function fanFrom(o, pts) {
+  const tris = [];
+  for (let k = 0; k + 1 < pts.length; k++) tris.push([o, pts[k], pts[k + 1]]);
+  return tris;
+}
+
+/** A triangle's points ordered so it faces up (+y), as the floor's quads do. */
+function upward([a, b, c]) {
+  const ny = (b.z - a.z) * (c.x - a.x) - (b.x - a.x) * (c.z - a.z);
+  return ny >= 0 ? [a, b, c] : [a, c, b];
 }
 
 /**
@@ -213,9 +290,23 @@ export function buildLevelView(level) {
   for (let row = 0; row < level.height; row++) {
     for (let col = 0; col < level.width; col++) {
       const tile = tileAt(level, col, row);
-      if (isHazard(tile)) continue; // a hole: drawn by addHoles
       const color = tile === 'exit' && !level.geometry ? exitCol : (col + row) % 2 ? floorB : floorA;
-      pushQuad(floorPos, floorCol, [col, 0, row + 1], [col + 1, 0, row + 1], [col + 1, 0, row], [col, 0, row], color);
+      const fill = (i) => (level.holeCorners ? cornerFill(level, col, row, i) : null);
+      if (isHazard(tile)) {
+        // A hole (drawn by addHoles); its corners rounded off into the floor are floor.
+        for (let i = 0; i < 4; i++) {
+          if (fill(i) !== 'floor') continue;
+          const { pts, px, pz } = cornerArc(level, col, row, i, HOLE_CHORDS);
+          pushTris(floorPos, floorCol, fanFrom({ x: px, z: pz }, pts), color);
+        }
+        continue;
+      }
+      if ([0, 1, 2, 3].some((i) => fill(i))) {
+        // A floor tile with a corner rounded off into a hole: the rest of it.
+        pushTris(floorPos, floorCol, fanCentred(roundedTile(level, col, row, (i) => !!fill(i), HOLE_CHORDS)), color);
+      } else {
+        pushQuad(floorPos, floorCol, [col, 0, row + 1], [col + 1, 0, row + 1], [col + 1, 0, row], [col, 0, row], color);
+      }
       if (tile === 'divot' || tile === 'bump') group.add(slopeDecal(tile, col, row));
       if (tile === 'exit' && level.geometry) group.add(roundedExit(level, col, row, exitCol));
     }

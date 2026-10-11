@@ -125,3 +125,21 @@ levels: 3 2`);
   assert.deepEqual(types, ['ice3', 'golem1', 'seeker2', 'basic1', 'ghost1']);
   assert.throws(() => parseLevel('#####\n#iS.#\n#####\nlevels: 7'), /1 to 5/);
 });
+
+test('rounded holes: a lone lava tile on a curviness-5 level is a circle; floor fills its corners', async () => {
+  const { holeAt } = await import('../src/hazardShape.js');
+  const level = parseLevel(['5######', '#.....#', '#..~..#', '#.....#', '#S...X#', '#######'].join('\n'));
+  assert.equal(holeAt(level, 3.5, 2.5)?.kind, 'lava', 'centre');
+  assert.equal(holeAt(level, 3.05, 2.05), null, 'its corner is floor');
+  assert.equal(holeAt(level, 3.1, 2.5)?.kind, 'lava', 'edge middle');
+  const square = parseLevel(['1######', '#.....#', '#..~..#', '#.....#', '#S...X#', '#######'].join('\n'));
+  assert.equal(holeAt(square, 3.05, 2.05)?.kind, 'lava', 'square level: the whole tile');
+});
+
+test("rounded holes: a floor tile's corner poking into lava is lava", async () => {
+  const { holeAt } = await import('../src/hazardShape.js');
+  // An L of lava round the floor tile at (2, 2): its bottom-right corner sticks into it.
+  const level = parseLevel(['5######', '#.....#', '#.....#', '#..~~.#', '#..~~.#', '#S...X#', '#######'].join('\n').replace('#..~~.#\n#..~~.#', '#...~.#\n#..~~.#'));
+  assert.equal(holeAt(level, 3.97, 3.97)?.kind, 'lava', 'the floor corner is rounded off into the lava');
+  assert.equal(holeAt(level, 3.5, 3.5), null, 'the rest of the tile is floor');
+});

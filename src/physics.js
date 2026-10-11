@@ -6,7 +6,8 @@
 // boxes that keep `bumperRestitution` of a ball's speed.
 
 import { CONFIG } from './config.js';
-import { isSolid, tileAt, isHazard } from './level.js';
+import { isSolid, tileAt } from './level.js';
+import { holeAt } from './hazardShape.js';
 import { wallContacts, insideWall } from './wallGeometry.js';
 
 const P = CONFIG.physics;
@@ -81,13 +82,14 @@ export function stepWorld(world, dt = P.step) {
     if (b.fallen) continue;
     for (const s of world.statics) resolveStatic(world, b, s);
     resolveWalls(world, b);
-    // Into a pit or lava: once its centre is over the hole, it falls in.
-    const t = tileAt(world.level, Math.floor(b.x), Math.floor(b.z));
-    if (isHazard(t)) {
-      b.fallen = t;
+    // Into a pit or lava: once its centre is over the hole (rounded corners
+    // and all, see hazardShape.js), it falls in.
+    const hole = holeAt(world.level, b.x, b.z);
+    if (hole) {
+      b.fallen = hole.kind;
       b.vx = b.vz = 0;
-      b.fallTo = { x: Math.floor(b.x) + 0.5, z: Math.floor(b.z) + 0.5 };
-      world.events.push({ type: 'fall', ball: b, kind: t });
+      b.fallTo = { x: hole.x, z: hole.z };
+      world.events.push({ type: 'fall', ball: b, kind: hole.kind });
     }
   }
   // A creeping ball that touched anything this step is just a ball again.

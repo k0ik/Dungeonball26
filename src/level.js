@@ -49,6 +49,7 @@ for (const ch of Object.keys(SPECIES)) LEGEND[ch] = 'enemy';
 
 import { CONFIG } from './config.js';
 import { buildWallGeometry } from './wallGeometry.js';
+import { roundHoles } from './hazardShape.js';
 
 const KEY_COLORS = { r: 'red', b: 'blue', y: 'yellow', R: 'red', B: 'blue', Y: 'yellow' };
 
@@ -203,6 +204,7 @@ export function parseLevel(text, name = 'level', { requireStart = true } = {}) {
       ? buildWallGeometry(level, share, CONFIG.walls.maxRound, spots, { solid: (t) => t === 'wall' || t === 'half', match: level.geometry })
       : level.geometry;
   }
+  roundHoles(level); // pits and lava round their corners too (hazardShape.js)
   return level;
 }
 

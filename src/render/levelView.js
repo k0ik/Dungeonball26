@@ -207,7 +207,7 @@ function addHalfWalls(group, level) {
   }
   const pos = [];
   const col = [];
-  const top = new THREE.Color(C.wallTop);
+  const top = new THREE.Color(C.halfWallTop); // darker than a full wall's top, nearer the floor
   const front = new THREE.Color(C.wallFront);
   const side = new THREE.Color(C.wallSide);
   const back = new THREE.Color(C.wallBack);
@@ -488,7 +488,7 @@ function addOutlineWalls(group, level, h, geom = level.geometry, outsideWalls = 
   geo.rotateX(-Math.PI / 2);
   if (outsideWalls) dropInsideWalls(geo, level);
 
-  const top = new THREE.Color(C.wallTop);
+  const top = new THREE.Color(outsideWalls ? C.halfWallTop : C.wallTop); // half-walls' tops are darker
   const front = new THREE.Color(C.wallFront); // +z
   const side = new THREE.Color(C.wallSide); // +x
   const back = new THREE.Color(C.wallBack); // -z and -x

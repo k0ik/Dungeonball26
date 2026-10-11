@@ -670,6 +670,7 @@ export const CONFIG = {
     floorA: 0x55575a,
     floorB: 0x55575a, // same as floorA: the mockup floor has no checker
     wallTop: 0x8a8c91, // darkened from 0xb5b8be with the higher-contrast lighting
+    halfWallTop: 0x65676a, // half-walls' tops: between the wall tops and the floor (0x55575a), nearer the floor, so they read as low
     wallFront: 0x6c6e72, // faces pointing down-left on screen
     wallSide: 0x626468, // faces pointing down-right on screen
     wallBack: 0x57595d, // faces pointing away from the camera

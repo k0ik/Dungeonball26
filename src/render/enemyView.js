@@ -20,6 +20,7 @@ export function createEnemyView(ball, toCamera) {
   const group = new THREE.Group();
 
   const color = (ball.type && CONFIG.enemy.types[ball.type].color) ?? CONFIG.colors.enemy;
+  let poisonShown = false;
   const body = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 20), clearOccluder(toonMaterial(color)));
   body.position.y = r;
   const outline = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 16), outlineHullMaterial);
@@ -198,6 +199,12 @@ export function createEnemyView(ball, toCamera) {
         body.material.color.setHex(hyde ? J.enragedColor : color);
         const s = group.scale.x + ((hyde ? J.enragedScale : 1) - group.scale.x) * Math.min(1, dt * 10);
         group.scale.setScalar(s);
+      }
+      if (ball.type !== 'jekyll' && ball.type !== 'bomb' && dying < 0 && !!ball.poisoned !== poisonShown) {
+        // Poisoned (the Poisoned Pen): tinted sickly green.
+        poisonShown = !!ball.poisoned;
+        body.material.color.setHex(color);
+        if (poisonShown) body.material.color.lerp(new THREE.Color(CONFIG.cards.poisonColor), CONFIG.cards.poisonTint);
       }
       if (spark) {
         const lit = ball.fuse != null;

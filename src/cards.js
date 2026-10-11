@@ -33,6 +33,9 @@ export const CARDS = [
   { id: 'warriorShield', name: "Warrior's Shield", icon: '🛡️', text: 'Start each level with a shield.' },
   { id: 'doctorsBottle', name: "Doctor's Bottle", icon: '🧴', text: 'Start each level with full health.' },
   { id: 'doctorsBag', name: "Doctor's Bag", icon: '🩺', text: 'Find more potions.' },
+  { id: 'wizardStaff', name: 'Bug Zapper', icon: '⚡', text: 'Automatically zaps enemies.' },
+  { id: 'rogueDagger', name: "Rogue's Dagger", icon: '🔪', text: 'Throw a dagger after each kill.' },
+  { id: 'poisonedPen', name: 'Poisoned Pen', icon: '🖋️', text: 'Enemies you attack lose -1 HP per turn.' },
   { id: 'stoneShoes', name: 'Stone Shoes', icon: '🪨', text: 'Enemy hits barely knock you back.' },
 ];
 

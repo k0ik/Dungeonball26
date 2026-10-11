@@ -312,3 +312,18 @@ test('Jekyll: a hit enrages it; on the enemy move its hit costs another enemy 1 
   combat.resolve(world, hero);
   assert.equal(other.hp, other.maxHp - 1, 'one attack per move');
 });
+
+test('strike: damage from outside a collision (Bug Zapper, Rogue\'s Dagger) counts as a combo and kills leave the board', async () => {
+  const { createCombat, createEnemy } = await import('../src/combat.js');
+  const { createWorld } = await import('../src/physics.js');
+  const { parseLevel } = await import('../src/level.js');
+  const world = createWorld(parseLevel('#######\n#.....#\n#.S...#\n#.....#\n#######'));
+  const e = createEnemy({ x: 3.5, z: 2.5, level: 1, id: 'e' });
+  world.balls.push(e);
+  const combat = createCombat();
+  combat.beginShot();
+  const out = combat.strike(world, e, 5);
+  assert.ok(out.some((o) => o.type === 'combo'));
+  assert.ok(out.some((o) => o.type === 'kill'));
+  assert.ok(!world.balls.includes(e));
+});

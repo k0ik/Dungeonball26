@@ -20,7 +20,7 @@ import * as THREE from 'three';
 import { CONFIG } from './config.js';
 import { parseLevel, tileCenter, tileAt } from './level.js';
 import { freeSpawn } from './spawn.js';
-import { createWorld, createBall, stepWorld, isAtRest, speedOf, overlapsSolid, applyBumperKicks, applyRubberRebound } from './physics.js';
+import { createWorld, createBall, stepWorld, isAtRest, speedOf, overlapsSolid, applyBumperKicks, applyRubberRebound, lineClear } from './physics.js';
 import { predictKill } from './killPredict.js';
 import { chooseVantage } from './killCutVantage.js';
 import { setFaceView } from './render/faces.js';
@@ -236,6 +236,7 @@ export function createGame(container, levels, startIndex = 0) {
     state.killCam = null;
     state.killCut = null;
     state.deathShown = false;
+    daggers.length = 0; // any still in flight go with the old level
     level = parseLevel(def.text, def.name);
     if (levelView) scene.remove(levelView);
     levelView = buildLevelView(level);
@@ -538,6 +539,12 @@ export function createGame(container, levels, startIndex = 0) {
 
   /** Your turn comes round again: every Ghost switches between solid and faded. */
   function newRound() {
+    // Poisoned Pen: poisoned enemies lose HP as each round starts, never below 1.
+    for (const e of enemies()) {
+      if (!e.poisoned || e.hp <= 1) continue;
+      e.hp = Math.max(1, e.hp - CONFIG.cards.poisonDamage);
+      overlay.float(`-${CONFIG.cards.poisonDamage}`, e.x, e.z, e.radius * 2 + 0.2, 'poison');
+    }
     hero.passThrough = null; // Tap Shoes' dodges last one enemy move
     hero.passing = false;
     for (const e of enemies()) {
@@ -1214,6 +1221,12 @@ export function createGame(container, levels, startIndex = 0) {
         }
         if (o.amount) floatAt(o.target, `-${o.amount}`, o.type === 'combo' ? 'combo' : ''); // (a golem's split does no damage)
         if (o.amount && o.target.hp > 0) enemyViews.get(o.target)?.ouch(CONFIG.render.enemyOuchSeconds); // >.<
+        if (o.type === 'hit' && state.phase === 'shot') {
+          // Poisoned Pen: an enemy you hit yourself is poisoned (see newRound).
+          if (card('poisonedPen') && o.target.hp > 0 && !['golem', 'bomb', 'gold'].includes(o.target.type)) o.target.poisoned = true;
+          // Bug Zapper (was Wizard's Staff): lightning from the enemy you hit to those near it.
+          if (card('wizardStaff')) zap(o.target);
+        }
         // Every enemy after the first one damaged this shot is a combo.
         if (o.chain >= 2) floatAt(o.target, 'Combo!', 'combo-label', 0.8);
       } else if (o.type === 'split') {
@@ -1268,6 +1281,8 @@ export function createGame(container, levels, startIndex = 0) {
         // and now and then a sword, shield or potion too (not when it fell
         // in a pit: its coins fall with it).
         if (!o.fell) scatterCoins(o.target.x, o.target.z, o.target.level * CONFIG.loot.killGoldPerLevel, rollEnemyDrops(Math.random, { potionScale: card('doctorsBag') ? CONFIG.cards.doctorsBag : 1 }));
+        // Rogue's Dagger: each kill of your shot throws a dagger (a dagger's own kill doesn't).
+        if (card('rogueDagger') && state.phase === 'shot' && !o.byDagger) throwDagger(o.target);
         // Vampirism: every kill heals you.
         if (card('vampirism') && hero.hp > 0 && hero.hp < hero.maxHp) {
           hero.hp = Math.min(hero.maxHp, hero.hp + CONFIG.cards.vampirismHeal);
@@ -1330,6 +1345,51 @@ export function createGame(container, levels, startIndex = 0) {
    */
   const framed = new Map(); // ball -> real seconds it stays framed
   const blasts = []; // { x, z, left }: bomb blasts kept in frame a beat
+  const daggers = []; // Rogue's Dagger: { target, left } in flight
+
+  /**
+   * Bug Zapper (was Wizard's Staff): lightning jumps from `src` (an enemy you just hit) to every
+   * other enemy within reach with nothing solid between: each takes damage
+   * (counting as a combo) and is pushed away from it. Zaps don't zap on.
+   */
+  function zap(src) {
+    const K = CONFIG.cards;
+    const near = enemies().filter((e) => e !== src && e.hp > 0 && !e.phased && Math.hypot(e.x - src.x, e.z - src.z) <= K.wizardRange && lineClear(level, src, e));
+    if (!near.length) return;
+    sfx.play('combo', 0.8, { pitch: 1.7 });
+    for (const e of near) {
+      const d = Math.hypot(e.x - src.x, e.z - src.z) || 1;
+      e.vx += ((e.x - src.x) / d) * K.wizardPush;
+      e.vz += ((e.z - src.z) / d) * K.wizardPush;
+      effects.bolt(src.x, src.z, e.x, e.z);
+      handleOutcomes(combat.strike(world, e, K.wizardDamage));
+    }
+  }
+
+  /** Rogue's Dagger: after a kill, a dagger flies from you at the nearest other enemy you can see. */
+  function throwDagger(killed) {
+    const seen = enemies().filter((e) => e !== killed && e.hp > 0 && !e.phased && !isTool(e) && canSee(level, e, hero, world.balls, world.statics));
+    if (!seen.length) return;
+    const dist = (e) => Math.hypot(e.x - hero.x, e.z - hero.z);
+    const target = seen.reduce((a, b) => (dist(b) < dist(a) ? b : a));
+    const seconds = Math.max(0.12, dist(target) / CONFIG.cards.daggerSpeed);
+    daggers.push({ target, left: seconds });
+    effects.dagger(hero.x, hero.z, target, seconds);
+    sfx.play('ball', 0.5, { pitch: 1.8 });
+  }
+
+  /** Daggers in flight land: damage, counted as a combo (a kill they make throws no dagger). */
+  function updateDaggers(dt) {
+    for (let i = daggers.length - 1; i >= 0; i--) {
+      const d = daggers[i];
+      if ((d.left -= dt) > 0) continue;
+      daggers.splice(i, 1);
+      if (d.target.hp <= 0 || !world.balls.includes(d.target)) continue;
+      const out = combat.strike(world, d.target, CONFIG.cards.daggerDamage);
+      for (const o of out) if (o.type === 'kill') o.byDagger = true;
+      handleOutcomes(out);
+    }
+  }
   function enemyFraming(realDt) {
     const C = CONFIG.camera;
     const attackers = new Set(state.moves.filter((m) => (m.kind === 'lunge' && (!m.target || m.target === hero)) || m.hunting).map((m) => m.enemy));
@@ -1629,7 +1689,7 @@ export function createGame(container, levels, startIndex = 0) {
       case 'shot':
         // Your shot came to rest: lit bombs go off first, and the shot
         // carries on (their blast counts toward it) until everything settles.
-        if (isAtRest(world) && bombsPending()) break;
+        if (isAtRest(world) && (bombsPending() || daggers.length)) break; // and daggers land
         if (isAtRest(world)) {
           endMoveForGold();
           // A sword breaks as the shot in which it hit an enemy comes to rest.
@@ -1750,6 +1810,7 @@ export function createGame(container, levels, startIndex = 0) {
     );
     heroView.update(dt);
     objectsView.update(dt);
+    updateDaggers(dt);
     effects.update(dt, renderer.getDrawingBufferSize(bufSize).y / ((rig.camera.top - rig.camera.bottom) / rig.camera.zoom));
     iceView.update(ice, state.move ?? 0, dt);
     doorsView.update(dt);

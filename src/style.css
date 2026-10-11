@@ -775,6 +775,16 @@ body {
     -1px 0 0 #0f3a16;
 }
 
+.float.poison {
+  color: #9be05a;
+  text-shadow:
+    0 0 2px #1d3a0a,
+    0 1px 0 #1d3a0a,
+    0 -1px 0 #1d3a0a,
+    1px 0 0 #1d3a0a,
+    -1px 0 0 #1d3a0a;
+}
+
 .float.gear {
   font-size: 28px;
   color: #d6e6ff;

@@ -337,6 +337,14 @@ export const CONFIG = {
     ninjaSight: 2 / 3, // Ninja: enemies' sight range is scaled by this (6 tiles to 4)
     tapShoesDodge: 0.25, // Tap Shoes: chance an enemy's move passes straight through you
     dodgeOpacity: 0.3, // how see-through you go while it does
+    wizardRange: 2.5, // Wizard's Staff: tiles (centre to centre) from the enemy you hit that its lightning reaches
+    wizardDamage: 1,
+    wizardPush: 3, // tiles/s a zapped enemy is pushed away from the one you hit
+    daggerSpeed: 14, // Rogue's Dagger: tiles/s it flies
+    daggerDamage: 1,
+    poisonDamage: 1, // Poisoned Pen: HP a poisoned enemy loses each round (never below 1)
+    poisonColor: 0x6fd43a, // the tint a poisoned enemy takes on
+    poisonTint: 0.5, // how far toward it
     doctorsBag: 2, // Doctor's Bag: potions turn up this many times as often (barrels and kill drops)
     stoneShoesMass: 15, // Stone Shoes: your ball's mass while enemies move (normally 1; a Brute is 3)
   },
@@ -623,6 +631,7 @@ export const CONFIG = {
 
   // Effects (src/render/effects.js): particles, barrel debris, floor marks.
   effects: {
+    boltColor: 0xa8dcff, // the Wizard's Staff's lightning
     maxParticles: 600, // per layer (glowing and soft)
     particleScale: 1.7, // all particle sizes
     maxDebris: 120, // barrel staves in flight or settling

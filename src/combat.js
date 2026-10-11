@@ -146,6 +146,19 @@ export function createCombat() {
     hasHitHero(enemy) {
       return !!actors && haveHit.has(enemy);
     },
+    /**
+     * Damage `enemy` from outside a collision (the Wizard's Staff's lightning,
+     * the Rogue's Dagger): `kind` 'combo' counts like a combo hit. Returns
+     * outcomes like resolve(); a killed enemy leaves the board.
+     */
+    strike(w, enemy, amount, kind = 'combo') {
+      world = w;
+      const out = [];
+      if (enemy.hp <= 0) return out;
+      damage(enemy, amount, world.time, out, null, kind);
+      if (out.some((o) => o.type === 'kill')) world.balls = world.balls.filter((b) => b.kind !== 'enemy' || b.hp > 0);
+      return out;
+    },
     /** This shot's records (combo pairs used, enemies damaged, kills), for a look-ahead copy (src/killPredict.js). */
     shotState() {
       return { pairs: new Set(pairsThisShot), damaged: [...damagedThisShot], kills: killsThisShot };

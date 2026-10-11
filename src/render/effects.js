@@ -152,6 +152,11 @@ export function createEffects(scene) {
   const soft = particleLayer(E.maxParticles, false);
   root.add(glow.points, soft.points);
   const tmp = new THREE.Color();
+  const bolts = []; // Wizard's Staff lightning: { line, age }
+  const daggers = []; // Rogue's Dagger: { mesh, x, z, target, t, seconds }
+  // A dagger: a steel blade along +z with a dark hilt.
+  const daggerGeo = new THREE.ConeGeometry(0.05, 0.42, 6).rotateX(Math.PI / 2);
+  const daggerMat = toonMaterial(0xd8dde6);
 
   // Debris: little wooden staves that fly, tumble, bounce and settle, then shrink away.
   const STAVE = new THREE.BoxGeometry(0.2, 0.035, 0.07);
@@ -335,8 +340,37 @@ export function createEffects(scene) {
     glint(x, z) {
       burst(glow, x, 0.3, z, 6, { color: E.glintColor, speed: [0.5, 1.6], up: [0.8, 2], life: [0.2, 0.4], size: [0.04, 0.08], gravity: 3 });
     },
+    /** The Wizard's Staff: a crackle of lightning from (ax, az) to (bx, bz). */
+    bolt(ax, az, bx, bz) {
+      const pts = [];
+      const n = 7;
+      const dx = bx - ax;
+      const dz = bz - az;
+      const len = Math.hypot(dx, dz) || 1;
+      for (let i = 0; i <= n; i++) {
+        const t = i / n;
+        const j = i === 0 || i === n ? 0 : rand(-0.18, 0.18);
+        pts.push(new THREE.Vector3(ax + dx * t - (dz / len) * j, 0.35 + rand(-0.05, 0.08), az + dz * t + (dx / len) * j));
+      }
+      const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: E.boltColor, transparent: true, opacity: 1, depthWrite: false, blending: THREE.AdditiveBlending }));
+      line.renderOrder = 8;
+      root.add(line);
+      bolts.push({ line, age: 0 });
+      for (const p of pts) burst(glow, p.x, p.y, p.z, 2, { color: E.boltColor, speed: [0.1, 0.6], up: [0, 0.3], life: [0.15, 0.3], size: [0.06, 0.1] });
+    },
+    /** The Rogue's Dagger: a dagger flying from (x, z) to `target` (a ball, followed as it moves) over `seconds`. */
+    dagger(x, z, target, seconds) {
+      const mesh = new THREE.Mesh(daggerGeo, daggerMat);
+      mesh.position.set(x, 0.4, z);
+      root.add(mesh);
+      daggers.push({ mesh, x, z, target, t: 0, seconds });
+    },
     /** Remove everything (a new level). */
     clear() {
+      for (const b of bolts) root.remove(b.line);
+      bolts.length = 0;
+      for (const d of daggers) root.remove(d.mesh);
+      daggers.length = 0;
       glow.clear();
       soft.clear();
       debris.length = 0;
@@ -352,6 +386,30 @@ export function createEffects(scene) {
       soft.material.uniforms.uPx.value = pxPerUnit * E.particleScale;
       glow.update(dt);
       soft.update(dt);
+      for (let i = bolts.length - 1; i >= 0; i--) {
+        const b = bolts[i];
+        b.age += dt;
+        b.line.material.opacity = Math.max(0, 1 - b.age / 0.3);
+        if (b.age >= 0.3) {
+          root.remove(b.line);
+          b.line.geometry.dispose();
+          b.line.material.dispose();
+          bolts.splice(i, 1);
+        }
+      }
+      for (let i = daggers.length - 1; i >= 0; i--) {
+        const d = daggers[i];
+        d.t += dt;
+        const k = Math.min(1, d.t / d.seconds);
+        const x = d.x + (d.target.x - d.x) * k;
+        const z = d.z + (d.target.z - d.z) * k;
+        d.mesh.position.set(x, 0.4 + Math.sin(k * Math.PI) * 0.25, z);
+        d.mesh.rotation.set(0, Math.atan2(d.target.x - d.x, d.target.z - d.z), 0);
+        if (k >= 1) {
+          root.remove(d.mesh);
+          daggers.splice(i, 1);
+        }
+      }
 
       let n = 0;
       for (let i = debris.length - 1; i >= 0; i--) {

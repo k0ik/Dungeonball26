@@ -1299,10 +1299,11 @@ export function createGame(container, levels, startIndex = 0) {
         heroView.flash();
         state.ouch = CONFIG.render.heroOuchSeconds;
         floatAt(hero, `-${o.amount}`, 'hurt');
-        // Hit by an enemy, you lose a share of your gold; part of it is
-        // scattered around you to win back, red at first (see updateFlyingCoins).
-        // Not from a blast.
-        if (o.event && state.gold > 0) {
+        // Hit by an enemy, you used to lose a share of your gold, part of it
+        // scattered around you to win back (red at first, see
+        // updateFlyingCoins). Off now (loot.hurtDropsGold): coins are earned,
+        // not found. Never from a blast.
+        if (CONFIG.loot.hurtDropsGold && o.event && state.gold > 0) {
           const { lost, scattered } = hurtGold(state.gold);
           state.gold -= lost;
           const pieces = Math.min(scattered, CONFIG.loot.hurtCoinsMaxPieces);

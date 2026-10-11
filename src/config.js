@@ -260,6 +260,7 @@ export const CONFIG = {
     swordAtk: 3, // added to ATK while you hold a sword (it lasts one round: your next shot)
     killGoldPerLevel: 1, // a kill drops coins worth the enemy's level
     // When an enemy hits you, you lose this share of your gold (rounded up)...
+    hurtDropsGold: false, // an enemy hit no longer costs you gold (the rules below are kept, switched off)
     hurtGoldShare: 0.1,
     // ...and this share of that (rounded up) is scattered around you to win
     // back; the rest is gone. 100 gold: lose 10, 5 scattered, 5 gone.

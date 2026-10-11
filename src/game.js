@@ -255,6 +255,7 @@ export function createGame(container, levels, startIndex = 0) {
     effects.clear();
     doorsView.build(level);
     applyCards(); // hero-side card effects (Athletic)
+    startOfLevelCards();
 
     for (const view of enemyViews.values()) {
       scene.remove(view.object);
@@ -903,6 +904,29 @@ export function createGame(container, levels, startIndex = 0) {
     hero.passing = passing;
   }
 
+  /**
+   * The "start each level with..." artifacts: Warrior's Sword and Shield
+   * hand you the gear (unless you already hold it), Doctor's Bottle fills
+   * your HP. Each shows its label over your ball.
+   */
+  function startOfLevelCards() {
+    const labels = [];
+    if (card('warriorSword') && !hero.sword) {
+      hero.atk += CONFIG.loot.swordAtk;
+      hero.sword = 'ready';
+      labels.push('Sword');
+    }
+    if (card('warriorShield') && !hero.shield) {
+      hero.shield = true;
+      labels.push('Shield');
+    }
+    if (card('doctorsBottle') && hero.hp > 0 && hero.hp < hero.maxHp) {
+      labels.push(`+${hero.maxHp - hero.hp} HP`);
+      hero.hp = hero.maxHp;
+    }
+    labels.forEach((text, i) => overlay.float(text, hero.x, hero.z, hero.radius * 2 + 0.2 + i * 0.45, text === 'Sword' || text === 'Shield' ? 'gear' : 'heal', heroFollow()));
+  }
+
   /** Effects that sit on the hero rather than being checked as they happen. */
   function applyCards() {
     const K = CONFIG.cards;
@@ -945,7 +969,7 @@ export function createGame(container, levels, startIndex = 0) {
    * nothing inside); roll over it to take it. Gold comes out as that many single coins, scattered.
    */
   function dropLoot(x, z) {
-    const loot = rollLoot(Math.random, { gearWeight: card('junkHunter') ? CONFIG.cards.junkHunter : 1 });
+    const loot = rollLoot(Math.random, { gearWeight: card('junkHunter') ? CONFIG.cards.junkHunter : 1, potionWeight: card('doctorsBag') ? CONFIG.cards.doctorsBag : 1 });
     if (loot.kind === 'gold') scatterCoins(x, z, loot.value);
     else if (loot.kind !== 'empty') world.items.push({ ...loot, x, z });
   }
@@ -1243,7 +1267,7 @@ export function createGame(container, levels, startIndex = 0) {
         // A kill scatters coins worth the enemy's level around where it died,
         // and now and then a sword, shield or potion too (not when it fell
         // in a pit: its coins fall with it).
-        if (!o.fell) scatterCoins(o.target.x, o.target.z, o.target.level * CONFIG.loot.killGoldPerLevel, rollEnemyDrops());
+        if (!o.fell) scatterCoins(o.target.x, o.target.z, o.target.level * CONFIG.loot.killGoldPerLevel, rollEnemyDrops(Math.random, { potionScale: card('doctorsBag') ? CONFIG.cards.doctorsBag : 1 }));
         // Vampirism: every kill heals you.
         if (card('vampirism') && hero.hp > 0 && hero.hp < hero.maxHp) {
           hero.hp = Math.min(hero.maxHp, hero.hp + CONFIG.cards.vampirismHeal);

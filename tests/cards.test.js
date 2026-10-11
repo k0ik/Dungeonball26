@@ -12,7 +12,7 @@ test('the artifacts in the pool (Locksmith and Doppleganger shelved, Value Vacuu
     [
       'Leech in a Jar', "Warrior's Nose", "Cooper's Hammer", 'Skates of Rollering',
       'Bouncy Britches', 'Chicken Heart', 'Bomb Squad T-Shirt', "Doctor's Orders", "Assassin's Cloak", "Assassin's Boots",
-      'Tap Shoes', 'Stone Shoes',
+      'Tap Shoes', "Warrior's Sword", "Warrior's Shield", "Doctor's Bottle", "Doctor's Bag", 'Stone Shoes',
     ],
   );
 });
@@ -78,6 +78,24 @@ test('Junk Hunter doubles the sword and shield weights in barrels', () => {
   const gearW = table.filter((e) => e.kind === 'sword' || e.kind === 'shield').reduce((s, e) => s + e.weight, 0);
   assert.ok(Math.abs(count(1) - gearW / total) < 0.01);
   assert.ok(Math.abs(count(2) - (2 * gearW) / (total + gearW)) < 0.01);
+});
+
+test("Doctor's Bag doubles the potion weights in barrels and the potion chance in kill drops", async () => {
+  const { rollEnemyDrops } = await import('../src/loot.js');
+  const share = (opts, roll) => {
+    let seed = 7;
+    const rng = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    let n = 0;
+    for (let i = 0; i < 20000; i++) if (roll(rng, opts)) n++;
+    return n / 20000;
+  };
+  const barrel = (rng, o) => ['potion', 'superPotion'].includes(rollLoot(rng, o).kind);
+  const table = CONFIG.loot.table;
+  const total = table.reduce((s, e) => s + e.weight, 0);
+  const potW = table.filter((e) => e.kind === 'potion' || e.kind === 'superPotion').reduce((s, e) => s + e.weight, 0);
+  assert.ok(Math.abs(share({ potionWeight: 2 }, barrel) - (2 * potW) / (total + potW)) < 0.01);
+  const drop = (rng, o) => rollEnemyDrops(rng, o).some((k) => k.includes('otion'));
+  assert.ok(Math.abs(share({ potionScale: 2 }, drop) - 2 * CONFIG.loot.enemyDrops.potion) < 0.01);
 });
 
 test('Elasticity kicks a ball off a barrel, but not off a wall', () => {

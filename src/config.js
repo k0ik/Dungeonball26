@@ -337,6 +337,7 @@ export const CONFIG = {
     ninjaSight: 2 / 3, // Ninja: enemies' sight range is scaled by this (6 tiles to 4)
     tapShoesDodge: 0.25, // Tap Shoes: chance an enemy's move passes straight through you
     dodgeOpacity: 0.3, // how see-through you go while it does
+    doctorsBag: 2, // Doctor's Bag: potions turn up this many times as often (barrels and kill drops)
     stoneShoesMass: 15, // Stone Shoes: your ball's mass while enemies move (normally 1; a Brute is 3)
   },
 

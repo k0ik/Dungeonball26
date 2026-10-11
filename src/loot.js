@@ -15,10 +15,12 @@ export function randomInt(min, max, rng = Math.random) {
 
 /**
  * Roll a barrel's drop from the weighted loot table. `gearWeight` scales the
- * sword and shield weights (the Junk Hunter card doubles them).
+ * sword and shield weights (Warrior's Nose doubles them), `potionWeight` the
+ * potions' (Doctor's Bag).
  */
-export function rollLoot(rng = Math.random, { gearWeight = 1 } = {}) {
-  const weight = (e) => (e.kind === 'sword' || e.kind === 'shield' ? e.weight * gearWeight : e.weight);
+export function rollLoot(rng = Math.random, { gearWeight = 1, potionWeight = 1 } = {}) {
+  const weight = (e) =>
+    e.kind === 'sword' || e.kind === 'shield' ? e.weight * gearWeight : e.kind === 'potion' || e.kind === 'superPotion' ? e.weight * potionWeight : e.weight;
   const total = L.table.reduce((sum, e) => sum + weight(e), 0);
   let pick = rng() * total;
   for (const entry of L.table) {
@@ -35,12 +37,12 @@ export function rollLoot(rng = Math.random, { gearWeight = 1 } = {}) {
  * potion has its own small chance, so a lucky kill can drop more than one.
  * A potion drop is a super potion some of the time. Returns a list of kinds.
  */
-export function rollEnemyDrops(rng = Math.random) {
+export function rollEnemyDrops(rng = Math.random, { potionScale = 1 } = {}) {
   const D = L.enemyDrops;
   const out = [];
   if (rng() < D.sword) out.push('sword');
   if (rng() < D.shield) out.push('shield');
-  if (rng() < D.potion) out.push(rng() < D.superPotionShare ? 'superPotion' : 'potion');
+  if (rng() < D.potion * potionScale) out.push(rng() < D.superPotionShare ? 'superPotion' : 'potion');
   return out;
 }
 

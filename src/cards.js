@@ -29,6 +29,10 @@ export const CARDS = [
   { id: 'ninja', name: "Assassin's Cloak", icon: '🥷', text: 'Enemies are less likely to see you.' },
   { id: 'balletShoes', name: "Assassin's Boots", icon: '🥾', text: 'Free turn after every kill.' },
   { id: 'tapShoes', name: 'Tap Shoes', icon: '👞', text: 'Chance to dodge enemy attacks.' },
+  { id: 'warriorSword', name: "Warrior's Sword", icon: '🗡️', text: 'Start each level with a sword.' },
+  { id: 'warriorShield', name: "Warrior's Shield", icon: '🛡️', text: 'Start each level with a shield.' },
+  { id: 'doctorsBottle', name: "Doctor's Bottle", icon: '🧴', text: 'Start each level with full health.' },
+  { id: 'doctorsBag', name: "Doctor's Bag", icon: '🩺', text: 'Find more potions.' },
   { id: 'stoneShoes', name: 'Stone Shoes', icon: '🪨', text: 'Enemy hits barely knock you back.' },
 ];
 

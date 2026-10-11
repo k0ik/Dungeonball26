@@ -976,7 +976,12 @@ export function createGame(container, levels, startIndex = 0) {
    */
   function dropLoot(x, z) {
     const loot = rollLoot(Math.random, { gearWeight: card('junkHunter') ? CONFIG.cards.junkHunter : 1, potionWeight: card('doctorsBag') ? CONFIG.cards.doctorsBag : 1 });
-    if (loot.kind === 'gold') scatterCoins(x, z, loot.value);
+    if (loot.kind === 'gold') {
+      // Barrel gold fountains up like a chest's and is yours at once (no coins on the floor).
+      itemsView.chestCoins(x, 0.3, z, loot.value);
+      const gold = addGold(loot.value);
+      overlay.float(`+${gold}`, hero.x, hero.z, hero.radius * 2 + 0.8, 'gold', heroFollow());
+    }
     else if (loot.kind !== 'empty') world.items.push({ ...loot, x, z });
   }
 

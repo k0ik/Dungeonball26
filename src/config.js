@@ -258,7 +258,7 @@ export const CONFIG = {
     potionHeal: 1,
     superPotionHeal: 5,
     swordAtk: 3, // added to ATK while you hold a sword (it lasts one round: your next shot)
-    killGoldPerLevel: 1, // a kill drops coins worth the enemy's level
+    killGoldPerLevel: 1, // a kill pays gold worth the enemy's level (a fountain, credited at once)
     // When an enemy hits you, you lose this share of your gold (rounded up)...
     hurtDropsGold: false, // an enemy hit no longer costs you gold (the rules below are kept, switched off)
     hurtGoldShare: 0.1,

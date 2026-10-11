@@ -1281,10 +1281,19 @@ export function createGame(container, levels, startIndex = 0) {
         }
         hitStop(CONFIG.effects.hitStopKill);
         overlay.removeBar(o.target);
-        // A kill scatters coins worth the enemy's level around where it died,
-        // and now and then a sword, shield or potion too (not when it fell
-        // in a pit: its coins fall with it).
-        if (!o.fell) scatterCoins(o.target.x, o.target.z, o.target.level * CONFIG.loot.killGoldPerLevel, rollEnemyDrops(Math.random, { potionScale: card('doctorsBag') ? CONFIG.cards.doctorsBag : 1 }));
+        // A kill pays gold worth the enemy's level, and now and then drops a
+        // sword, shield or potion (not when it fell in a pit: it all falls with it).
+        if (!o.fell) {
+          // Its gold fountains up like a chest's and is yours at once; any
+          // gear or potion it drops still lands on the floor to roll over.
+          const n = o.target.level * CONFIG.loot.killGoldPerLevel;
+          if (n > 0) {
+            itemsView.chestCoins(o.target.x, 0.3, o.target.z, n);
+            const gold = addGold(n);
+            overlay.float(`+${gold}`, hero.x, hero.z, hero.radius * 2 + 0.8, 'gold', heroFollow());
+          }
+          scatterCoins(o.target.x, o.target.z, 0, rollEnemyDrops(Math.random, { potionScale: card('doctorsBag') ? CONFIG.cards.doctorsBag : 1 }));
+        }
         // Rogue's Dagger: each kill of your shot throws a dagger (a dagger's own kill doesn't).
         if (card('rogueDagger') && state.phase === 'shot' && !o.byDagger) throwDagger(o.target);
         // Vampirism: every kill heals you.

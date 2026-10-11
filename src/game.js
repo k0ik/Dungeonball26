@@ -1527,7 +1527,7 @@ export function createGame(container, levels, startIndex = 0) {
       const outcomes = combat.resolve(world, hero);
       strikeGold();
       const objectOutcomes = resolveObjects(world, hero, Math.random, { heroBarrelHits: card('barrelOfFun') ? 1 : CONFIG.objects.barrelHits });
-      // Rubber enemies: your ball comes off them at double speed.
+      // Rubber enemies: your ball comes off them at double speed, and they off you.
       const R = CONFIG.enemy.types.rubber;
       applyRubberRebound(world, hero, R.rebound, R.maxRebound);
       // Barrels kick every ball on like pinball bumpers; with Elasticity,

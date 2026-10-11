@@ -6,7 +6,7 @@ export const CONFIG = {
   physics: {
     step: 1 / 120, // fixed timestep, seconds
     maxStepsPerFrame: 12, // cap catch-up after a stall so we never spiral
-    friction: 1.3125, // constant deceleration, tiles/s² (the doc's 3.5 halved after playtesting, then cut by a quarter more: what the Athletic card used to give)
+    friction: 1.246875, // constant deceleration, tiles/s² (the doc's 3.5 halved after playtesting, then cut by a quarter more: what the Athletic card used to give; then 5% less)
     stopThreshold: 0.25, // below this a ball counts as at rest
     // Divots and bumps (tiles u and n): their slope's push, tiles/s², at its
     // steepest (partway out from the centre); it eases to nothing at the
@@ -56,7 +56,7 @@ export const CONFIG = {
     // The preview runs the real physics ahead of time, so it ends where the
     // shot would stop. It shows at most this many bounces, then ends at the next contact.
     previewBounces: 1,
-    previewMaxTime: 8, // seconds of simulated travel, a safety cap (full power stops in ~5 s)
+    previewMaxTime: 10, // seconds of simulated travel, a safety cap (full power stops in ~8.3 s on open floor)
     // Dash pattern encodes power: soft shots are short, sparse dots; hard
     // shots are long dashes packed close together. Lengths in tiles.
     dashMin: 0.06,
@@ -137,7 +137,7 @@ export const CONFIG = {
         puddleMoves: 1, // goop lasts the move it's laid in and this many more, like ice
       },
       rubber: {
-        rebound: 2, // your ball comes off it at this times its rebound speed...
+        rebound: 2, // your ball comes off it at this times its rebound speed, and it springs off you the same way...
         maxRebound: 13.5, // ...up to this (tiles/s; 1.5× the max launch speed)
         color: 0xff8fc8, // pink
       },

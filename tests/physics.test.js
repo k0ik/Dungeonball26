@@ -176,6 +176,32 @@ test('Rubber: your ball comes off a Rubber enemy at double the rebound speed (ca
   assert.equal(speedOf(hero), R.maxRebound);
 });
 
+test('Rubber: the Rubber enemy springs off your ball the other way, also at double speed', async () => {
+  const { applyRubberRebound } = await import('../src/physics.js');
+  const { createEnemy } = await import('../src/combat.js');
+  const R = CONFIG.enemy.types.rubber;
+  const hit = (type) => {
+    const world = createWorld(room);
+    const hero = createBall({ x: 3, z: 5.5, kind: 'hero', id: 'h' });
+    hero.vx = 3;
+    const e = createEnemy({ x: 4.5, z: 5.3, level: 1, id: 'e', type });
+    world.balls.push(hero, e);
+    for (let i = 0; i < 120; i++) {
+      stepWorld(world);
+      if (world.events.some((ev) => ev.type === 'ball')) {
+        applyRubberRebound(world, hero, R.rebound, R.maxRebound);
+        return { hero, e };
+      }
+      world.events.length = 0;
+    }
+    throw new Error('no hit');
+  };
+  const plain = hit(null).e;
+  const { hero, e } = hit('rubber');
+  assert.ok(Math.abs(speedOf(e) - Math.min(R.maxRebound, speedOf(plain) * R.rebound)) < 1e-9);
+  assert.ok(e.vx > 0 && hero.vx < e.vx, 'it heads away from you');
+});
+
 test('Brute: heavy, so it barely moves when you hit it and knocks you further than you knock it', async () => {
   const { createEnemy } = await import('../src/combat.js');
   const { heroDamage, lungeVelocity } = await import('../src/turns.js');

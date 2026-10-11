@@ -207,6 +207,34 @@ When you reach the exit, a scorecard sums up how you played the level before the
 
 Later candidates: coins collected (n of N, strips included), Clean Sweeps, trick shots landed, and lives lost. Each line would convert into bonus gold (or a grade) once the math is decided.
 
+### Planned: the economy (coins are earned, not found)
+
+Agreed direction, not built yet. The aim is emergent, improvised play rather than a power ladder: coins reward *how* you played a level, power is capped by the 3 artifact slots, and enemies never scale to the player (difficulty comes from the hand-authored levels). It replaces collecting coins off the floor, which had become a chore of precision sweeping, and a score that mostly measured luck with loot.
+
+- **Coins are paid, not picked up.** No coins lie on the floor to be collected.
+  - **Barrels never drop coins.** A barrel is empty or drops a potion or gear (sword or shield); no tools yet. The Gold row of the barrel loot table goes, its share spread over the others.
+  - **Enemies pay a little.** A kill pays a small number of coins in a fountain like a chest's (show only, credited at once), not a scatter to roll over.
+  - **Chests pay a little** (as now, a small fountain), and still give 1 random artifact for free.
+  - **The scorecard pays most.** At the exit, the scorecard pays out coins for deeds. Each pays a fixed amount whatever the level's size, so big levels aren't farms and every level offers the same deeds:
+    - all enemies killed
+    - all chests opened
+    - no deaths
+    - never seen
+    - trick shots landed in the level
+  - Bonuses that pull in different directions (you can't usually kill everything *and* stay unseen) are the point: each level you pick which ones to chase.
+- **Shots count against you, with no par.** The level's payout loses 1% per shot taken, floored at zero: 10 shots keep 90%, 30 keep 70%, 100 shots pay nothing. A percentage rather than a flat fee per shot, so big levels aren't punished for needing more shots.
+- **Score** is the total coins earned in the run, not the coins you hold, so spending never costs you score and nobody hoards.
+- **The peddler** comes right after the scorecard and its payout, as a screen (not modelled as a character or placed in the level for now). It offers 3 artifacts for sale at a time, with a reroll for a small fee. Buying one goes through the same "Choose a slot" step as a chest's artifact.
+- **Continues:** at game over you can pay to carry on instead: 100 coins the first time in a run, then 200, then 300 and so on. It keeps the continue a lifeline rather than a crutch. (Possibly an in-app purchase one day; if so, mark continued runs on the scoreboard so purchases don't buy rank.)
+- **Artifacts stay capped at 3 slots** and nothing else grows: no XP, no levelling, no permanent stat upgrades. A new artifact replaces an old one, so power plateaus early and a run is about which three you hold right now. Artifacts should be styles that are good in most levels in different ways (heal per shot, start with sword and shield), not counters that only pay off against one enemy type.
+
+Open choices:
+
+- **A rumour of the next level** at the peddler: the next level's name and a row of icons for the species and hazards (lava, pits, bombs) you'll meet, without the map, so choosing what to buy or swap is an informed bet rather than a coin flip. Suggested, not yet agreed.
+- **Sell-back:** an artifact pushed out of its slot sells back for a little, so a wrong guess costs something but doesn't wreck the run.
+- **Catches:** each artifact could carry a cost that makes it a commitment to a way of playing rather than strictly better (Quartermaster: start every level with sword and shield, but chests give nothing; Shamanic Powers: heal 1 HP per shot, but −3 max HP). Not decided.
+- **Still to settle:** what becomes of the coin strips (`*`) and the Clean Sweep bonuses; the gold you drop when hit (with no coins on the floor, perhaps the hit simply costs coins); and the coin artifacts (Sack of Plenty, Value Vacuum), which lose their purpose.
+
 ## Trick shots
 
 Trick shots are special one-shot combos, tracked as achievements. Each one pays a gold bonus the first time you land it, with a big centre banner naming it, like "Trick shot: Double Kill! +10". After that it still shows its name, but pays nothing extra. All of them happen within a single shot of yours, except Backfire, which happens on the enemy turn.
@@ -428,7 +456,7 @@ One line per open item, grouped; the full entries are below (or in the named sec
 
 - **Polish and feedback:** artifacts light up when they act · enemy hit expression · shield blinks out when used · cancel "X" above the ball · Seekers always look at you · hold the camera on an enemy's death · effects still to come (squash and stretch, motion trails, bloom, chest-lid debris, ice and goop shimmer) · swap in your sound effects · custom artifact icons (Artifacts table)
 - **HUD and menus:** lives counter · pause button and panel · keys stay on the key ring, in card-like frames · tap an enemy to learn about it · accessibility pass · `?` map button
-- **Rules and scoring:** coins expire after 2 turns · clear-the-level bonus · all-chests bonus · end-of-level scorecard maths and gold per level (Scorecard) · trick shots (Trick shots) · red barrel blast push · stackable artifacts (to explore, Artifacts)
+- **Rules and scoring:** coins expire after 2 turns · clear-the-level bonus · all-chests bonus · end-of-level scorecard maths and gold per level (Scorecard) · the economy: coins earned not found, shot penalty, peddler, paid continues (Scorecard) · trick shots (Trick shots) · red barrel blast push · stackable artifacts (to explore, Artifacts)
 - **Tiles and level features:** portals · boost tiles · outdoor tiles (cobblestone, dirt, grass, mud, water) · `?` progressive reveal
 - **Enemies and tool balls** (Enemy ideas): Double · Slime · Zombie · Stink · Magnet (tool) · Key ball (tool)
 - **Artifact ideas** (Artifacts): Wizard · Medic · Warrior · Paladin · Poisoner · Ninja · Rogue · Chainsmoker · Clairvoyance · Fleet Feet · Alchemist · Mountain Pose · +1 max HP (name to come) · Limber · Bomb Squad · Charmer · Value Vacuum with a taper

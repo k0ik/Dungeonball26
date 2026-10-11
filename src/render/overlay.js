@@ -196,6 +196,14 @@ export function createOverlay(container, camera) {
         if (bar.el.hidden !== !!ball.inert) bar.el.hidden = !!ball.inert;
         if (ball.inert) continue;
         place(bar.el, ball.x, ball.radius * 2 + BAR_HEIGHT, ball.z);
+        if (bar.shownMax !== ball.maxHp) {
+          // Max HP can change (the Chicken Heart artifact): one notch per HP.
+          bar.shownMax = ball.maxHp;
+          bar.shown = -1;
+          const hp = bar.el.querySelector('.hp');
+          hp.style.setProperty('--segments', ball.maxHp);
+          hp.style.width = `${Math.max(CONFIG.render.hpBarMinPx, CONFIG.render.hpBarPxPerHp * ball.maxHp)}px`;
+        }
         if (bar.shown !== ball.hp) {
           bar.shown = ball.hp;
           bar.fill.style.width = `${(100 * ball.hp) / ball.maxHp}%`;

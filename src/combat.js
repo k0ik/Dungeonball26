@@ -173,7 +173,9 @@ export function createCombat() {
       const out = [];
       const amount = CONFIG.objects.explosiveDamage;
       if (victim === hero) {
-        if (hero.shield) {
+        if (hero.blastproof) {
+          out.push({ type: 'immune', target: hero, source: 'explosion' }); // the Bomb Squad T-Shirt
+        } else if (hero.shield) {
           hero.shield = false;
           out.push({ type: 'blocked', target: hero, source: 'explosion' });
         } else if (hero.hp > 0) {
@@ -211,7 +213,9 @@ export function createCombat() {
           ball.vz += (dz / d) * push;
         }
         if (ball === hero) {
-          if (hero.shield) {
+          if (hero.blastproof) {
+            out.push({ type: 'immune', target: hero, source: 'explosion' }); // the Bomb Squad T-Shirt
+          } else if (hero.shield) {
             hero.shield = false;
             out.push({ type: 'blocked', target: hero, source: 'explosion' });
           } else if (hero.hp > 0) {
@@ -279,6 +283,12 @@ export function createCombat() {
           const actor = ev.a === hero ? ev.b : ev.b === hero ? ev.a : null;
           if (!actors.has(actor) || haveHit.has(actor) || hero.hp <= 0) continue;
           haveHit.add(actor);
+          // Tap Shoes: a share of hits miss you entirely (no damage; the
+          // shield isn't used up). The bump itself has already happened.
+          if (hero.dodge && Math.random() < hero.dodge) {
+            out.push({ type: 'dodged', target: hero, source: actor, event: ev });
+            continue;
+          }
           if (hero.shield) {
             hero.shield = false;
             out.push({ type: 'blocked', target: hero, source: actor, event: ev });

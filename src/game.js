@@ -845,6 +845,11 @@ export function createGame(container, levels, startIndex = 0) {
       if (id === 'doppleganger') state.lives += 1; // kept even if the card is later replaced
       sfx.play('gear', 0.8);
       applyCards();
+      // Chicken Heart: the extra max HP comes filled.
+      if (id === 'chickenHeart' && hero.hp > 0) {
+        hero.hp = Math.min(hero.maxHp, hero.hp + CONFIG.cards.chickenHeartHp);
+        floatAt(hero, `+${CONFIG.cards.chickenHeartHp} HP`, 'heal');
+      }
     });
   }
 
@@ -862,7 +867,14 @@ export function createGame(container, levels, startIndex = 0) {
 
   /** Effects that sit on the hero rather than being checked as they happen. */
   function applyCards() {
-    hero.friction = card('athletic') ? CONFIG.cards.athleticFriction : undefined;
+    const K = CONFIG.cards;
+    hero.friction = card('athletic') ? K.athleticFriction : undefined;
+    hero.maxHp = CONFIG.hero.maxHp + (card('chickenHeart') ? K.chickenHeartHp : 0);
+    hero.hp = Math.min(hero.hp, hero.maxHp);
+    hero.blastproof = card('bombSquad');
+    hero.potionScale = card('doctorsOrders') ? K.doctorsOrdersHeal : 1;
+    hero.sightScale = card('ninja') ? K.ninjaSight : 1;
+    hero.dodge = card('tapShoes') ? K.tapShoesDodge : 0;
   }
 
   /**
@@ -1226,6 +1238,11 @@ export function createGame(container, levels, startIndex = 0) {
       } else if (o.type === 'blocked') {
         sfx.play('blocked', 1);
         floatAt(hero, 'Blocked!', 'gear');
+      } else if (o.type === 'dodged') {
+        sfx.play('blocked', 0.7, { pitch: 1.3 });
+        floatAt(hero, 'Dodged!', 'gear');
+      } else if (o.type === 'immune') {
+        floatAt(hero, 'Blast-proof!', 'gear');
       }
     }
   }
@@ -1504,6 +1521,8 @@ export function createGame(container, levels, startIndex = 0) {
     acc += dt;
     let steps = 0;
     while (acc >= step && steps < CONFIG.physics.maxStepsPerFrame) {
+      // Stone Shoes: heavy while the enemies move, so their hits barely shift you.
+      hero.mass = card('stoneShoes') && (state.phase === 'enemyMove' || state.phase === 'enemyWait') ? CONFIG.cards.stoneShoesMass : undefined;
       stepWorld(world, step);
       handleFalls();
       if (hero.inert) {
@@ -1560,8 +1579,9 @@ export function createGame(container, levels, startIndex = 0) {
             sfx.play('blocked', 0.6, { pitch: 0.8 });
           }
           // A combo kill (2+ enemies in one shot) earns a bonus turn: the
-          // enemy phase is skipped and you shoot again.
-          if (combat.shotKills >= 2) {
+          // enemy phase is skipped and you shoot again. With Ballet Shoes,
+          // any kill does.
+          if (combat.shotKills >= (card('balletShoes') ? 1 : 2)) {
             state.phase = 'aim';
             newRound();
             // The "Combo Kill!" banner already announced the bonus turn; only

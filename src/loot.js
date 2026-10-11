@@ -87,11 +87,11 @@ export function collect(item, hero, run) {
       run.gold += item.value;
       return `+${item.value}`;
     case 'potion':
-      hero.hp = Math.min(hero.maxHp, hero.hp + L.potionHeal);
-      return `+${L.potionHeal} HP`;
+      hero.hp = Math.min(hero.maxHp, hero.hp + L.potionHeal * (hero.potionScale ?? 1));
+      return `+${L.potionHeal * (hero.potionScale ?? 1)} HP`;
     case 'superPotion':
-      hero.hp = Math.min(hero.maxHp, hero.hp + L.superPotionHeal);
-      return `+${L.superPotionHeal} HP`;
+      hero.hp = Math.min(hero.maxHp, hero.hp + L.superPotionHeal * (hero.potionScale ?? 1));
+      return `+${L.superPotionHeal * (hero.potionScale ?? 1)} HP`;
     case 'shield':
       hero.shield = true;
       return 'Shield';

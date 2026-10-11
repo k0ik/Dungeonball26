@@ -156,37 +156,40 @@ Starting artifacts (numbers are defaults to tune). The card shows the short line
 | --- | --- |
 | 🫙 Leech in a Jar (was Vampirism; later named Vampire's Tooth) | *"Defeating an enemy gives you +1 HP."* Each kill heals you 1 HP, capped at max. Custom icon to come: a fat leech in a little glass jar |
 | ~~Doppleganger~~ | *Shelved for now (not offered or dealt).* +1 life, and +1 to the lives you're restored to on a game over |
-| 👃 Soldier's Nose (was Junk Hunter; later named Junk Detector) | *"You find more swords and shields in barrels."* Swords and shields turn up twice as often in barrels. Custom icon to come: a big comical nose wearing a tiny helmet |
+| 👃 Warrior's Nose (was Junk Hunter, then Junk Detector, then Soldier's Nose) | *"Find swords and shields more often."* Swords and shields turn up twice as often in barrels. Custom icon to come: a big comical nose wearing a tiny helmet |
 | 💰 Sack of Plenty (was Bullionaire; later named Magic Wallet) | *"The gold you collect is worth 1.5×."* All gold you collect is worth 1.5× (rounded up). Custom icon to come: a bulging drawstring sack, one coin spilling out of the top |
 | 🔨 Cooper's Hammer (was Barrel of Fun; later named Wood Axe) | *"Break barrels with one hit."* Barrels your ball hits break in one hit. Only your ball's hits: an enemy knocked into a barrel, or a Bomb's blast, still takes the usual two hits. Custom icon to come: a mallet with an iron barrel hoop round its head (a cooper makes barrels) |
 | ~~Locksmith~~ | *Shelved for now (not offered or dealt): it's unclear that skipping doors pays off.* Doors open without keys, and keys don't appear |
-| 🥾 Boots of Rolling (was Athletic; later named Rollerskates) | *"Travel faster and farther."* Your ball rolls faster and farther: 40% less friction on it, on top of the lower base friction every ball now has (the old Athletic, 25%, became the baseline). Enemies unaffected; the aim preview includes it. Custom icon to come: a fantasy boot with little wheels for a sole |
-| 🌪️ Value Vacuum (was Money Magnet; later named Moola Magnet) | *"Nearby coins are attracted to you."* Gold on the floor (enemy coins, barrel gold and strip coins) is collected from farther away: within 1.5 tiles of your ball's centre instead of just on contact (about 0.6 tiles), drawn in to you as you roll past. Other loot still needs contact. Custom icon to come: a brass hand-crank vacuum with a horn nozzle |
+| 🛼 Skates of Rollering (was Athletic, then Rollerskates, then Boots of Rolling) | *"Travel faster and farther."* Your ball rolls faster and farther: 40% less friction on it, on top of the lower base friction every ball now has (the old Athletic, 25%, became the baseline). Enemies unaffected; the aim preview includes it. Custom icon to come: a fantasy boot with little wheels for a sole |
+| ~~🌪️ Value Vacuum~~ (was Money Magnet; later named Moola Magnet) | *Removed (not offered or dealt): coins won't lie on the floor in the planned economy. Its effect is still wired up.* *"Nearby coins are attracted to you."* Gold on the floor (enemy coins, barrel gold and strip coins) is collected from farther away: within 1.5 tiles of your ball's centre instead of just on contact (about 0.6 tiles), drawn in to you as you roll past. Other loot still needs contact. Custom icon to come: a brass hand-crank vacuum with a horn nozzle |
 | 🩳 Bouncy Britches (was Elasticity; later named Rubber Bumpers) | *"Bounce off objects and enemies to go faster and farther."* Barrels, chests and enemies act like pinball bumpers for you: when your ball bounces off one, it's kicked away with +2.5 tiles/s of extra speed (instead of the +1.5 every ball gets from barrels alone) along the bounce (never above the 10.35 tiles/s max launch speed). Each bumper kicks up to 3 times per shot (`cards.elasticityKicksPerBumper`), so a ball caught rattling between a chest and a wall (worst with Athletic) still runs down instead of bouncing forever. Walls bounce as normal. The aim preview includes the kick. Custom icon to come: puffy patched pumpkin-shaped trousers with a coil spring poking out of the seat |
+| 🐔 Chicken Heart | *"+1 to max health."* Your max HP goes up by 1 (`cards.chickenHeartHp`), and the new HP comes filled when you take it (a "+1 HP" label); your HP bar gains a notch. Losing the artifact takes the extra HP away again |
+| 👕 Bomb Squad T-Shirt | *"Explosions don't hurt you."* Red barrels and Bomb blasts do you no damage ("Blast-proof!") and leave a held shield unused. A Bomb's blast still pushes you |
+| 📋 Doctor's Orders | *"Potions heal twice as much."* A potion heals 2 HP and a super potion 10 (`cards.doctorsOrdersHeal`) |
+| 🥷 Ninja | *"Enemies are less likely to see you."* Enemies' sight range is two thirds of normal: 4 tiles instead of 6 (`cards.ninjaSight`) |
+| 🩰 Ballet Shoes | *"Free turn after every kill."* Any shot of yours that kills an enemy earns a bonus turn, not just a combo kill. A catch is still to be decided |
+| 👞 Tap Shoes | *"Chance to dodge enemy attacks."* Each enemy hit has a 25% chance (`cards.tapShoesDodge`) to miss you entirely: no damage, no dropped gold, a held shield isn't used up ("Dodged!"). The bump itself still happens, since the balls have already collided |
+| 🪨 Stone Shoes | *"Enemy hits barely knock you back."* While the enemies move your ball weighs 5 (`cards.stoneShoesMass`; a normal ball is 1, a Brute 3), so their hits barely shift you and they bounce off you instead. Your own shots are unaffected |
 
 Defaults assumed until you say otherwise: an offer never includes a card you already hold, and a card you replace goes back into the pool. Cards carry over between levels like HP and gold, but dying loses them all.
 
-**Card ideas** (candidates for the pool, not yet in the starting set; numbers to tune):
+**Artifact ideas** (candidates for the pool, not yet built; names and card text agreed, numbers to tune):
 
-| Card | Effect | Notes |
-| --- | --- | --- |
-| Wizard | When you hit an enemy, lightning zaps other enemies within about 2 tiles: each takes 1 damage and is pushed away as if hit | Zapped enemies count as combos |
-| Medic | Potions turn up more often in barrels and kill drops | Alt: start each level at full HP |
-| Warrior | Swords turn up more often | Alt: start each level holding a sword |
-| Paladin | Shields turn up more often | Alt: start each level holding a shield |
-| Poisoner | Each enemy you hit directly (not by combo) is poisoned: it turns green and loses 1 HP at the start of each round, stopping at 1 HP | Poison never kills, so the last hit is still yours |
-| Ninja | Enemies see a shorter distance (sight range down), so sneaking is easier | |
-| Rogue | After you hit an enemy, a dagger flies at the nearest other enemy you can see, for 1 damage | Once per shot, or once per hit? Open |
-| Chainsmoker | Any kill earns a bonus turn, not just a combo kill | Toggle; doesn't stack |
-| Clairvoyance | The aim preview shows twice as far (two bounces instead of one) | For this to matter, the normal preview gets shorter when cards arrive (M7), so the default only hints at the path |
-| Fleet Feet | 10% less friction on your ball | Overlaps Athletic (40%); could be its smaller, stackable version |
-| Alchemist | Potions heal twice as much: a potion +6 HP, a super potion +10 | Makes potions (and Junk Hunter, which finds more of them) worth chasing |
-| Mountain Pose | Enemy hits hurt just as much, but barely move you: their impact knocks your ball back with a small share of the usual force, so you don't go flying into barrels, red barrels or other enemies | A steadiness card for crowded levels |
-| (name to come) | +1 to your max HP (and +1 HP now) | A simple sturdiness artifact; name and icon undetermined |
-| Limber | A chance to dodge an enemy's hit entirely: no damage, no knockback, no dropped gold (the ball slips aside with a little flourish). Perhaps 25%, rolled per hit | A defensive card; the chance is a number to tune |
-| Bomb Squad | Explosions (red barrels, bomb enemies) don't hurt you | Toggle; doesn't stack |
+| Artifact | Card text | Rule | Notes |
+| --- | --- | --- | --- |
+| Wizard's Staff | "Automatically zaps enemies" | When you hit an enemy, lightning zaps other enemies within about 2 tiles: each takes 1 damage and is pushed away as if hit | Zapped enemies count as combos |
+| Rogue's Dagger | "Throw a dagger after each kill" | After a kill, a dagger flies at the nearest other enemy you can see, for 1 damage | Needs a projectile |
+| Poisoned Pen | "Enemies you attack lose -1 HP per turn" | Each enemy you hit directly (not by combo) is poisoned: it turns green and loses 1 HP at the start of each round, stopping at 1 HP | Poison never kills, so the last hit is still yours |
+| Warrior's Sword | "Start each level with a sword" | You enter every level holding a sword | |
+| Warrior's Shield | "Start each level with a shield" | You enter every level holding a shield | |
+| Shaman's Mask | "Heal +1 HP per shot" | Each shot of yours heals 1 HP | Needs a catch, e.g. −3 max HP |
+| Doctor's Bag | "Find more potions" | Potions turn up more often in barrels and kill drops | |
+| Doctor's Bottle | "Start each level with full health" | You enter every level at full HP | |
+| Charmer | | The first enemy you hit becomes your companion (see To-do) | On hold |
+| Quartermaster | | Start every level with sword and shield, but chests give nothing | On hold (overlaps Warrior's Sword and Shield) |
+| Clairvoyance | | The aim preview shows two bounces instead of one | Left out for now: only matters if the normal preview gets shorter |
 
-Medic, Warrior and Paladin overlap Junk Hunter (swords and shields twice as often); if they go in, Junk Hunter could be dropped, or kept as the all-in-one.
+Dropped: Fleet Feet (a smaller Skates of Rollering). Built from this list so far: Chicken Heart, Bomb Squad T-Shirt, Doctor's Orders, Ninja, Ballet Shoes, Tap Shoes and Stone Shoes (in the table above). Wizard's Staff was Wizard, Rogue's Dagger Rogue, Poisoned Pen Poisoner, Ballet Shoes Chainsmoker, Chicken Heart the unnamed +1 max HP, Tap Shoes Limber, Stone Shoes Mountain Pose, Doctor's Orders Alchemist; Medic, Warrior and Paladin became the Doctor's and Warrior's artifacts.
 
 **To explore: stackable cards.** Copies of a card add up, each in its own slot: one Medic is +5% potion chance, two Medics (two slots) +10%, three Medics (all three slots) +15%. That's all a stack gives: each copy adds the same step, with no extra bonus for matching sets and no levelling up. Likewise Ninja at −5%, −10%, −15% sight range, and Fleet Feet at −2%, −5%, −8% friction. Since there are only 3 slots, stacking trades breadth for depth. Cards that are simple on/off toggles (Chainsmoker, Barrel of Fun, Bomb Squad, Locksmith) do nothing extra as a second copy, so you can only ever hold one of each. This changes the default above: an offer can include a stackable card you already hold (taking it fills another slot with another copy), but never a toggle you already hold.
 
@@ -459,7 +462,7 @@ One line per open item, grouped; the full entries are below (or in the named sec
 - **Rules and scoring:** coins expire after 2 turns · clear-the-level bonus · all-chests bonus · end-of-level scorecard maths and gold per level (Scorecard) · the economy: coins earned not found, shot penalty, peddler, paid continues (Scorecard) · trick shots (Trick shots) · red barrel blast push · stackable artifacts (to explore, Artifacts)
 - **Tiles and level features:** portals · boost tiles · outdoor tiles (cobblestone, dirt, grass, mud, water) · `?` progressive reveal
 - **Enemies and tool balls** (Enemy ideas): Double · Slime · Zombie · Stink · Magnet (tool) · Key ball (tool)
-- **Artifact ideas** (Artifacts): Wizard · Medic · Warrior · Paladin · Poisoner · Ninja · Rogue · Chainsmoker · Clairvoyance · Fleet Feet · Alchemist · Mountain Pose · +1 max HP (name to come) · Limber · Bomb Squad · Charmer · Value Vacuum with a taper
+- **Artifact ideas** (Artifacts): Wizard's Staff · Rogue's Dagger · Poisoned Pen · Warrior's Sword · Warrior's Shield · Shaman's Mask · Doctor's Bag · Doctor's Bottle · Ballet Shoes' catch · on hold: Charmer, Quartermaster, Clairvoyance
 - **Levels and tools:** level editor saving (step 2) · remaining tutorial lessons · M8 levels (Two Keys, Gauntlet) · a second visual mood (stone crypt)
 - **Testing settings to undo:** hero max HP back to 10 (`hero.maxHp`, now 5)
 
@@ -490,7 +493,7 @@ One line per open item, grouped; the full entries are below (or in the named sec
 - **Aim cancel mark on top:** the "X" that shows while your drag is inside the cancel ring (let go to cancel) moves from on the ball to above it on screen, so the finger dragging back from the bottom never covers it.
 - **Shield blinks out:** when your shield is used up (it took a hit or a blast for you), it blinks 3 times before it disappears, so you notice it's gone. (The sword doesn't need this.)
 - **Sound effects:** you have a collection of sound effects to swap in for the placeholders (see Audio).
-- **Value Vacuum with a taper (idea):** instead of a 1.5-tile pickup range, a wide field (perhaps 6 tiles each way, a 12×12 area) whose pull fades with distance: coins close to your path rush in fast and far and are collected, coins further out drift gently toward you and stop short. Rolling through a field of coins leaves an empty trail with the rest smeared toward it. Coins would then need to move as real bodies: today they're fixed pickups, so they'd have to slide with friction and stop at walls and doors (a simple circle-against-wall-tile check, much cheaper than full ball physics), and settle where they end so later shots can sweep them. Collected coins still count toward coin streaks. Costs: a few hundred moving coins per shot is fine; the preview wouldn't show the smear. A medium-sized job, worth it if coin strips become a big part of levels.
+- **Value Vacuum with a taper (idea; dropped with Value Vacuum):** instead of a 1.5-tile pickup range, a wide field (perhaps 6 tiles each way, a 12×12 area) whose pull fades with distance: coins close to your path rush in fast and far and are collected, coins further out drift gently toward you and stop short. Rolling through a field of coins leaves an empty trail with the rest smeared toward it. Coins would then need to move as real bodies: today they're fixed pickups, so they'd have to slide with friction and stop at walls and doors (a simple circle-against-wall-tile check, much cheaper than full ball physics), and settle where they end so later shots can sweep them. Collected coins still count toward coin streaks. Costs: a few hundred moving coins per shot is fine; the preview wouldn't show the smear. A medium-sized job, worth it if coin strips become a big part of levels.
 - **Artifacts light up when they act:** whenever a held artifact does something, its card in the HUD briefly enlarges (a quick pop and settle), so you learn what each one does: Leech in a Jar when a kill heals you, Bouncy Britches on a kick, Cooper's Hammer when a barrel breaks in one hit, Value Vacuum as it pulls coins, Sack of Plenty as gold is multiplied, Soldier's Nose when a barrel drops gear, Boots of Rolling as your shot launches.
 - **Hit effects:** on every hit to an enemy, a short burst of lines or dots in that enemy's colour flies outward from the point of impact.
 - **Hit expression for enemies:** a struck enemy shows a pained face for a moment (like your ball's "ouch"), while still looking toward its attacker (see Faces look where they're going).

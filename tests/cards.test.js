@@ -6,15 +6,44 @@ import { createWorld, createBall, createStaticCircle, stepWorld, applyBumperKick
 import { parseLevel } from '../src/level.js';
 import { CONFIG } from '../src/config.js';
 
-test('the seven starting artifacts (Locksmith and Doppleganger are shelved)', () => {
+test('the artifacts in the pool (Locksmith and Doppleganger shelved, Value Vacuum removed)', () => {
   assert.deepEqual(
     CARDS.map((c) => c.name),
     [
-      'Leech in a Jar', "Soldier's Nose", 'Sack of Plenty', "Cooper's Hammer", 'Boots of Rolling', 'Value Vacuum',
-      'Bouncy Britches',
+      'Leech in a Jar', "Warrior's Nose", 'Sack of Plenty', "Cooper's Hammer", 'Skates of Rollering',
+      'Bouncy Britches', 'Chicken Heart', 'Bomb Squad T-Shirt', "Doctor's Orders", 'Ninja', 'Ballet Shoes',
+      'Tap Shoes', 'Stone Shoes',
     ],
   );
 });
+
+test("Doctor's Orders: potions heal twice as much", async () => {
+  const { collect } = await import('../src/loot.js');
+  const hero = { hp: 1, maxHp: 20, potionScale: CONFIG.cards.doctorsOrdersHeal };
+  collect({ kind: 'potion' }, hero, { gold: 0 });
+  assert.equal(hero.hp, 1 + CONFIG.loot.potionHeal * CONFIG.cards.doctorsOrdersHeal);
+});
+
+test('Ninja: enemies see a shorter distance', async () => {
+  const { canSee } = await import('../src/sight.js');
+  const level = parseLevel(['#########', '#.......#', '#.......#', '#.......#', '#.......#', '#.......#', '#.......#', '#.......#', '#.......#', '#.......#', '#S......#', '#########'].join('\n'));
+  const enemy = createBall({ x: 4.5, z: 3, kind: 'enemy', id: 'e' });
+  const hero = createBall({ x: 4.5, z: 3 + 5, kind: 'hero', id: 'h' });
+  assert.ok(canSee(level, enemy, hero, [enemy, hero]), 'seen at 5 tiles');
+  hero.sightScale = CONFIG.cards.ninjaSight;
+  assert.ok(!canSee(level, enemy, hero, [enemy, hero]), 'unseen at 5 tiles with Ninja');
+});
+
+test('Bomb Squad T-Shirt: a red barrel does you no harm and leaves your shield', async () => {
+  const { createCombat } = await import('../src/combat.js');
+  const combat = createCombat();
+  const hero = { kind: 'hero', hp: 5, maxHp: 5, shield: true, blastproof: true };
+  const out = combat.explosion(createWorld(parseLevel('#####\n#S..#\n#####')), hero, hero);
+  assert.equal(hero.hp, 5);
+  assert.ok(hero.shield);
+  assert.equal(out[0].type, 'immune');
+});
+
 
 test('an offer is 3 different cards, never one you hold', () => {
   const held = ['athletic', 'elasticity', 'vampirism'];

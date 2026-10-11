@@ -332,6 +332,11 @@ export const CONFIG = {
     magnetPull: 10, // how fast pulled coins close in, 1/s
     elasticityKick: 2.5, // tiles/s added on bouncing off a barrel, chest or enemy (instead of the barrels' own physics.barrelKick)
     elasticityKicksPerBumper: 3, // kicks each bumper gives per shot (so a ball pinned against one still runs down)
+    chickenHeartHp: 1, // Chicken Heart: added to your max HP (and healed when you take it)
+    doctorsOrdersHeal: 2, // Doctor's Orders: potions heal this many times as much
+    ninjaSight: 2 / 3, // Ninja: enemies' sight range is scaled by this (6 tiles to 4)
+    tapShoesDodge: 0.25, // Tap Shoes: chance an enemy's hit misses you entirely
+    stoneShoesMass: 5, // Stone Shoes: your ball's mass while enemies move (normally 1; a Brute is 3)
   },
 
   hero: {

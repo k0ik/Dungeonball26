@@ -30,7 +30,7 @@ export function canSee(level, enemy, hero, balls, statics = []) {
   const dx = hero.x - enemy.x;
   const dz = hero.z - enemy.z;
   const dist = Math.hypot(dx, dz);
-  if (dist > CONFIG.enemy.sightRange) return false;
+  if (dist > CONFIG.enemy.sightRange * (hero.sightScale ?? 1)) return false; // sightScale: the Ninja artifact
 
   // Hero-width sweep against walls (slightly shrunk so resting against a
   // wall doesn't count as a hit at the very start).

@@ -14,7 +14,8 @@ export const CARDS = [
   // Shelved for now. Its effect is still wired up in game.js.
   // { id: 'doppleganger', name: 'Doppleganger', icon: '👥', text: '+1 life, and +1 to the lives a game over restores.' },
   { id: 'junkHunter', name: "Warrior's Nose", icon: '👃', text: 'Find swords and shields more often.' },
-  { id: 'bullionaire', name: 'Sack of Plenty', icon: '💰', text: `The gold you collect is worth ${K.bullionaire}×.` },
+  // Removed: gold won't be picked up in the planned economy. Its effect is still wired up in game.js.
+  // { id: 'bullionaire', name: 'Sack of Plenty', icon: '💰', text: `The gold you collect is worth ${K.bullionaire}×.` },
   { id: 'barrelOfFun', name: "Cooper's Hammer", icon: '🔨', text: 'Break barrels with one hit.' },
   // Shelved for now: unclear that skipping doors pays off. Its effect is still wired up in game.js.
   // { id: 'locksmith', name: 'Locksmith', icon: '🗝️', text: 'Doors open without keys.' },
@@ -25,8 +26,8 @@ export const CARDS = [
   { id: 'chickenHeart', name: 'Chicken Heart', icon: '🐔', text: `+${K.chickenHeartHp} to max health.` },
   { id: 'bombSquad', name: 'Bomb Squad T-Shirt', icon: '👕', text: "Explosions don't hurt you." },
   { id: 'doctorsOrders', name: "Doctor's Orders", icon: '📋', text: 'Potions heal twice as much.' },
-  { id: 'ninja', name: 'Ninja', icon: '🥷', text: 'Enemies are less likely to see you.' },
-  { id: 'balletShoes', name: 'Ballet Shoes', icon: '🩰', text: 'Free turn after every kill.' },
+  { id: 'ninja', name: "Assassin's Cloak", icon: '🥷', text: 'Enemies are less likely to see you.' },
+  { id: 'balletShoes', name: "Assassin's Boots", icon: '🥾', text: 'Free turn after every kill.' },
   { id: 'tapShoes', name: 'Tap Shoes', icon: '👞', text: 'Chance to dodge enemy attacks.' },
   { id: 'stoneShoes', name: 'Stone Shoes', icon: '🪨', text: 'Enemy hits barely knock you back.' },
 ];

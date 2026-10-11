@@ -96,6 +96,7 @@ export function createBallView(ball, { color, stripe, silver = false, finish = s
     root.add(m);
     return m;
   });
+  let seeThrough = 1; // opacity while dodging (Tap Shoes: ball.passing)
   let beamT = -1; // seconds into the beam-out, or -1
   let fallT = -1; // seconds into a fall (pit or lava), or -1
 
@@ -140,6 +141,23 @@ export function createBallView(ball, { color, stripe, silver = false, finish = s
     /** Sync to the simulation and roll by the distance moved since last frame. */
     update(dt = 0) {
       lookFace?.(ball.look, dt);
+      // Dodging (Tap Shoes): see-through while an enemy passes through you.
+      if (ball.passing || seeThrough < 1) {
+        const target = ball.passing ? CONFIG.cards.dodgeOpacity : 1;
+        seeThrough += (target - seeThrough) * Math.min(1, dt * 14);
+        if (seeThrough > 0.99 && !ball.passing) seeThrough = 1;
+        const see = seeThrough < 1;
+        for (const m of [body.material, face?.material]) {
+          if (!m) continue;
+          if (m.transparent !== see) {
+            m.transparent = see;
+            m.depthWrite = !see;
+            m.needsUpdate = true;
+          }
+          m.opacity = seeThrough;
+        }
+        outline.visible = !see;
+      }
       if (flashLeft > 0 || flashLevel > 0) {
         flashLeft = Math.max(0, flashLeft - dt);
         flashLevel = flashLeft / CONFIG.render.hitFlashSeconds;

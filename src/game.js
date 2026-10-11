@@ -495,6 +495,11 @@ export function createGame(container, levels, startIndex = 0) {
       return;
     }
     combat.beginEnemyTurn(moves.map((m) => m.enemy));
+    // Tap Shoes: each enemy that moves may be dodged. It's rolled now, but
+    // only shows if it reaches you: you turn see-through as it arrives, it
+    // passes straight through, and you're solid (and hittable) again once
+    // it's clear (see watchDodges).
+    hero.passThrough = card('tapShoes') ? new Set(moves.map((m) => m.enemy).filter(() => Math.random() < CONFIG.cards.tapShoesDodge)) : null;
     const lunge = moves.some((m) => m.kind === 'lunge');
     state.phase = 'enemyWait';
     state.timer = Math.max(lunge ? CONFIG.enemy.lungeTelegraph : CONFIG.enemy.patrolDelay, CONFIG.enemy.turnRingBeat);
@@ -532,6 +537,8 @@ export function createGame(container, levels, startIndex = 0) {
 
   /** Your turn comes round again: every Ghost switches between solid and faded. */
   function newRound() {
+    hero.passThrough = null; // Tap Shoes' dodges last one enemy move
+    hero.passing = false;
     for (const e of enemies()) {
       if (e.type !== 'ghost') continue;
       if (e.phased) e.solidifying = true; // turns solid once nothing overlaps it (settleGhosts)
@@ -848,7 +855,7 @@ export function createGame(container, levels, startIndex = 0) {
       // Chicken Heart: the extra max HP comes filled.
       if (id === 'chickenHeart' && hero.hp > 0) {
         hero.hp = Math.min(hero.maxHp, hero.hp + CONFIG.cards.chickenHeartHp);
-        floatAt(hero, `+${CONFIG.cards.chickenHeartHp} HP`, 'heal');
+        overlay.float(`+${CONFIG.cards.chickenHeartHp} HP`, hero.x, hero.z, hero.radius * 2 + 0.2, 'heal', heroFollow());
       }
     });
   }
@@ -865,6 +872,37 @@ export function createGame(container, levels, startIndex = 0) {
     applyCards();
   }
 
+  /**
+   * Tap Shoes: an enemy rolled as dodged (hero.passThrough) passes through
+   * you. While it overlaps you, you're see-through (hero.passing); the first
+   * time it does, "Dodged!", and it's spent for this move. Once it's clear,
+   * it's solid to you again.
+   */
+  const dodgeShown = new WeakSet();
+  function watchDodges() {
+    if (!hero.passThrough?.size) {
+      hero.passing = false;
+      return;
+    }
+    let passing = false;
+    for (const e of hero.passThrough) {
+      const near = Math.hypot(e.x - hero.x, e.z - hero.z) < e.radius + hero.radius + 0.05;
+      if (near) {
+        passing = true;
+        if (!dodgeShown.has(e)) {
+          dodgeShown.add(e);
+          combat.spend(e);
+          sfx.play('blocked', 0.7, { pitch: 1.3 });
+          overlay.float('Dodged!', hero.x, hero.z, hero.radius * 2 + 0.2, 'gear', heroFollow());
+        }
+      } else if (dodgeShown.has(e)) {
+        hero.passThrough.delete(e); // through and clear: you're solid to it again
+        dodgeShown.delete(e);
+      }
+    }
+    hero.passing = passing;
+  }
+
   /** Effects that sit on the hero rather than being checked as they happen. */
   function applyCards() {
     const K = CONFIG.cards;
@@ -874,7 +912,6 @@ export function createGame(container, levels, startIndex = 0) {
     hero.blastproof = card('bombSquad');
     hero.potionScale = card('doctorsOrders') ? K.doctorsOrdersHeal : 1;
     hero.sightScale = card('ninja') ? K.ninjaSight : 1;
-    hero.dodge = card('tapShoes') ? K.tapShoesDodge : 0;
   }
 
   /**
@@ -1238,9 +1275,6 @@ export function createGame(container, levels, startIndex = 0) {
       } else if (o.type === 'blocked') {
         sfx.play('blocked', 1);
         floatAt(hero, 'Blocked!', 'gear');
-      } else if (o.type === 'dodged') {
-        sfx.play('blocked', 0.7, { pitch: 1.3 });
-        floatAt(hero, 'Dodged!', 'gear');
       } else if (o.type === 'immune') {
         floatAt(hero, 'Blast-proof!', 'gear');
       }
@@ -1521,6 +1555,7 @@ export function createGame(container, levels, startIndex = 0) {
     acc += dt;
     let steps = 0;
     while (acc >= step && steps < CONFIG.physics.maxStepsPerFrame) {
+      watchDodges();
       // Stone Shoes: heavy while the enemies move, so their hits barely shift you.
       hero.mass = card('stoneShoes') && (state.phase === 'enemyMove' || state.phase === 'enemyWait') ? CONFIG.cards.stoneShoesMass : undefined;
       stepWorld(world, step);

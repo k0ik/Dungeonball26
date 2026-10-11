@@ -272,6 +272,7 @@ export function bounceOffFixed(ev, ball) {
 function resolveBallPair(world, a, b) {
   if (a.phased || b.phased) return; // a faded Ghost: balls pass straight through
   if (a.fallen || b.fallen) return; // gone down a pit
+  if (a.passThrough?.has(b) || b.passThrough?.has(a)) return; // a dodge (Tap Shoes): it passes straight through you
   const dx = b.x - a.x;
   const dz = b.z - a.z;
   const minDist = a.radius + b.radius;

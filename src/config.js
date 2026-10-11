@@ -335,8 +335,9 @@ export const CONFIG = {
     chickenHeartHp: 1, // Chicken Heart: added to your max HP (and healed when you take it)
     doctorsOrdersHeal: 2, // Doctor's Orders: potions heal this many times as much
     ninjaSight: 2 / 3, // Ninja: enemies' sight range is scaled by this (6 tiles to 4)
-    tapShoesDodge: 0.25, // Tap Shoes: chance an enemy's hit misses you entirely
-    stoneShoesMass: 5, // Stone Shoes: your ball's mass while enemies move (normally 1; a Brute is 3)
+    tapShoesDodge: 0.25, // Tap Shoes: chance an enemy's move passes straight through you
+    dodgeOpacity: 0.3, // how see-through you go while it does
+    stoneShoesMass: 15, // Stone Shoes: your ball's mass while enemies move (normally 1; a Brute is 3)
   },
 
   hero: {

@@ -398,3 +398,16 @@ test('a creeping ball heads for its spot friction aside, and is just a (draggy) 
   assert.ok(blob2.x < 4.5, `it stopped short instead of creeping on, x=${blob2.x}`);
   assert.ok(other.x > 4.5, 'and it nudged the other ball');
 });
+
+test('Tap Shoes: a ball in passThrough rolls straight through you', () => {
+  const world = createWorld(room);
+  const hero = createBall({ x: 3, z: 5.5, kind: 'hero', id: 'h' });
+  const e = createBall({ x: 4.5, z: 5.5, kind: 'enemy', id: 'e' });
+  e.vx = -4;
+  hero.passThrough = new Set([e]);
+  world.balls.push(hero, e);
+  for (let i = 0; i < 60; i++) stepWorld(world);
+  assert.equal(hero.vx, 0, 'you are not knocked');
+  assert.ok(e.x < hero.x, 'it went through');
+  assert.ok(!world.events.some((ev) => ev.type === 'ball'));
+});

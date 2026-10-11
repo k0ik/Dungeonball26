@@ -248,6 +248,10 @@ export function createCombat() {
       actors = new Set([].concat(enemies));
       haveHit.clear();
     },
+    /** `actor` has had its go at the hero this phase (it was dodged): it can't hurt them again. */
+    spend(actor) {
+      haveHit.add(actor);
+    },
     /**
      * Apply one physics step's events. `hero` carries `atk` and `hp`.
      * Dead enemies are removed from world.balls. Returns outcomes:
@@ -283,12 +287,6 @@ export function createCombat() {
           const actor = ev.a === hero ? ev.b : ev.b === hero ? ev.a : null;
           if (!actors.has(actor) || haveHit.has(actor) || hero.hp <= 0) continue;
           haveHit.add(actor);
-          // Tap Shoes: a share of hits miss you entirely (no damage; the
-          // shield isn't used up). The bump itself has already happened.
-          if (hero.dodge && Math.random() < hero.dodge) {
-            out.push({ type: 'dodged', target: hero, source: actor, event: ev });
-            continue;
-          }
           if (hero.shield) {
             hero.shield = false;
             out.push({ type: 'blocked', target: hero, source: actor, event: ev });

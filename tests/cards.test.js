@@ -6,12 +6,12 @@ import { createWorld, createBall, createStaticCircle, stepWorld, applyBumperKick
 import { parseLevel } from '../src/level.js';
 import { CONFIG } from '../src/config.js';
 
-test('the artifacts in the pool (Locksmith and Doppleganger shelved, Value Vacuum removed)', () => {
+test('the artifacts in the pool (Locksmith and Doppleganger shelved, Value Vacuum and Sack of Plenty removed)', () => {
   assert.deepEqual(
     CARDS.map((c) => c.name),
     [
-      'Leech in a Jar', "Warrior's Nose", 'Sack of Plenty', "Cooper's Hammer", 'Skates of Rollering',
-      'Bouncy Britches', 'Chicken Heart', 'Bomb Squad T-Shirt', "Doctor's Orders", 'Ninja', 'Ballet Shoes',
+      'Leech in a Jar', "Warrior's Nose", "Cooper's Hammer", 'Skates of Rollering',
+      'Bouncy Britches', 'Chicken Heart', 'Bomb Squad T-Shirt', "Doctor's Orders", "Assassin's Cloak", "Assassin's Boots",
       'Tap Shoes', 'Stone Shoes',
     ],
   );
@@ -24,14 +24,14 @@ test("Doctor's Orders: potions heal twice as much", async () => {
   assert.equal(hero.hp, 1 + CONFIG.loot.potionHeal * CONFIG.cards.doctorsOrdersHeal);
 });
 
-test('Ninja: enemies see a shorter distance', async () => {
+test("Assassin's Cloak: enemies see a shorter distance", async () => {
   const { canSee } = await import('../src/sight.js');
   const level = parseLevel(['#########', '#.......#', '#.......#', '#.......#', '#.......#', '#.......#', '#.......#', '#.......#', '#.......#', '#.......#', '#S......#', '#########'].join('\n'));
   const enemy = createBall({ x: 4.5, z: 3, kind: 'enemy', id: 'e' });
   const hero = createBall({ x: 4.5, z: 3 + 5, kind: 'hero', id: 'h' });
   assert.ok(canSee(level, enemy, hero, [enemy, hero]), 'seen at 5 tiles');
   hero.sightScale = CONFIG.cards.ninjaSight;
-  assert.ok(!canSee(level, enemy, hero, [enemy, hero]), 'unseen at 5 tiles with Ninja');
+  assert.ok(!canSee(level, enemy, hero, [enemy, hero]), 'unseen at 5 tiles with the cloak');
 });
 
 test('Bomb Squad T-Shirt: a red barrel does you no harm and leaves your shield', async () => {

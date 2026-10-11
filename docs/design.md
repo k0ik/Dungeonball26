@@ -167,7 +167,7 @@ Starting artifacts (numbers are defaults to tune). The card shows the short line
 | 👕 Bomb Squad T-Shirt | *"Explosions don't hurt you."* Red barrels and Bomb blasts do you no damage ("Blast-proof!") and leave a held shield unused. A Bomb's blast still pushes you |
 | 📋 Doctor's Orders | *"Potions heal twice as much."* A potion heals 2 HP and a super potion 10 (`cards.doctorsOrdersHeal`) |
 | 🥷 Assassin's Cloak (was Ninja) | *"Enemies are less likely to see you."* Enemies' sight range is two thirds of normal: 4 tiles instead of 6 (`cards.ninjaSight`) |
-| 🥾 Assassin's Boots (was Ballet Shoes) | *"Free turn after every kill."* Any shot of yours that kills an enemy earns a bonus turn, not just a combo kill. A catch is still to be decided |
+| 🥾 Assassin's Boots (was Ballet Shoes) | *"Free turn after a kill, if no one sees you."* A shot of yours that kills an enemy earns a bonus turn, but only if no enemy can see you where your ball comes to rest (no "!" showing; a Jekyll counts only once it's enraged). Kill in the open and the enemies get their turn as usual. The catch suits the name (strike, slip out of sight, strike again) and pairs with Assassin's Cloak. A combo kill (2+) still earns its bonus turn whether you're seen or not |
 | 👞 Tap Shoes | *"Chance to dodge enemy attacks."* Each enemy that moves on the enemy turn has a 25% chance (`cards.tapShoesDodge`, rolled as the turn starts) of being dodged. If it reaches you, you go see-through as it arrives (`cards.dodgeOpacity`), "Dodged!" shows, and it rolls straight through you: no damage, no bump, no dropped gold, and a held shield isn't used up. Once it's clear of you, you're solid again, so other enemies (and the same one bouncing back, though it can't hurt you again that turn) can still hit you |
 | 🪨 Stone Shoes | *"Enemy hits barely knock you back."* While the enemies move your ball weighs 15 (`cards.stoneShoesMass`, raised from 5, which wasn't noticeable enough; a normal ball is 1, a Brute 3), so their hits barely shift you and they bounce off you instead. Your own shots are unaffected |
 | 🗡️ Warrior's Sword | *"Start each level with a sword."* As each level starts you're handed a sword (+3 ATK, spent like any sword), unless you already hold one. Taking it mid-level gives nothing until the next level |
@@ -464,7 +464,7 @@ One line per open item, grouped; the full entries are below (or in the named sec
 - **Rules and scoring:** coins expire after 2 turns · clear-the-level bonus · all-chests bonus · end-of-level scorecard maths and gold per level (Scorecard) · the economy: coins earned not found, shot penalty, peddler, paid continues (Scorecard) · trick shots (Trick shots) · red barrel blast push · stackable artifacts (to explore, Artifacts)
 - **Tiles and level features:** portals · boost tiles · outdoor tiles (cobblestone, dirt, grass, mud, water) · `?` progressive reveal
 - **Enemies and tool balls** (Enemy ideas): Double · Slime · Zombie · Stink · Magnet (tool) · Key ball (tool)
-- **Artifact ideas** (Artifacts): Shaman's Mask · Assassin's Boots' catch · on hold: Charmer, Quartermaster, Clairvoyance
+- **Artifact ideas** (Artifacts): Shaman's Mask · on hold: Charmer, Quartermaster, Clairvoyance
 - **Levels and tools:** level editor saving (step 2) · remaining tutorial lessons · M8 levels (Two Keys, Gauntlet) · a second visual mood (stone crypt)
 - **Testing settings to undo:** hero max HP back to 10 (`hero.maxHp`, now 5)
 

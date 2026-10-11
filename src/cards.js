@@ -27,7 +27,7 @@ export const CARDS = [
   { id: 'bombSquad', name: 'Bomb Squad T-Shirt', icon: '👕', text: "Explosions don't hurt you." },
   { id: 'doctorsOrders', name: "Doctor's Orders", icon: '📋', text: 'Potions heal twice as much.' },
   { id: 'ninja', name: "Assassin's Cloak", icon: '🥷', text: 'Enemies are less likely to see you.' },
-  { id: 'balletShoes', name: "Assassin's Boots", icon: '🥾', text: 'Free turn after every kill.' },
+  { id: 'balletShoes', name: "Assassin's Boots", icon: '🥾', text: 'Free turn after a kill, if no one sees you.' },
   { id: 'tapShoes', name: 'Tap Shoes', icon: '👞', text: 'Chance to dodge enemy attacks.' },
   { id: 'warriorSword', name: "Warrior's Sword", icon: '🗡️', text: 'Start each level with a sword.' },
   { id: 'warriorShield', name: "Warrior's Shield", icon: '🛡️', text: 'Start each level with a shield.' },

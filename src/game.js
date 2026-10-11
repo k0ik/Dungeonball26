@@ -1366,6 +1366,11 @@ export function createGame(container, levels, startIndex = 0) {
     }
   }
 
+  /** Does any enemy see you right now (the same rule as the "!": a Jekyll only once it's enraged)? */
+  function seenByAny() {
+    return enemies().some((e) => !isTool(e) && e.hp > 0 && (e.type === 'jekyll' ? e.enraged : canSee(level, e, hero, world.balls, world.statics)));
+  }
+
   /** Rogue's Dagger: after a kill, a dagger flies from you at the nearest other enemy you can see. */
   function throwDagger(killed) {
     const seen = enemies().filter((e) => e !== killed && e.hp > 0 && !e.phased && !isTool(e) && canSee(level, e, hero, world.balls, world.statics));
@@ -1698,9 +1703,10 @@ export function createGame(container, levels, startIndex = 0) {
             sfx.play('blocked', 0.6, { pitch: 0.8 });
           }
           // A combo kill (2+ enemies in one shot) earns a bonus turn: the
-          // enemy phase is skipped and you shoot again. With Ballet Shoes,
-          // any kill does.
-          if (combat.shotKills >= (card('balletShoes') ? 1 : 2)) {
+          // enemy phase is skipped and you shoot again. With Assassin's
+          // Boots, any kill does, as long as no enemy sees where you stopped.
+          const unseenKill = card('balletShoes') && combat.shotKills >= 1 && !seenByAny();
+          if (combat.shotKills >= 2 || unseenKill) {
             state.phase = 'aim';
             newRound();
             // The "Combo Kill!" banner already announced the bonus turn; only

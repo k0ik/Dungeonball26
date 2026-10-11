@@ -51,7 +51,7 @@ export const CONFIG = {
     // with the square of its speed, so with a straight line (1) small drags
     // were twitchy; at 1.8 half the drag range gives a short ~2.5-tile shot.
     powerCurve: 1.8,
-    maxLaunchSpeed: 9,
+    maxLaunchSpeed: 10.35, // was 9; raised 15% to speed play up
     grabRadius: 1.0, // how close to the hero a press must land to start aiming
     // The preview runs the real physics ahead of time, so it ends where the
     // shot would stop. It shows at most this many bounces, then ends at the next contact.

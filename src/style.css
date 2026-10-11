@@ -689,6 +689,13 @@ body {
   font-size: 13px;
 }
 
+.banner em {
+  font-size: 12px;
+  font-style: normal;
+  color: #b9a7ff;
+  letter-spacing: 0.04em;
+}
+
 .banner.show {
   animation: banner-in 0.25s ease-out;
 }

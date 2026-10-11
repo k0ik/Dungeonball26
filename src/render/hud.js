@@ -372,10 +372,13 @@ export function createHud(container) {
       message.textContent = text ?? '';
       message.hidden = !text;
     },
-    banner(title, sub = '', seconds = 1.6) {
-      banner.innerHTML = `<strong></strong><span></span>`;
+    /** A big centre banner; `cause` is a small line under it saying what earned it (a bonus turn's "Combo Kill"). */
+    banner(title, sub = '', seconds = 1.6, cause = '') {
+      banner.innerHTML = `<strong></strong><span></span><em></em>`;
       banner.querySelector('strong').textContent = title;
       banner.querySelector('span').textContent = sub;
+      banner.querySelector('em').textContent = cause;
+      banner.querySelector('em').hidden = !cause;
       banner.hidden = false;
       banner.classList.remove('show');
       void banner.offsetWidth; // restart the entry animation

@@ -570,7 +570,6 @@ export const CONFIG = {
     // Labels about you (gold, health, gear...) ride along above the ball.
     // false: they stay at the spot where they were earned, like enemy labels.
     heroLabelsFollowBall: true,
-    bonusReminderAfter: 1.5, // s after "Combo Kill!" before a separate "Bonus turn!" banner is worth showing
     hpBarMinPx: 14,
     // A key you pick up flies to the middle of the screen, spinning and
     // growing, holds there a moment, then flies into its HUD slot.

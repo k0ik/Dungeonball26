@@ -121,7 +121,6 @@ export function createGame(container, levels, startIndex = 0) {
     moves: [], // this enemy phase: { enemy, kind: 'lunge' } or { enemy, kind: 'patrol', vx, vz, target }
     timer: 0,
     waited: 0, // seconds the acting enemy has waited for the camera
-    comboKillAt: -Infinity, // when the last "Combo Kill!" banner showed
   };
 
   let levelIndex = -1;
@@ -1290,8 +1289,7 @@ export function createGame(container, levels, startIndex = 0) {
         }
         if (o.shotKills >= 2 && state.phase === 'shot') {
           sfx.play('comboKill', 0.9);
-          state.comboKillAt = performance.now();
-          hud.banner(o.shotKills > 2 ? `Combo Kill ×${o.shotKills}!` : 'Combo Kill!', 'Bonus turn: shoot again', 2);
+          hud.banner(o.shotKills > 2 ? `Combo Kill ×${o.shotKills}!` : 'Combo Kill!', '', 1.2); // the bonus turn gets its own banner as the shot rests
         }
       } else if (o.type === 'hurt') {
         sfx.play('hurt', 1);
@@ -1709,11 +1707,9 @@ export function createGame(container, levels, startIndex = 0) {
           if (combat.shotKills >= 2 || unseenKill) {
             state.phase = 'aim';
             newRound();
-            // The "Combo Kill!" banner already announced the bonus turn; only
-            // remind you if the shot rolled on long after it.
-            if (performance.now() - state.comboKillAt > CONFIG.render.bonusReminderAfter * 1000) {
-              hud.banner('Bonus turn!', 'Shoot again', 1.3);
-            }
+            // Every bonus turn says what earned it.
+            const cause = combat.shotKills >= 2 ? (combat.shotKills > 2 ? `Combo Kill ×${combat.shotKills}` : 'Combo Kill') : "Assassin's Boots";
+            hud.banner('Bonus turn!', 'Shoot again', 1.6, cause);
             sfx.play('respawn', 0.7);
           } else {
             startEnemyPhase();

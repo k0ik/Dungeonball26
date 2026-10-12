@@ -1212,6 +1212,7 @@ export function createGame(container, levels, startIndex = 0) {
     // Labels about you ride along above your ball; labels over enemies stay put.
     const floatAt = (ball, text, cls, lift = 0) =>
       overlay.float(text, ball.x, ball.z, ball.radius * 2 + 0.2 + lift, cls, ball === hero ? heroFollow() : null);
+    const zaps = [];
     let comboSounded = false;
     for (const o of outcomes) {
       if (o.type === 'hit' || o.type === 'combo') {
@@ -1228,8 +1229,10 @@ export function createGame(container, levels, startIndex = 0) {
         if (o.type === 'hit' && state.phase === 'shot') {
           // Poisoned Pen: an enemy you hit yourself is poisoned (see newRound).
           if (card('poisonedPen') && o.target.hp > 0 && !['golem', 'bomb', 'gold'].includes(o.target.type)) o.target.poisoned = true;
-          // Bug Zapper (was Wizard's Staff): lightning from the enemy you hit to those near it.
-          if (card('wizardStaff')) zap(o.target);
+          // Bug Zapper (was Wizard's Staff): lightning from the enemy you hit
+          // to those near it, once this batch is handled (a golem's pieces
+          // need their views first).
+          if (card('wizardStaff')) zaps.push(o.target);
         }
         // Every enemy after the first one damaged this shot is a combo.
         if (o.chain >= 2) floatAt(o.target, 'Combo!', 'combo-label', 0.8);
@@ -1238,7 +1241,7 @@ export function createGame(container, levels, startIndex = 0) {
         sfx.play('crack', 1, { pitch: 0.7 });
         enemyViews.get(o.target)?.die();
         overlay.removeBar(o.target);
-        for (const piece of o.pieces) addEnemyView(piece);
+        for (const piece of o.pieces) if (piece.hp > 0 && world.balls.includes(piece)) addEnemyView(piece); // (not one already gone)
       } else if (o.type === 'lit') {
         sfx.play('crack', 0.8, { pitch: 1.6 }); // the fuse catches
       } else if (o.type === 'boom') {
@@ -1331,6 +1334,7 @@ export function createGame(container, levels, startIndex = 0) {
         floatAt(hero, 'Blast-proof!', 'gear');
       }
     }
+    for (const src of zaps) zap(src);
   }
 
   // --- Camera ------------------------------------------------------------------

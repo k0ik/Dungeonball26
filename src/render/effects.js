@@ -32,7 +32,12 @@ uniform float uPx;
 void main() {
   vColor = color;
   vAlpha = alpha;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  // A sprite is depth-tested at one depth for its whole square. Soft puffs
+  // (dust, smoke) are tested at their far side instead, so a ball beside
+  // one hides it rather than wearing it as a flat disc on its chin.
+  mv.z -= ${additive ? '0.0' : '0.5'} * size;
+  gl_Position = projectionMatrix * mv;
   gl_PointSize = max(1.0, size * uPx);
 }`,
     fragmentShader: `
@@ -352,8 +357,19 @@ export function createEffects(scene) {
         const j = i === 0 || i === n ? 0 : rand(-0.18, 0.18);
         pts.push(new THREE.Vector3(ax + dx * t - (dz / len) * j, 0.35 + rand(-0.05, 0.08), az + dz * t + (dx / len) * j));
       }
-      const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: E.boltColor, transparent: true, opacity: 1, depthWrite: false, blending: THREE.AdditiveBlending }));
-      line.renderOrder = 8;
+      // A tube (lines are always 1px in WebGL): a bright core in a wider glow.
+      const path = new THREE.CurvePath();
+      for (let i = 0; i < n; i++) path.add(new THREE.LineCurve3(pts[i], pts[i + 1]));
+      const line = new THREE.Group();
+      for (const [radius, opacity] of [[E.boltWidth / 2, 1], [E.boltWidth * 1.4, 0.35]]) {
+        const mesh = new THREE.Mesh(
+          new THREE.TubeGeometry(path, n * 2, radius, 6, false),
+          new THREE.MeshBasicMaterial({ color: E.boltColor, transparent: true, opacity, depthWrite: false, blending: THREE.AdditiveBlending }),
+        );
+        mesh.userData.opacity = opacity;
+        mesh.renderOrder = 8;
+        line.add(mesh);
+      }
       root.add(line);
       bolts.push({ line, age: 0 });
       for (const p of pts) burst(glow, p.x, p.y, p.z, 2, { color: E.boltColor, speed: [0.1, 0.6], up: [0, 0.3], life: [0.15, 0.3], size: [0.06, 0.1] });
@@ -389,11 +405,14 @@ export function createEffects(scene) {
       for (let i = bolts.length - 1; i >= 0; i--) {
         const b = bolts[i];
         b.age += dt;
-        b.line.material.opacity = Math.max(0, 1 - b.age / 0.3);
-        if (b.age >= 0.3) {
+        const fade = Math.max(0, 1 - b.age / E.boltSeconds);
+        for (const m of b.line.children) m.material.opacity = m.userData.opacity * fade;
+        if (b.age >= E.boltSeconds) {
           root.remove(b.line);
-          b.line.geometry.dispose();
-          b.line.material.dispose();
+          for (const m of b.line.children) {
+            m.geometry.dispose();
+            m.material.dispose();
+          }
           bolts.splice(i, 1);
         }
       }

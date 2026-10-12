@@ -631,7 +631,9 @@ export const CONFIG = {
 
   // Effects (src/render/effects.js): particles, barrel debris, floor marks.
   effects: {
-    boltColor: 0xa8dcff, // the Wizard's Staff's lightning
+    boltColor: 0xa8dcff, // the Bug Zapper's lightning
+    boltWidth: 0.08, // tiles across its bright core (about 10x the old 1px line), in a glow 2.8x as wide
+    boltSeconds: 0.35, // how long it takes to fade
     maxParticles: 600, // per layer (glowing and soft)
     particleScale: 1.7, // all particle sizes
     maxDebris: 120, // barrel staves in flight or settling

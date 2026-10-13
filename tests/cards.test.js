@@ -13,7 +13,7 @@ test('the artifacts in the pool (Locksmith and Doppleganger shelved, Value Vacuu
       'Leech in a Jar', "Warrior's Nose", "Cooper's Hammer", 'Skates of Rollering',
       'Bouncy Britches', 'Chicken Heart', 'Bomb Squad T-Shirt', "Doctor's Orders", "Assassin's Cloak", "Assassin's Boots",
       'Tap Shoes', "Warrior's Sword", "Warrior's Shield", "Doctor's Bottle", "Doctor's Bag", 'Bug Zapper',
-      "Rogue's Dagger", 'Poisoned Pen', 'Stone Shoes',
+      "Rogue's Dagger", 'Poisoned Pen', "Shaman's Mask", 'Stone Shoes',
     ],
   );
 });

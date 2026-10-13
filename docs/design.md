@@ -177,6 +177,7 @@ Starting artifacts (numbers are defaults to tune). The card shows the short line
 | ⚡ Bug Zapper (was Wizard's Staff) | *"Automatically zaps enemies."* Whenever your ball hits an enemy during your shot, lightning jumps from it to every other enemy within 2.5 tiles (centre to centre, `cards.wizardRange`) with nothing solid between: each takes 1 damage, counted as a combo (so it can earn Combo Kills and bonus turns), and is pushed away from the one you hit at 3 tiles/s. Zapped enemies don't zap on. The lightning is a jagged, glowing tube about a tenth of a tile thick (`effects.boltWidth`; it was a 1-pixel line, too thin to see), fading over a third of a second. Very strong in a packed room: on the Billiards break it can wipe out half the rack |
 | 🔪 Rogue's Dagger | *"Throw a dagger after each kill."* Each kill in your shot throws a dagger from your ball at the nearest other enemy you can see (not a tool ball); it flies at 14 tiles/s, following its target, and does 1 damage on arrival, counted as a combo. A dagger's own kill throws no dagger. The shot doesn't end until daggers in flight have landed |
 | 🖋️ Poisoned Pen | *"Enemies you attack lose -1 HP per turn."* An enemy your ball hits directly (not a combo) is poisoned for the rest of the level: tinted sickly green, it loses 1 HP as each round starts (a green "-1"), but never below 1, so the last hit is still yours. Golems, Bombs and the Gold ball can't be poisoned |
+| 🎭 Shaman's Mask | *"Heal +1 HP per shot, but -3 max health."* Each shot you take heals you 1 HP as you launch it (`cards.shamanHeal`, a "+1 HP" over your ball), but your max HP is 3 lower while you wear it (`cards.shamanMaxHpLoss`, never below 1; your HP is trimmed to fit when you put it on). Taking it off gives the max HP back, but not the HP. A trickle of healing for a thinner margin: strong if you keep out of trouble, dangerous against big hitters like Brutes. (With the testing 5 HP it leaves just 2.) |
 
 Defaults assumed until you say otherwise: an offer never includes a card you already hold, and a card you replace goes back into the pool. Cards carry over between levels like HP and gold, but dying loses them all.
 
@@ -184,12 +185,11 @@ Defaults assumed until you say otherwise: an offer never includes a card you alr
 
 | Artifact | Card text | Rule | Notes |
 | --- | --- | --- | --- |
-| Shaman's Mask | "Heal +1 HP per shot" | Each shot of yours heals 1 HP | Needs a catch, e.g. −3 max HP |
 | Charmer | | The first enemy you hit becomes your companion (see To-do) | On hold |
 | Quartermaster | | Start every level with sword and shield, but chests give nothing | On hold (overlaps Warrior's Sword and Shield) |
 | Clairvoyance | | The aim preview shows two bounces instead of one | Left out for now: only matters if the normal preview gets shorter |
 
-Dropped: Fleet Feet (a smaller Skates of Rollering). Built from this list so far: Chicken Heart, Bomb Squad T-Shirt, Doctor's Orders, Assassin's Cloak (was Ninja), Assassin's Boots (was Ballet Shoes), Tap Shoes, Stone Shoes, Warrior's Sword, Warrior's Shield, Doctor's Bottle, Doctor's Bag, Bug Zapper (was Wizard's Staff), Rogue's Dagger and Poisoned Pen (in the table above). Bug Zapper was Wizard (then Wizard's Staff), Rogue's Dagger Rogue, Poisoned Pen Poisoner, Assassin's Boots Chainsmoker, Chicken Heart the unnamed +1 max HP, Tap Shoes Limber, Stone Shoes Mountain Pose, Doctor's Orders Alchemist; Medic, Warrior and Paladin became the Doctor's and Warrior's artifacts.
+Dropped: Fleet Feet (a smaller Skates of Rollering). Built from this list so far: Chicken Heart, Bomb Squad T-Shirt, Doctor's Orders, Assassin's Cloak (was Ninja), Assassin's Boots (was Ballet Shoes), Tap Shoes, Stone Shoes, Warrior's Sword, Warrior's Shield, Doctor's Bottle, Doctor's Bag, Bug Zapper (was Wizard's Staff), Rogue's Dagger, Poisoned Pen and Shaman's Mask (in the table above). Bug Zapper was Wizard (then Wizard's Staff), Rogue's Dagger Rogue, Poisoned Pen Poisoner, Assassin's Boots Chainsmoker, Chicken Heart the unnamed +1 max HP, Tap Shoes Limber, Stone Shoes Mountain Pose, Doctor's Orders Alchemist; Medic, Warrior and Paladin became the Doctor's and Warrior's artifacts.
 
 **To explore: stackable cards.** Copies of a card add up, each in its own slot: one Medic is +5% potion chance, two Medics (two slots) +10%, three Medics (all three slots) +15%. That's all a stack gives: each copy adds the same step, with no extra bonus for matching sets and no levelling up. Likewise Ninja at −5%, −10%, −15% sight range, and Fleet Feet at −2%, −5%, −8% friction. Since there are only 3 slots, stacking trades breadth for depth. Cards that are simple on/off toggles (Chainsmoker, Barrel of Fun, Bomb Squad, Locksmith) do nothing extra as a second copy, so you can only ever hold one of each. This changes the default above: an offer can include a stackable card you already hold (taking it fills another slot with another copy), but never a toggle you already hold.
 
@@ -464,7 +464,7 @@ One line per open item, grouped; the full entries are below (or in the named sec
 - **Rules and scoring:** coins expire after 2 turns · clear-the-level bonus · all-chests bonus · end-of-level scorecard maths and gold per level (Scorecard) · the economy: coins earned not found, shot penalty, peddler, paid continues (Scorecard) · trick shots (Trick shots) · red barrel blast push · stackable artifacts (to explore, Artifacts)
 - **Tiles and level features:** portals · boost tiles · outdoor tiles (cobblestone, dirt, grass, mud, water) · `?` progressive reveal
 - **Enemies and tool balls** (Enemy ideas): Double · Slime · Zombie · Stink · Magnet (tool) · Key ball (tool)
-- **Artifact ideas** (Artifacts): Shaman's Mask · on hold: Charmer, Quartermaster, Clairvoyance
+- **Artifact ideas** (Artifacts): on hold: Charmer, Quartermaster, Clairvoyance
 - **Levels and tools:** level editor saving (step 2) · remaining tutorial lessons · M8 levels (Two Keys, Gauntlet) · a second visual mood (stone crypt)
 - **Testing settings to undo:** hero max HP back to 10 (`hero.maxHp`, now 5)
 

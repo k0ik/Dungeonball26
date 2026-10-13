@@ -434,6 +434,12 @@ export function createGame(container, levels, startIndex = 0) {
     state.contacts = [{ x: hero.x, z: hero.z }]; // debugging: where the real shot touched things
     nextMove();
     combat.beginShot();
+    // Shaman's Mask: each shot you take heals you.
+    if (card('shamanMask') && hero.hp > 0 && hero.hp < hero.maxHp) {
+      const heal = Math.min(CONFIG.cards.shamanHeal, hero.maxHp - hero.hp);
+      hero.hp += heal;
+      overlay.float(`+${heal} HP`, hero.x, hero.z, hero.radius * 2 + 0.2, 'heal', heroFollow());
+    }
     // A new shot: the coin streak and the coin tick's pitch start over.
     state.shotCoins = 0;
     sfx.play('launch', 0.4 + 0.6 * shot.fill, { pitch: 0.9 + 0.2 * shot.fill });
@@ -937,7 +943,7 @@ export function createGame(container, levels, startIndex = 0) {
   function applyCards() {
     const K = CONFIG.cards;
     hero.friction = card('athletic') ? K.athleticFriction : undefined;
-    hero.maxHp = CONFIG.hero.maxHp + (card('chickenHeart') ? K.chickenHeartHp : 0);
+    hero.maxHp = Math.max(1, CONFIG.hero.maxHp + (card('chickenHeart') ? K.chickenHeartHp : 0) - (card('shamanMask') ? K.shamanMaxHpLoss : 0));
     hero.hp = Math.min(hero.hp, hero.maxHp);
     hero.blastproof = card('bombSquad');
     hero.potionScale = card('doctorsOrders') ? K.doctorsOrdersHeal : 1;

@@ -346,6 +346,8 @@ export const CONFIG = {
     poisonDamage: 1, // Poisoned Pen: HP a poisoned enemy loses each round (never below 1)
     poisonColor: 0x6fd43a, // the tint a poisoned enemy takes on
     poisonTint: 0.5, // how far toward it
+    shamanHeal: 1, // Shaman's Mask: HP healed as you take each shot...
+    shamanMaxHpLoss: 3, // ...for this much less max HP (never below 1)
     doctorsBag: 2, // Doctor's Bag: potions turn up this many times as often (barrels and kill drops)
     stoneShoesMass: 15, // Stone Shoes: your ball's mass while enemies move (normally 1; a Brute is 3)
   },

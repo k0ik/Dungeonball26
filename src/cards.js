@@ -36,6 +36,7 @@ export const CARDS = [
   { id: 'wizardStaff', name: 'Bug Zapper', icon: '⚡', text: 'Automatically zaps enemies.' },
   { id: 'rogueDagger', name: "Rogue's Dagger", icon: '🔪', text: 'Throw a dagger after each kill.' },
   { id: 'poisonedPen', name: 'Poisoned Pen', icon: '🖋️', text: 'Enemies you attack lose -1 HP per turn.' },
+  { id: 'shamanMask', name: "Shaman's Mask", icon: '🎭', text: `Heal +${K.shamanHeal} HP per shot, but -${K.shamanMaxHpLoss} max health.` },
   { id: 'stoneShoes', name: 'Stone Shoes', icon: '🪨', text: 'Enemy hits barely knock you back.' },
 ];
 

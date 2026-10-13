@@ -1083,6 +1083,125 @@ body {
   }
 }
 
+/* The peddler (hud.showPeddler): after the scorecard, over the dark screen; the slot pick (z 11) opens over it. */
+.peddler {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: #e4e5e8;
+  animation: sc-in 0.3s ease-out both;
+}
+.pd-panel {
+  width: min(100%, 360px);
+  text-align: center;
+}
+.pd-panel h2 {
+  margin: 0;
+  font-size: 28px;
+  color: #ffd23f;
+}
+.pd-gold {
+  margin: 6px 0 16px;
+  font-size: 18px;
+  font-weight: 700;
+}
+.pd-gold .coin {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  vertical-align: -2px;
+}
+.pd-offers {
+  display: grid;
+  gap: 10px;
+}
+.pd-offer {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 2px solid #ffd23f;
+  background: #2a2b30;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pd-offer:not(:disabled):hover {
+  background: #36373d;
+}
+.pd-icon {
+  grid-row: 1 / 3;
+  font-size: 34px;
+  text-align: center;
+}
+.pd-name {
+  font-weight: 700;
+  font-size: 15px;
+}
+.pd-text {
+  grid-column: 2;
+  font-size: 12px;
+  color: #b6b8be;
+}
+.pd-price {
+  grid-row: 1 / 3;
+  grid-column: 3;
+  font-size: 18px;
+  color: #ffd23f;
+}
+.pd-price::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: #ffc24a;
+  box-shadow: inset 0 0 0 2px #e0a02c;
+  vertical-align: -1px;
+}
+.pd-offer.sold {
+  border-color: #4a4b50;
+  opacity: 0.5;
+  cursor: default;
+}
+.pd-offer.sold .pd-price::before {
+  display: none;
+}
+.pd-offer.poor {
+  border-color: #5a5b60;
+  cursor: default;
+}
+.pd-offer.poor .pd-price {
+  color: #ff8a7a;
+}
+.pd-empty {
+  color: #8b8d94;
+}
+.pd-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+.pd-actions .card-skip:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.pd-leave {
+  border-color: #ffd23f;
+  color: #ffd23f;
+}
+
 /* A startup or runtime error, shown instead of a blank page (main.js showFatal). */
 .fatal {
   position: fixed;

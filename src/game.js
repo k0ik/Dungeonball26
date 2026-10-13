@@ -841,12 +841,16 @@ export function createGame(container, levels, startIndex = 0) {
     hud.showScorecard(card, () => {
       state.gold += card.payout;
       state.earned += card.payout;
-      hud.fade(false, CONFIG.render.exitFadeSeconds);
       if (levelIndex + 1 < levels.length) {
-        loadLevel(levelIndex + 1); // cards come from chests now, not here
-        levelBanner();
+        // Then the peddler, then the next level.
+        openPeddler(() => {
+          hud.fade(false, CONFIG.render.exitFadeSeconds);
+          loadLevel(levelIndex + 1); // cards come from chests now, not here
+          levelBanner();
+        });
         return;
       }
+      hud.fade(false, CONFIG.render.exitFadeSeconds);
       state.phase = 'won';
       state.timer = CONFIG.hero.runCompleteSeconds;
       sfx.play('win', 0.9);
@@ -902,17 +906,63 @@ export function createGame(container, levels, startIndex = 0) {
     if (!id) return;
     hud.showCardFind(id, state.cards, (replace) => {
       if (replace === false) return; // skipped
-      const hand = takeCard(state.cards, id, replace);
-      if (!hand) return;
-      state.cards = hand;
-      if (id === 'doppleganger') state.lives += 1; // kept even if the card is later replaced
-      sfx.play('gear', 0.8);
-      applyCards();
-      // Chicken Heart: the extra max HP comes filled.
-      if (id === 'chickenHeart' && hero.hp > 0) {
-        hero.hp = Math.min(hero.maxHp, hero.hp + CONFIG.cards.chickenHeartHp);
-        overlay.float(`+${CONFIG.cards.chickenHeartHp} HP`, hero.x, hero.z, hero.radius * 2 + 0.2, 'heal', heroFollow());
-      }
+      takeArtifact(id, replace);
+    });
+  }
+
+  /** Put artifact `id` in your hand (in place of `replace`, if given). Returns false if there was no room. */
+  function takeArtifact(id, replace) {
+    const hand = takeCard(state.cards, id, replace);
+    if (!hand) return false;
+    state.cards = hand;
+    if (id === 'doppleganger') state.lives += 1; // kept even if the card is later replaced
+    sfx.play('gear', 0.8);
+    applyCards();
+    // Chicken Heart: the extra max HP comes filled.
+    if (id === 'chickenHeart' && hero.hp > 0) {
+      hero.hp = Math.min(hero.maxHp, hero.hp + CONFIG.cards.chickenHeartHp);
+      overlay.float(`+${CONFIG.cards.chickenHeartHp} HP`, hero.x, hero.z, hero.radius * 2 + 0.2, 'heal', heroFollow());
+    }
+    return true;
+  }
+
+  /**
+   * The peddler, after the scorecard: three artifacts you don't hold, at a
+   * price each, a reroll for three new ones, and Continue. Buying goes through
+   * the usual "Choose a slot"; an artifact it replaces sells back for a
+   * little. Skipping there buys nothing. Calls next() on Continue.
+   */
+  function openPeddler(next) {
+    const P = CONFIG.peddler;
+    state.phase = 'shop';
+    let offers = [];
+    const deal = () => (offers = offerCards(state.cards, Math.random, P.offers).map((id) => ({ id, sold: false })));
+    deal();
+    const model = () => ({ gold: state.gold, offers, price: P.price, rerollPrice: P.rerollPrice });
+    const shop = hud.showPeddler(model(), {
+      buy(i) {
+        const o = offers[i];
+        if (!o || o.sold || state.gold < P.price) return;
+        hud.showCardFind(o.id, state.cards, (replace) => {
+          if (replace === false) return; // changed your mind: nothing bought
+          if (!takeArtifact(o.id, replace)) return;
+          state.gold -= P.price;
+          if (replace) state.gold += P.sellBack;
+          o.sold = true;
+          shop.update(model());
+        }, { kicker: `Buy for ${P.price} gold`, sellBack: P.sellBack });
+      },
+      reroll() {
+        if (state.gold < P.rerollPrice) return;
+        state.gold -= P.rerollPrice;
+        deal();
+        sfx.play('gear', 0.5, { pitch: 1.4 });
+        shop.update(model());
+      },
+      leave() {
+        shop.close();
+        next();
+      },
     });
   }
 
@@ -1606,7 +1656,7 @@ export function createGame(container, levels, startIndex = 0) {
 
   /** Skip to the next level (n, or three quick taps on the gold counter); not mid-death or between levels. */
   function skipLevel() {
-    if (['won', 'pick', 'exiting', 'down', 'score'].includes(state.phase)) return;
+    if (['won', 'pick', 'exiting', 'down', 'score', 'shop'].includes(state.phase)) return;
     loadLevel(levelIndex + 1);
     levelBanner();
   }
@@ -1748,7 +1798,7 @@ export function createGame(container, levels, startIndex = 0) {
       handleEvents(outcomes, objectOutcomes);
       checkPickups();
       checkDoors();
-      if (state.phase !== 'down' && state.phase !== 'won' && state.phase !== 'pick' && state.phase !== 'exiting' && state.phase !== 'score' && tileAt(level, Math.floor(hero.x), Math.floor(hero.z)) === 'exit') {
+      if (state.phase !== 'down' && state.phase !== 'won' && state.phase !== 'pick' && state.phase !== 'exiting' && state.phase !== 'score' && state.phase !== 'shop' && tileAt(level, Math.floor(hero.x), Math.floor(hero.z)) === 'exit') {
         reachExit();
         break;
       }

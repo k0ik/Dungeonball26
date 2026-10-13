@@ -326,6 +326,15 @@ export const CONFIG = {
     tapDelay: 0.8, // seconds before a tap can close it
   },
 
+  // The peddler (design doc: "Planned: the economy"): a shop after each
+  // level's scorecard, 3 artifacts at a time.
+  peddler: {
+    offers: 3,
+    price: 40, // gold per artifact
+    rerollPrice: 5, // for 3 new offers
+    sellBack: 5, // gold back for an artifact you replace with one you buy
+  },
+
   cards: {
     slots: 3, // cards you can hold
     offer: 3, // cards offered after each level

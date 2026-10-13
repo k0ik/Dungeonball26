@@ -214,7 +214,7 @@ Under it: your gold after the payout and your run's score, then "Tap to continue
 
 Agreed direction, not built yet. The aim is emergent, improvised play rather than a power ladder: coins reward *how* you played a level, power is capped by the 3 artifact slots, and enemies never scale to the player (difficulty comes from the hand-authored levels). It replaces collecting coins off the floor, which had become a chore of precision sweeping, and a score that mostly measured luck with loot.
 
-- **Built so far:** coins are paid, not picked up (kill gold fountains up, barrels hold no gold, hits cost none), the coin streaks are gone, and the scorecard pays the deeds. Still to come: the peddler and paid continues.
+- **Built so far:** coins are paid, not picked up (kill gold fountains up, barrels hold no gold, hits cost none), the coin streaks are gone, and the scorecard pays the deeds. The peddler is built too (below). Still to come: paid continues.
 - **Coins are paid, not picked up.** No coins lie on the floor to be collected.
   - **Barrels never drop coins.** A barrel is empty or drops a potion or gear (sword or shield); no tools yet. The Gold row of the barrel loot table goes, its share spread over the others.
   - **Enemies pay a little.** A kill pays a small number of coins in a fountain like a chest's (show only, credited at once), not a scatter to roll over.
@@ -228,14 +228,14 @@ Agreed direction, not built yet. The aim is emergent, improvised play rather tha
   - Bonuses that pull in different directions (you can't usually kill everything *and* stay unseen) are the point: each level you pick which ones to chase.
 - **Shots count against you, with no par.** The level's payout loses 1% per shot taken, floored at zero: 10 shots keep 90%, 30 keep 70%, 100 shots pay nothing. A percentage rather than a flat fee per shot, so big levels aren't punished for needing more shots.
 - **Score** is the total coins earned in the run, not the coins you hold, so spending never costs you score and nobody hoards.
-- **The peddler** comes right after the scorecard and its payout, as a screen (not modelled as a character or placed in the level for now). It offers 3 artifacts for sale at a time, with a reroll for a small fee. Buying one goes through the same "Choose a slot" step as a chest's artifact.
+- **The peddler (built)** comes right after the scorecard's tap (not after the last level), over the dark screen: "The Peddler", your gold, and 3 artifacts you don't hold, each a card with its price (40 gold, `CONFIG.peddler.price`; "Sold" once bought, greyed with a red price if you can't afford it). Tap one to buy it: the usual "Choose a slot" comes up (headed "Buy for 40 gold"), and only placing it pays; Skip there buys nothing. If it replaces an artifact you hold, that one sells back for 5 gold (`sellBack`, said in the "Discard ...?" confirmation). Reroll (5 gold, `rerollPrice`) deals 3 new offers; Continue loads the next level. Not modelled as a character or placed in the level for now.
 - **Continues:** at game over you can pay to carry on instead: 100 coins the first time in a run, then 200, then 300 and so on. It keeps the continue a lifeline rather than a crutch. (Possibly an in-app purchase one day; if so, mark continued runs on the scoreboard so purchases don't buy rank.)
 - **Artifacts stay capped at 3 slots** and nothing else grows: no XP, no levelling, no permanent stat upgrades. A new artifact replaces an old one, so power plateaus early and a run is about which three you hold right now. Artifacts should be styles that are good in most levels in different ways (heal per shot, start with sword and shield), not counters that only pay off against one enemy type.
 
 Open choices:
 
 - **A rumour of the next level** at the peddler: the next level's name and a row of icons for the species and hazards (lava, pits, bombs) you'll meet, without the map, so choosing what to buy or swap is an informed bet rather than a coin flip. Suggested, not yet agreed.
-- **Sell-back (agreed):** an artifact pushed out of its slot sells back for a tiny fee, so a wrong guess costs something but doesn't wreck the run.
+- **Sell-back (agreed, built: 5 gold at the peddler):** an artifact pushed out of its slot sells back for a tiny fee, so a wrong guess costs something but doesn't wreck the run.
 - **Catches:** each artifact could carry a cost that makes it a commitment to a way of playing rather than strictly better (Quartermaster: start every level with sword and shield, but chests give nothing; Shamanic Powers: heal 1 HP per shot, but −3 max HP). Not decided.
 - **Still to settle:** the tutorials' guiding coin strips (`*`) and the Gold ball (the Clean Sweep bonuses are gone); the gold you drop when hit (with no coins on the floor, perhaps the hit simply costs coins); and the coin artifacts (Sack of Plenty, Value Vacuum), which lose their purpose.
 
@@ -462,7 +462,7 @@ One line per open item, grouped; the full entries are below (or in the named sec
 
 - **Polish and feedback:** artifacts light up when they act · enemy hit expression · shield blinks out when used · cancel "X" above the ball · Seekers always look at you · hold the camera on an enemy's death · effects still to come (squash and stretch, motion trails, bloom, chest-lid debris, ice and goop shimmer) · swap in your sound effects · custom artifact icons (Artifacts table)
 - **HUD and menus:** lives counter · pause button and panel · keys stay on the key ring, in card-like frames · tap an enemy to learn about it · accessibility pass · `?` map button
-- **Rules and scoring:** the economy still to build: peddler (with sell-back) and paid continues (Scorecard) · trick shots, Parting Shot included (Trick shots) · red barrel blast push · stackable artifacts (to explore, Artifacts)
+- **Rules and scoring:** the economy still to build: paid continues (Scorecard) · trick shots, Parting Shot included (Trick shots) · red barrel blast push · stackable artifacts (to explore, Artifacts)
 - **Tiles and level features:** portals · boost tiles · outdoor tiles (cobblestone, dirt, grass, mud, water) · `?` progressive reveal
 - **Enemies and tool balls** (Enemy ideas): Double · Slime · Zombie · Stink · Magnet (tool) · Key ball (tool)
 - **Artifact ideas** (Artifacts): on hold: Charmer, Quartermaster, Clairvoyance

@@ -245,12 +245,12 @@ export const CONFIG = {
   loot: {
     itemScale: 2, // coins and potions are drawn this much bigger than their first size: game pieces beside the balls, not props
     table: [
-      { kind: 'empty', weight: 40 }, // nothing inside
-      { kind: 'gold', weight: 30 },
-      { kind: 'potion', weight: 12 },
-      { kind: 'superPotion', weight: 4 },
-      { kind: 'shield', weight: 7 },
-      { kind: 'sword', weight: 4 },
+      // No gold any more (coins are earned, not found): its share went to the gear and potions.
+      { kind: 'empty', weight: 43 }, // nothing inside
+      { kind: 'potion', weight: 24 },
+      { kind: 'superPotion', weight: 8 },
+      { kind: 'shield', weight: 14 },
+      { kind: 'sword', weight: 8 },
       { kind: 'oneUp', weight: 3 },
     ],
     goldMin: 1,
@@ -285,11 +285,8 @@ export const CONFIG = {
     stripCoinValue: 1,
     // Coin streaks: any coins taken within one of your shots (placed or
     // dropped) count up, and these counts pay a bonus as you reach them.
-    coinStreaks: [
-      { count: 5, bonus: 5, name: 'Clean Sweep!' },
-      { count: 10, bonus: 10, name: 'Super Sweep!' },
-      { count: 20, bonus: 25, name: 'Mega Sweep!' },
-    ],
+    // (Clean Sweep and the bigger ones are gone: coins are earned, not found.)
+    coinStreaks: [],
     // Kills and barrel gold scatter that many single coins (the same coins as
     // strips) around the spot: each flies out to a random clear spot at a
     // random distance, arc height and speed, bounces once, then can be taken.
@@ -318,6 +315,17 @@ export const CONFIG = {
   },
 
   // Trait cards (M7).
+  // The end-of-level scorecard (design doc: "End-of-level scorecard"): bonuses
+  // for deeds, paid at the exit, less 1% per shot taken.
+  scorecard: {
+    allEnemies: 20, // every enemy killed (levels with enemies)
+    allChests: 10, // every chest opened (levels with chests)
+    noDeaths: 15, // not knocked out on the level
+    unseen: 25, // no enemy ever saw you (levels with enemies)
+    shotPenalty: 0.01, // of the bonuses, per shot taken (never below 0)
+    tapDelay: 0.8, // seconds before a tap can close it
+  },
+
   cards: {
     slots: 3, // cards you can hold
     offer: 3, // cards offered after each level

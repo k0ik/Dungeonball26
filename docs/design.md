@@ -195,25 +195,26 @@ Dropped: Fleet Feet (a smaller Skates of Rollering). Built from this list so far
 
 ## End-of-level scorecard
 
-When you reach the exit, a scorecard sums up how you played the level before the next one starts. The scoring math comes later; for now, what it tracks:
+**Built.** When you reach the exit and the screen fades, a scorecard comes up over the dark screen ("Level Complete" and the level's name), its lines appearing one after another, before the next level loads. Each line is a deed with what it pays (`CONFIG.scorecard`); a missed deed is greyed out with a dash:
 
-| Line | What it counts |
-| --- | --- |
-| Chests found | n of N chests opened |
-| Enemies slain | n of N enemies killed |
-| Untouched | Took no damage in the level (yes or no) |
-| Combos | n combos landed (enemy-to-enemy hits in your shots) |
-| Shots taken | n shots; this one counts against you, since fewer is better |
-| Gold collected | the gold you finish the level with (planned, see below) |
+| Line | Shows | Pays |
+| --- | --- | --- |
+| Enemies slain | "All", or how many are left (tool balls don't count); only on levels with enemies | +20 if none are left |
+| Chests opened | n of N; only on levels with chests | +10 if all are open |
+| No deaths | "Untouchable", or how many times you were knocked out on the level | +15 with none |
+| Never seen | "Like a ghost", or "Spotted" if any enemy saw you at any moment on the level (whenever its "!" would show, the enemy turn included); only on levels with enemies | +25 if never seen |
+| Shots taken | the shots you took | takes 1% per shot off the bonuses above (`shotPenalty`; 100 shots leave nothing) |
+| Payout | the bonuses less the shots' cut, rounded | added to your gold |
 
-**Planned: gold per level.** Each level starts you at 0 gold, and the gold you hold at the exit goes onto the scorecard (and into its formula) as that level's haul, so what you lose to hits is lost from that level's score. The run's total is the sum of the levels' hauls, banked at each exit where hits can't touch it. This also keeps the gold you can lose to a hit (and so the coins it scatters) bounded by what one level holds. (Not built yet: gold currently carries over from level to level.)
+Under it: your gold after the payout and your run's score, then "Tap to continue" (a tap closes it after 0.8 s, `tapDelay`). A game over restarts the level's record along with the level. Levels played from the editor skip it.
 
-Later candidates: coins collected (n of N, strips included), Clean Sweeps, trick shots landed, and lives lost. Each line would convert into bonus gold (or a grade) once the math is decided.
+**Gold and score.** Gold (the counter at the top left) is what you hold to spend; the **score** is everything earned in the run (kills, chests and payouts), spent or not, shown on the scorecard and as "Score N" on the Run Complete screen. Trick shots (see below, not built yet) will add a line each when they are.
 
 ### Planned: the economy (coins are earned, not found)
 
 Agreed direction, not built yet. The aim is emergent, improvised play rather than a power ladder: coins reward *how* you played a level, power is capped by the 3 artifact slots, and enemies never scale to the player (difficulty comes from the hand-authored levels). It replaces collecting coins off the floor, which had become a chore of precision sweeping, and a score that mostly measured luck with loot.
 
+- **Built so far:** coins are paid, not picked up (kill gold fountains up, barrels hold no gold, hits cost none), the coin streaks are gone, and the scorecard pays the deeds. Still to come: the peddler and paid continues.
 - **Coins are paid, not picked up.** No coins lie on the floor to be collected.
   - **Barrels never drop coins.** A barrel is empty or drops a potion or gear (sword or shield); no tools yet. The Gold row of the barrel loot table goes, its share spread over the others.
   - **Enemies pay a little.** A kill pays a small number of coins in a fountain like a chest's (show only, credited at once), not a scatter to roll over.
@@ -234,9 +235,9 @@ Agreed direction, not built yet. The aim is emergent, improvised play rather tha
 Open choices:
 
 - **A rumour of the next level** at the peddler: the next level's name and a row of icons for the species and hazards (lava, pits, bombs) you'll meet, without the map, so choosing what to buy or swap is an informed bet rather than a coin flip. Suggested, not yet agreed.
-- **Sell-back:** an artifact pushed out of its slot sells back for a little, so a wrong guess costs something but doesn't wreck the run.
+- **Sell-back (agreed):** an artifact pushed out of its slot sells back for a tiny fee, so a wrong guess costs something but doesn't wreck the run.
 - **Catches:** each artifact could carry a cost that makes it a commitment to a way of playing rather than strictly better (Quartermaster: start every level with sword and shield, but chests give nothing; Shamanic Powers: heal 1 HP per shot, but −3 max HP). Not decided.
-- **Still to settle:** what becomes of the coin strips (`*`) and the Clean Sweep bonuses; the gold you drop when hit (with no coins on the floor, perhaps the hit simply costs coins); and the coin artifacts (Sack of Plenty, Value Vacuum), which lose their purpose.
+- **Still to settle:** the tutorials' guiding coin strips (`*`) and the Gold ball (the Clean Sweep bonuses are gone); the gold you drop when hit (with no coins on the floor, perhaps the hit simply costs coins); and the coin artifacts (Sack of Plenty, Value Vacuum), which lose their purpose.
 
 ## Trick shots
 
@@ -259,6 +260,7 @@ Trick shots are special one-shot combos, tracked as achievements. Each one pays 
 | Door Prize | Unlock a door (roll over its key so it opens) and kill an enemy in the same shot | +15 gold |
 | Shopping Spree | Collect a sword and a shield in the same shot | +15 gold |
 | Double Tap | In your shot, hit the same enemy twice within a split second (about a quarter of a second) and kill it with the second hit; it often happens when the enemy is up against a wall and your ball bounces straight back into it | +15 gold (to tune) |
+| Parting Shot | Kill an enemy and then reach the exit, in the same shot | +15 gold (to tune) |
 
 The names and bonus amounts are placeholders to tune.
 - **Tracking:** credit for a hit passes along a chain. An enemy you hit is "knocked by you", and an enemy it hits is "combo-knocked". Whatever a knocked enemy touches next (a barrel, a pit, another enemy) is credited to the chain for the rest of the shot.
@@ -275,7 +277,7 @@ Barrels, chests, keys and doors are the level's furniture. Chest gold is granted
 | Key | Floor pickup (a standing key in red, blue or yellow), collected by rolling over it. Color-matched to the doors of its colour: it stays in the inventory at the bottom for the rest of the level (on your key ring) and opens every door of that colour, however many there are. Keys, potions, gear and 1-ups cast a soft shadow on the floor under them (coins don't), so you can tell which tile they sit on. On the floor it keeps its size on screen when the camera pulls out (it grows with the view beyond the 9-tile base width, like the HP bars), so it's easy to spot zoomed out. Picking one up shows no label: the key flies from where it lay to the middle of the screen, growing to about four times its inventory size and spinning, holds there a moment still spinning, then flies into its slot in the inventory, its spin settling to face front, and the slot fills as it lands (about 1.4 s in all, `render.key*`). |
 | Door | Solid and opaque until the hero is within half a tile while holding the matching key, during your own shot (being knocked against it by an enemy in the enemy move doesn't unlock it, or the enemy would roll through while it sinks). Then it opens for good (it sinks into the floor with a clunk and "Unlocked!"); the key is kept, so it opens the other doors of its colour too; the check runs every physics step, so a ball rolling at a door with its key usually goes straight through. A closed door is a slab in its key's colour, 0.3 tiles thick (`objects.doorThickness`), standing across the middle of its tile in line with the walls (or half walls) either side, a little lower than them, with a keyhole on its broad faces: it sits in an indent that breaks up the wall, so it reads as a door rather than more wall, and a ball rolls into the indent before it meets the door. Enemies can pass through an open door. |
 | Exit | Ends the level when the hero's center enters its tile. |
-| Coin strip | Single coins placed in the level with `*`, 1 gold each (coins and potions are drawn twice their first size, `loot.itemScale`, to read as game pieces beside the balls rather than props), set out in rows or columns like Pac-Man dots. Coins that touch side by side form one strip. They don't block the ball and are collected by rolling over them (enemies don't take them), with a quick tick that rises in pitch with each coin in the same shot instead of a floating label. **Coin streaks:** any coins you take within one of your shots count up, strip coins and dropped coins alike. 5 in one shot is a **Clean Sweep** (+5 gold), 10 a **Super Sweep** (+10) and 20 a **Mega Sweep** (+25), each with a sparkle and a label ("Clean Sweep! +5"); the bonuses add up, so a 20-coin shot pays all three. Coins taken outside your shot (knocked about on the enemy turn) don't count. A strip also shows you a line: a trail of coins toward a wall hints at a bank shot, and it can draw you across a room into enemies' sight. Money Magnet (a trait card) sweeps up strips from a near miss. |
+| Coin strip | Single coins placed in the level with `*`, 1 gold each (coins and potions are drawn twice their first size, `loot.itemScale`, to read as game pieces beside the balls rather than props), set out in rows or columns like Pac-Man dots. Coins that touch side by side form one strip. They don't block the ball and are collected by rolling over them (enemies don't take them), with a quick tick that rises in pitch with each coin in the same shot instead of a floating label. **Coin streaks** (Clean Sweep, Super Sweep, Mega Sweep for 5, 10 and 20 coins in one shot) are gone, along with floor coins. A strip also shows you a line: a trail of coins toward a wall hints at a bank shot, and it can draw you across a room into enemies' sight. Money Magnet (a trait card) sweeps up strips from a near miss. |
 | Coins | There is one coin: the single 1-gold coin of the strips. Kill gold and barrel gold used to scatter as coins to roll over; both now fountain up like a chest's and are credited at once (a killed enemy's gear or potion still scatters, see below). Each coin flies out from the spot in an arc to a random clear spot 0.5 to 1.7 tiles away (never into a wall, door or bumper, nor across one), with a random arc height and flight time, so they land one after another, each with a single small bounce and a faint tink. A coin can be taken once it has landed. Collected by rolling over them, so grabbing them can pull you back into an enemy's sight. Scattered coins belong to no strip. Every coin on the floor spins in step with the others (one shared angle), and the same goes for every other pickup of a kind: all shields turn and bob together, all 1-ups, and so on. A coin you take hops straight up, flashes white once and vanishes, like the chest's coins. |
 | Enemy drops | Besides its coins, a kill has separate, rare chances of dropping a sword (5%), a shield (8%) and a potion (12%, a quarter of those a super potion). They're rolled independently, so a lucky kill can drop more than one. Extras fly out and bounce just like the coins, and wait on the floor to be rolled over. |
 | Explosive barrel (red) | Solid bumper with the same physics as a barrel. Any contact from the hero or an enemy, at any speed, detonates it: the ball that touched it takes 1 flat damage, ignoring ATK, and the barrel is destroyed with no loot. If it's you and you hold a shield, the shield takes the blast instead ("Blocked!") and is used up. |
@@ -284,12 +286,11 @@ A barrel may be empty; otherwise what it drops is left on the floor where the ba
 
 | Result | Chance | Effect |
 | --- | --- | --- |
-| Empty | 40% | Nothing |
-| Gold | 30% | 1 to 5 gold, credited at once (a "+N" over your ball) and shown as a little fountain of coins popping out of the broken barrel, like a chest's; nothing lands on the floor. It's yours whatever broke the barrel |
-| Health potion | 12% | +1 HP, capped at max |
-| Super health potion | 4% | +5 HP, capped at max |
-| Shield | 7% | You now hold a shield: it cancels the next enemy hit or red-barrel blast on you, then is used up. Shields don't stack |
-| Sword | 4% | +3 ATK (ATK 4). It's spent by the first shot of yours that hits an enemy: every hit in that shot gets the +3, and it breaks as that shot comes to rest ("Sword broke!"). Shots that hit no enemy don't touch it |
+| Empty | 43% | Nothing (barrels no longer hold gold: its 30% went to the gear and potions, doubling them) |
+| Health potion | 24% | +1 HP, capped at max |
+| Super health potion | 8% | +5 HP, capped at max |
+| Shield | 14% | You now hold a shield: it cancels the next enemy hit or red-barrel blast on you, then is used up. Shields don't stack |
+| Sword | 8% | +3 ATK (ATK 4). It's spent by the first shot of yours that hits an enemy: every hit in that shot gets the +3, and it breaks as that shot comes to rest ("Sword broke!"). Shots that hit no enemy don't touch it |
 | 1-up | 3% | +1 life |
 
 There is no inventory. Each pickup floats above the hero, for example "+1 HP", "+5 HP", "+3", "Shield", "Sword" or "1-up". Like every floating value (damage numbers, "Combo!", labels), it's set large (about twice the HUD text size), rises for about half a second and then holds still for another half second before fading, so it can be read. Anything about you (gold, including a chest's, health, gear, "Blocked!", damage you take) floats above your ball and rides along with it; labels about an enemy stay where they were earned. (A config switch, `render.heroLabelsFollowBall`, leaves your labels in place instead, if that reads better.) Floating values are always kept inside the visible screen. While you hold gear, its icon sits beside your ball: the sword to the right, the shield to the left. Barrels crack from any ball, so knocking an enemy into one breaks it too; only the hero opens chests.
@@ -461,7 +462,7 @@ One line per open item, grouped; the full entries are below (or in the named sec
 
 - **Polish and feedback:** artifacts light up when they act · enemy hit expression · shield blinks out when used · cancel "X" above the ball · Seekers always look at you · hold the camera on an enemy's death · effects still to come (squash and stretch, motion trails, bloom, chest-lid debris, ice and goop shimmer) · swap in your sound effects · custom artifact icons (Artifacts table)
 - **HUD and menus:** lives counter · pause button and panel · keys stay on the key ring, in card-like frames · tap an enemy to learn about it · accessibility pass · `?` map button
-- **Rules and scoring:** coins expire after 2 turns · clear-the-level bonus · all-chests bonus · end-of-level scorecard maths and gold per level (Scorecard) · the economy: coins earned not found, shot penalty, peddler, paid continues (Scorecard) · trick shots (Trick shots) · red barrel blast push · stackable artifacts (to explore, Artifacts)
+- **Rules and scoring:** the economy still to build: peddler (with sell-back) and paid continues (Scorecard) · trick shots, Parting Shot included (Trick shots) · trick shots (Trick shots) · red barrel blast push · stackable artifacts (to explore, Artifacts)
 - **Tiles and level features:** portals · boost tiles · outdoor tiles (cobblestone, dirt, grass, mud, water) · `?` progressive reveal
 - **Enemies and tool balls** (Enemy ideas): Double · Slime · Zombie · Stink · Magnet (tool) · Key ball (tool)
 - **Artifact ideas** (Artifacts): on hold: Charmer, Quartermaster, Clairvoyance

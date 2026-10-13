@@ -145,19 +145,18 @@ test('a held shield cancels an attacker hit and is used up', () => {
   assert.equal(hero.hp, 9, 'the next hit lands');
 });
 
-test('loot rolls follow the table and gold is 1 to 5', () => {
+test('loot rolls follow the table, and barrels never hold gold', () => {
   const counts = {};
   let seed = 0.123;
   const rng = () => (seed = (seed * 16807 + 0.3141) % 1);
   for (let i = 0; i < 4000; i++) {
     const l = rollLoot(rng);
     counts[l.kind] = (counts[l.kind] ?? 0) + 1;
-    if (l.kind === 'gold') assert.ok(l.value >= 1 && l.value <= 5);
   }
   const share = (k) => counts[k] / 4000;
-  assert.ok(Math.abs(share('empty') - 0.4) < 0.04, JSON.stringify(counts));
-  assert.ok(Math.abs(share('gold') - 0.3) < 0.04, JSON.stringify(counts));
-  assert.ok(Math.abs(share('potion') - 0.12) < 0.04);
+  assert.ok(!counts.gold, 'no gold');
+  assert.ok(Math.abs(share('empty') - 0.43) < 0.04, JSON.stringify(counts));
+  assert.ok(Math.abs(share('potion') - 0.24) < 0.04, JSON.stringify(counts));
   assert.ok(counts.oneUp > 0 && counts.sword > 0 && counts.superPotion > 0 && counts.shield > 0);
 });
 
@@ -213,11 +212,9 @@ test('a sword is spent only by a shot that hits an enemy', () => {
   assert.equal(canCollect({ kind: 'sword' }, hero), true);
 });
 
-test('coin streaks pay at 5, 10 and 20 coins in one shot', async () => {
+test('coin streaks are gone: no number of coins in a shot pays a bonus', async () => {
   const { coinStreakBonus } = await import('../src/loot.js');
-  const paid = [];
-  for (let n = 1; n <= 25; n++) if (coinStreakBonus(n)) paid.push(`${n}:+${coinStreakBonus(n).bonus}`);
-  assert.deepEqual(paid, ['5:+5', '10:+10', '20:+25']);
+  for (let n = 1; n <= 25; n++) assert.equal(coinStreakBonus(n), null);
 });
 
 test('enemy drops: sword, shield and potion each on their own rare chance', async () => {

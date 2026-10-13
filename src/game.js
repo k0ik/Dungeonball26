@@ -108,7 +108,9 @@ export function createGame(container, levels, startIndex = 0) {
     shots: 0,
     clears: 0,
     lives: CONFIG.hero.lives,
-    gold: 0, // the score
+    gold: 0, // coins you hold (to spend, once there's a peddler)
+    earned: 0, // the score: every coin earned this run, spent or not
+    lvl: null, // this level's record for the scorecard (loadLevel)
     goldFraction: 0, // Bullionaire's leftover fraction of a gold, carried to the next pickup
     pendingPicks: [], // card picks waiting to open: seconds left for each (see updateCardPicks)
     cards: [], // trait cards held (ids), at most CONFIG.cards.slots
@@ -284,6 +286,16 @@ export function createGame(container, levels, startIndex = 0) {
       addEnemyView(gold);
     });
 
+    // This level's record for the scorecard (a game over starts it again).
+    state.lvl = {
+      enemies: enemies().filter((e) => !isTool(e)).length,
+      chests: world.statics.filter((s) => s.kind === 'chest').length,
+      opened: 0,
+      deaths: 0,
+      seen: false,
+      shots: 0,
+    };
+
     start = tileCenter(level.start);
     rig.setBounds(0, level.width, 0, level.height);
     state.entry = { hp: hero.hp, atk: hero.atk, shield: hero.shield, sword: hero.sword, gold: state.gold, cards: [...state.cards] };
@@ -434,6 +446,7 @@ export function createGame(container, levels, startIndex = 0) {
     state.contacts = [{ x: hero.x, z: hero.z }]; // debugging: where the real shot touched things
     nextMove();
     combat.beginShot();
+    if (state.lvl) state.lvl.shots++;
     // Shaman's Mask: each shot you take heals you.
     if (card('shamanMask') && hero.hp > 0 && hero.hp < hero.maxHp) {
       const heal = Math.min(CONFIG.cards.shamanHeal, hero.maxHp - hero.hp);
@@ -738,6 +751,7 @@ export function createGame(container, levels, startIndex = 0) {
     applyCards();
     state.lives--;
     if (state.lives > 0) {
+      if (state.lvl) state.lvl.deaths++;
       respawn({ heal: true });
     } else {
       // Game over: the level starts from scratch, at full HP (as any respawn
@@ -812,23 +826,51 @@ export function createGame(container, levels, startIndex = 0) {
   function finishExit() {
     state.exit = null;
     hero.phased = false;
-    hud.fade(false, CONFIG.render.exitFadeSeconds);
     // A level played from the level editor: no next level; reset it and hand back to the editor.
     if (levels[levelIndex].test) {
+      hud.fade(false, CONFIG.render.exitFadeSeconds);
       loadLevel(levelIndex);
       hud.banner('Test complete!', 'Back to the editor', 1.2);
       api.onTestComplete?.();
       return;
     }
-    if (levelIndex + 1 < levels.length) {
-      loadLevel(levelIndex + 1); // cards come from chests now, not here
-      levelBanner();
-      return;
-    }
-    state.phase = 'won';
-    state.timer = CONFIG.hero.runCompleteSeconds;
-    sfx.play('win', 0.9);
-    hud.showScreen('Run Complete!', `${state.gold} gold`, 'win');
+    // The scorecard comes up over the dark screen; a tap pays it out and moves on.
+    const card = scorecard();
+    state.phase = 'score';
+    sfx.play('win', 0.5);
+    hud.showScorecard(card, () => {
+      state.gold += card.payout;
+      state.earned += card.payout;
+      hud.fade(false, CONFIG.render.exitFadeSeconds);
+      if (levelIndex + 1 < levels.length) {
+        loadLevel(levelIndex + 1); // cards come from chests now, not here
+        levelBanner();
+        return;
+      }
+      state.phase = 'won';
+      state.timer = CONFIG.hero.runCompleteSeconds;
+      sfx.play('win', 0.9);
+      hud.showScreen('Run Complete!', `Score ${state.earned}`, 'win');
+    });
+  }
+
+  /**
+   * The level's scorecard: a line per deed (with its bonus, or none), then
+   * the shots taken, which take 1% each off the bonuses, and the payout.
+   */
+  function scorecard() {
+    const S = CONFIG.scorecard;
+    const L = state.lvl;
+    const left = enemies().filter((e) => !isTool(e) && e.hp > 0).length;
+    const rows = [];
+    if (L.enemies) rows.push({ label: 'Enemies slain', detail: left ? `${left} left` : 'All', bonus: left ? 0 : S.allEnemies });
+    if (L.chests) rows.push({ label: 'Chests opened', detail: `${L.opened} of ${L.chests}`, bonus: L.opened >= L.chests ? S.allChests : 0 });
+    rows.push({ label: 'No deaths', detail: L.deaths ? `${L.deaths} ${L.deaths === 1 ? 'death' : 'deaths'}` : 'Untouchable', bonus: L.deaths ? 0 : S.noDeaths });
+    if (L.enemies) rows.push({ label: 'Never seen', detail: L.seen ? 'Spotted' : 'Like a ghost', bonus: L.seen ? 0 : S.unseen });
+    const bonus = rows.reduce((s, r) => s + r.bonus, 0);
+    const keep = Math.max(0, 1 - L.shots * S.shotPenalty);
+    const payout = Math.round(bonus * keep);
+    return { name: levels[levelIndex].name, rows, bonus, shots: L.shots, cut: Math.min(100, Math.round(L.shots * S.shotPenalty * 100)), payout, gold: state.gold + payout, score: state.earned + payout };
   }
 
   /** A fresh run from level 1: full HP, no gear, 3 lives, no gold, no cards. */
@@ -836,6 +878,7 @@ export function createGame(container, levels, startIndex = 0) {
     Object.assign(hero, { atk: CONFIG.hero.atk, maxHp: CONFIG.hero.maxHp, hp: CONFIG.hero.maxHp, shield: false, sword: 0 });
     state.lives = CONFIG.hero.lives;
     state.gold = 0;
+    state.earned = 0;
     state.goldFraction = 0;
     state.pendingPicks = [];
     dealStartingCards();
@@ -959,6 +1002,7 @@ export function createGame(container, levels, startIndex = 0) {
     const whole = Math.floor(total);
     state.goldFraction = total - whole;
     state.gold += whole;
+    state.earned += whole; // the run's score: everything earned, spent or not
     return whole;
   }
 
@@ -1151,6 +1195,7 @@ export function createGame(container, levels, startIndex = 0) {
         effects.barrelBreak(obj.x, obj.z, CONFIG.colors.barrel);
         dropLoot(obj.x, obj.z);
       } else if (o.type === 'open') {
+        if (state.lvl) state.lvl.opened++;
         sfx.play('chest', 0.9);
         objectsView.openChest(obj);
         itemsView.chestCoins(obj.x, 0.35, obj.z, o.gold); // one spinning coin per gold, popping out
@@ -1561,7 +1606,7 @@ export function createGame(container, levels, startIndex = 0) {
 
   /** Skip to the next level (n, or three quick taps on the gold counter); not mid-death or between levels. */
   function skipLevel() {
-    if (['won', 'pick', 'exiting', 'down'].includes(state.phase)) return;
+    if (['won', 'pick', 'exiting', 'down', 'score'].includes(state.phase)) return;
     loadLevel(levelIndex + 1);
     levelBanner();
   }
@@ -1703,7 +1748,7 @@ export function createGame(container, levels, startIndex = 0) {
       handleEvents(outcomes, objectOutcomes);
       checkPickups();
       checkDoors();
-      if (state.phase !== 'down' && state.phase !== 'won' && state.phase !== 'pick' && state.phase !== 'exiting' && tileAt(level, Math.floor(hero.x), Math.floor(hero.z)) === 'exit') {
+      if (state.phase !== 'down' && state.phase !== 'won' && state.phase !== 'pick' && state.phase !== 'exiting' && state.phase !== 'score' && tileAt(level, Math.floor(hero.x), Math.floor(hero.z)) === 'exit') {
         reachExit();
         break;
       }
@@ -1894,6 +1939,7 @@ export function createGame(container, levels, startIndex = 0) {
       }
       const lunging = lungers.has(enemy);
       const aware = lunging || canSee(level, enemy, hero, world.balls, world.statics);
+      if (aware && state.lvl && state.phase !== 'exiting' && state.phase !== 'score') state.lvl.seen = true; // spotted: no "Never seen" bonus
       enemy.watching = aware ? hero : null;
       overlay.setAlert(enemy, aware, lunging);
       enemyViews.get(enemy)?.setAngry(aware);

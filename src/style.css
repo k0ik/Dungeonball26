@@ -971,6 +971,118 @@ body {
   opacity: 1;
 }
 
+/* The end-of-level scorecard (hud.showScorecard), over the dark screen. */
+.scorecard {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: #e4e5e8;
+}
+.sc-panel {
+  width: min(100%, 340px);
+  text-align: center;
+}
+.sc-panel h2 {
+  margin: 0;
+  font-size: 28px;
+  color: #ffd23f;
+  animation: sc-in 0.35s ease-out both;
+}
+.sc-name {
+  margin: 2px 0 18px;
+  font-size: 14px;
+  color: #a7a9b0;
+  animation: sc-in 0.35s ease-out both;
+}
+.sc-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.sc-panel li,
+.sc-payout,
+.sc-totals {
+  display: grid;
+  grid-template-columns: 1fr auto 52px;
+  align-items: baseline;
+  gap: 10px;
+  text-align: left;
+  animation: sc-in 0.3s ease-out both;
+  animation-delay: calc(0.25s + var(--i) * 0.22s);
+}
+.sc-panel li .sc-label {
+  font-size: 16px;
+}
+.sc-panel li .sc-detail {
+  font-size: 13px;
+  color: #a7a9b0;
+}
+.sc-panel li b {
+  text-align: right;
+  font-size: 17px;
+}
+.sc-panel li.got b {
+  color: #ffd23f;
+}
+.sc-panel li.miss .sc-label,
+.sc-panel li.miss b {
+  color: #6f7178;
+}
+.sc-panel li.shots b {
+  color: #ff8a7a;
+}
+.sc-payout {
+  grid-template-columns: 1fr auto;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #3a3b40;
+  font-size: 20px;
+}
+.sc-payout b {
+  font-size: 26px;
+  color: #ffd23f;
+}
+.sc-totals {
+  grid-template-columns: 1fr 1fr;
+  margin-top: 10px;
+  font-size: 15px;
+  color: #c9cbd1;
+}
+.sc-totals span:last-child {
+  text-align: right;
+}
+.sc-totals .coin {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  vertical-align: -2px;
+}
+.sc-tap {
+  margin-top: 22px;
+  font-size: 13px;
+  color: #8b8d94;
+  animation: sc-in 0.3s ease-out both, sc-pulse 1.4s ease-in-out infinite;
+  animation-delay: calc(0.25s + var(--i) * 0.22s), calc(0.6s + var(--i) * 0.22s);
+}
+@keyframes sc-in {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+@keyframes sc-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
 /* A startup or runtime error, shown instead of a blank page (main.js showFatal). */
 .fatal {
   position: fixed;

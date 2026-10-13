@@ -195,6 +195,39 @@ export function createHud(container) {
       death.classList.remove('on');
     },
     /**
+     * The end-of-level scorecard over the dark screen: the level's deeds
+     * line by line (each with its bonus, or none), the shots taken and what
+     * they cost, and the payout. A tap (after a moment) closes it and calls done().
+     */
+    showScorecard(card, done) {
+      const el = document.createElement('div');
+      el.className = 'scorecard';
+      const rows = card.rows
+        .map((r, i) => `<li class="${r.bonus ? 'got' : 'miss'}" style="--i:${i}"><span class="sc-label"></span><span class="sc-detail"></span><b>${r.bonus ? `+${r.bonus}` : '—'}</b></li>`)
+        .join('');
+      const n = card.rows.length;
+      el.innerHTML = `<div class="sc-panel">
+        <h2>Level Complete</h2><p class="sc-name"></p>
+        <ul>${rows}<li class="shots" style="--i:${n}"><span class="sc-label">Shots taken</span><span class="sc-detail">${card.shots}</span><b>${card.bonus ? `−${card.cut}%` : ''}</b></li></ul>
+        <div class="sc-payout" style="--i:${n + 1}"><span>Payout</span><b>+${card.payout}</b></div>
+        <div class="sc-totals" style="--i:${n + 2}"><span><i class="coin"></i>${card.gold}</span><span>Score ${card.score}</span></div>
+        <p class="sc-tap" style="--i:${n + 3}">Tap to continue</p>
+      </div>`;
+      el.querySelector('.sc-name').textContent = card.name;
+      el.querySelectorAll('li:not(.shots)').forEach((li, i) => {
+        li.querySelector('.sc-label').textContent = card.rows[i].label;
+        li.querySelector('.sc-detail').textContent = card.rows[i].detail;
+      });
+      container.appendChild(el);
+      const opened = performance.now();
+      el.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        if (performance.now() - opened < CONFIG.scorecard.tapDelay * 1000) return;
+        el.remove();
+        done();
+      });
+    },
+    /**
      * The end-of-level card pick. Tap a card to take it; if your slots are
      * full you then pick one of yours to replace. Skip is always there.
      * Calls done(id, replaceId) once, with id null for a skip.

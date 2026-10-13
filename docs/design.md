@@ -462,7 +462,7 @@ One line per open item, grouped; the full entries are below (or in the named sec
 
 - **Polish and feedback:** artifacts light up when they act · enemy hit expression · shield blinks out when used · cancel "X" above the ball · Seekers always look at you · hold the camera on an enemy's death · effects still to come (squash and stretch, motion trails, bloom, chest-lid debris, ice and goop shimmer) · swap in your sound effects · custom artifact icons (Artifacts table)
 - **HUD and menus:** lives counter · pause button and panel · keys stay on the key ring, in card-like frames · tap an enemy to learn about it · accessibility pass · `?` map button
-- **Rules and scoring:** the economy still to build: peddler (with sell-back) and paid continues (Scorecard) · trick shots, Parting Shot included (Trick shots) · trick shots (Trick shots) · red barrel blast push · stackable artifacts (to explore, Artifacts)
+- **Rules and scoring:** the economy still to build: peddler (with sell-back) and paid continues (Scorecard) · trick shots, Parting Shot included (Trick shots) · red barrel blast push · stackable artifacts (to explore, Artifacts)
 - **Tiles and level features:** portals · boost tiles · outdoor tiles (cobblestone, dirt, grass, mud, water) · `?` progressive reveal
 - **Enemies and tool balls** (Enemy ideas): Double · Slime · Zombie · Stink · Magnet (tool) · Key ball (tool)
 - **Artifact ideas** (Artifacts): on hold: Charmer, Quartermaster, Clairvoyance

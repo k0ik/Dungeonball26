@@ -21,6 +21,7 @@ import floorIsLava from './levels/floor-is-lava.txt?raw';
 import enemytester01 from './levels/enemytester01.txt?raw';
 import castleClaude from './levels/castle-claude.txt?raw';
 import depot from './levels/depot.txt?raw';
+import hazardousMaterials from './levels/hazardous-materials.txt?raw';
 
 // The run, in order (design doc: "Levels"). Levels 4 and 5 arrive in M8.
 const LEVELS = [
@@ -48,6 +49,7 @@ const LEVELS = [
   { id: 'crawlspace', name: 'Crawlspace', text: crawlspace },
   { id: 'castle-claude', name: 'Castle Claude', text: castleClaude },
   { id: 'depot', name: 'Depot', text: depot },
+  { id: 'hazardous-materials', name: 'Hazardous Materials', text: hazardousMaterials },
 ];
 
 // Start on a level with the URL hash, e.g. #one-key.

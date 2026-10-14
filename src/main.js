@@ -24,6 +24,7 @@ import depot from './levels/depot.txt?raw';
 import hazardousMaterials from './levels/hazardous-materials.txt?raw';
 import lavaPark from './levels/lava-park.txt?raw';
 import simplex from './levels/simplex.txt?raw';
+import icky from './levels/icky.txt?raw';
 
 // The run, in order (design doc: "Levels"). Levels 4 and 5 arrive in M8.
 const LEVELS = [
@@ -54,6 +55,7 @@ const LEVELS = [
   { id: 'hazardous-materials', name: 'Hazardous Materials', text: hazardousMaterials },
   { id: 'lava-park', name: 'Lava Park', text: lavaPark },
   { id: 'simplex', name: 'Simplex', text: simplex },
+  { id: 'icky', name: 'Icky', text: icky },
 ];
 
 // Start on a level with the URL hash, e.g. #one-key.

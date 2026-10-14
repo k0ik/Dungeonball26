@@ -111,7 +111,7 @@ D_{\text{enemy}} = \text{ATK} \qquad D_{\text{hero}} = 1 \qquad \text{HP}_{\text
 
 Combo example: with ATK 1, you hit enemy A and it slides into enemy B. A takes 2 damage in total and B takes 1. A level-1 enemy has 2 HP, so A dies and B is left at 1 HP if it is also level 1.
 
-Combos are called out so you can see them land. Within a single shot, the first enemy you damage shows the usual "-1"; every further enemy damaged in that shot (the second, third and so on) also shows "Combo!" above it. If two or more enemies die in one shot, "Combo Kill!" appears in the centre of the screen, and it earns a **bonus turn**: the enemy phase is skipped and you shoot again straight away. Every bonus turn is announced as the shot comes to rest with a banner, "Bonus turn!" over "Shoot again", and a small third line naming its cause: "Combo Kill" ("Combo Kill ×3" and so on) or "Assassin's Boots". (The "Combo Kill!" banner at the moment of the kill no longer carries the bonus-turn line.) When an enemy hits you, your ball flashes red for about a quarter of a second.
+Combos are called out so you can see them land. Within a single shot, the first enemy you damage shows the usual "-1"; every further enemy damaged in that shot (the second, third and so on) shows its "-1" in the combo colour; it no longer gets a "Combo!" label too (combo hits are too frequent to call out). If two or more enemies die in one shot, "Combo Kill!" appears in the centre of the screen, and it earns a **bonus turn**: the enemy phase is skipped and you shoot again straight away. Every bonus turn is announced as the shot comes to rest with a banner, "Bonus turn!" over "Shoot again", and a small third line naming its cause: "Combo Kill" ("Combo Kill ×3" and so on) or "Assassin's Boots". (The "Combo Kill!" banner at the moment of the kill no longer carries the bonus-turn line.) When an enemy hits you, your ball flashes red for about a quarter of a second.
 
 Pinning works too. Trap an enemy between you and a wall and your rebound can hit it again within the same shot. A hit counts only at an impact speed of at least 0.4 tiles/s (just above the stop threshold, so any visible contact lands; it was 1.5 until halving friction made slow roll-ins common), with a 0.15 s cooldown per enemy, so a ball resting against another cannot grind it down.
 
@@ -197,19 +197,19 @@ Dropped: Fleet Feet (a smaller Skates of Rollering). Built from this list so far
 
 (This replaced an end-of-level scorecard, built and then dropped: a tally screen with lines that came and went from level to level read as complex and inconsistent, and its shot penalty, 1% of the payout per shot, suited levels of different sizes badly. There is no shot penalty or shot bonus now, and no separate score: the gold counter is the one number.)
 
-Every bonus is paid **the moment it's earned**, with a callout naming it, its gold and what it's for (`CONFIG.bonuses`):
+Every bonus is paid **the moment it's earned** (`CONFIG.bonuses`), so it's yours even if you never reach the exit:
 
-| Callout | When | Pays |
+| Bonus | When | Pays |
 | --- | --- | --- |
-| Clean Sweep! (every enemy slain) | the last enemy dies (tool balls don't count; a golem isn't done until its last piece is; whoever kills it, on either turn); only on levels with enemies | +20 |
-| Looted! (every chest opened) | the last chest opens; only on levels with chests | +10 |
-| Parting Shot! (a kill, then out) | a trick shot: you reach the exit in a shot of yours that killed an enemy | +15 |
-| Untouchable! (no deaths) | as you reach the exit, if you weren't knocked out on the level | +15 |
-| Ghost! (never seen) | as you reach the exit, if no enemy saw you at any moment (whenever its "!" would show, the enemy turn included); only on levels with enemies, and not always possible (some enemies see the start) | +25 |
+| All Enemies Vanquished | the last enemy dies (tool balls don't count; a golem isn't done until its last piece is; whoever kills it, on either turn); only on levels with enemies; called out at once | +20 |
+| All Treasures Looted | the last chest opens; only on levels with chests; called out at once | +10 |
+| Parting Shot | a trick shot: you reach the exit in a shot of yours that killed an enemy | +15 |
+| Unscathed | as you reach the exit, if you weren't knocked out on the level | +15 |
+| Ghost | as you reach the exit, if no enemy saw you at any moment (whenever its "!" would show, the enemy turn included); only on levels with enemies, and not always possible (some enemies see the start) | +25 |
 
-The exit's callouts come up as your ball glides into the exit, and the beam-out waits for them. Then the screen fades and the peddler comes up (between levels).
+**Bonuses Earned.** As your ball beams out, a dark veil (60% black) drops over the board and "BONUSES EARNED" comes up in a chunky font, then the level's bonuses one by one, about three a second (`render.bonusLineSeconds`), each with its value and a sword or shield sound, in the order you earned them; the list scrolls if it outgrows the screen. There's no total: it's a list of achievements already added to your gold (the counter at the top left shows it). With none, it says "None this time". Then a Continue button, which goes on to the peddler (between levels). The exit's own bonuses (Parting Shot, Unscathed, Ghost) are paid as you reach the exit and appear only here, with no callout.
 
-**Callouts** (`hud.callout`) are also used for "Combo Kill!" and "Bonus turn!". One shows above the middle of the board for 1.3 s (`render.calloutSeconds`). Several close together stack: each new one waits at least 0.45 s after the last (`render.calloutBeat`), then grows in at the bottom of the stack and pushes the older ones up.
+**Callouts** (`hud.callout`) are for what happens mid-level: "All Enemies Vanquished! +20", "All Treasures Looted! +10", "Combo Kill!" and "Bonus turn!". One shows above the middle of the board for 1.3 s (`render.calloutSeconds`). Several close together stack: each new one waits at least 0.45 s after the last (`render.calloutBeat`), then grows in at the bottom of the stack and pushes the older ones up.
 
 A game over restarts the level (and takes your gold back to what you entered with), so bonuses earned before it are earned again on the retry, not twice. Ordinary deaths keep the board, so Clean Sweep and Looted can't be paid twice.
 
@@ -226,7 +226,7 @@ Agreed direction, not built yet. The aim is emergent, improvised play rather tha
   - Bonuses that pull in different directions (you can't usually kill everything *and* stay unseen) are the point: each level you pick which ones to chase.
 - **No shot penalty** (dropped): levels differ too much in size and steps to the exit for shots to be judged fairly, so there's neither a penalty nor a bonus for them.
 - **No separate score:** the gold counter is the one number (a running score beside it confused more than it told).
-- **The peddler (built)** comes right after the exit (not after the last level), over the dark screen: "The Peddler", your gold, and 3 artifacts you don't hold, each a card with its price (40 gold, `CONFIG.peddler.price`; "Sold" once bought, greyed with a red price if you can't afford it). Tap one to buy it: the usual "Choose a slot" comes up (headed "Buy for 40 gold"), and only placing it pays; Skip there buys nothing. If it replaces an artifact you hold, that one sells back for 5 gold (`sellBack`, said in the "Discard ...?" confirmation). Reroll (5 gold, `rerollPrice`) deals 3 new offers; Continue loads the next level. Not modelled as a character or placed in the level for now.
+- **The peddler (built)** comes right after the exit (not after the last level), over the dark screen: "The Peddler", your gold, 3 artifacts you don't hold, and under them "Your artifacts" (your three slots, each with its icon, name and effect, or Empty, so you can buy to suit what you hold); each a card with its price (40 gold, `CONFIG.peddler.price`; "Sold" once bought, greyed with a red price if you can't afford it). Tap one to buy it: the usual "Choose a slot" comes up (headed "Buy for 40 gold"), and only placing it pays; Skip there buys nothing. If it replaces an artifact you hold, that one sells back for 5 gold (`sellBack`, said in the "Discard ...?" confirmation). Reroll (5 gold, `rerollPrice`) deals 3 new offers; Continue loads the next level. Not modelled as a character or placed in the level for now.
 - **Continues:** at game over you can pay to carry on instead: 100 coins the first time in a run, then 200, then 300 and so on. It keeps the continue a lifeline rather than a crutch. (Possibly an in-app purchase one day; if so, mark continued runs on the scoreboard so purchases don't buy rank.)
 - **Artifacts stay capped at 3 slots** and nothing else grows: no XP, no levelling, no permanent stat upgrades. A new artifact replaces an old one, so power plateaus early and a run is about which three you hold right now. Artifacts should be styles that are good in most levels in different ways (heal per shot, start with sword and shield), not counters that only pay off against one enemy type.
 

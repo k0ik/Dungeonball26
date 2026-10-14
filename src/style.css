@@ -1034,6 +1034,130 @@ body {
   }
 }
 
+/* Bonuses Earned (hud.showBonuses): over the dimmed board as a level ends. */
+.bonuses {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px 16px;
+  background: rgba(0, 0, 0, 0.62);
+  color: #f2f0ea;
+  font-family: 'Arial Black', 'Arial Bold', Impact, system-ui, sans-serif;
+  animation: sc-in 0.3s ease-out both;
+}
+.bonuses h2 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffd23f;
+  text-shadow: 0 3px 0 #7a4a00, 0 0 18px rgba(255, 190, 60, 0.35);
+}
+.bonuses ul {
+  list-style: none;
+  margin: 0;
+  padding: 0 4px;
+  width: min(100%, 360px);
+  max-height: 55vh;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  display: grid;
+  gap: 10px;
+}
+.bonuses li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 19px;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-shadow: 0 2px 0 #000;
+  animation: bn-in 0.25s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+.bonuses li b {
+  color: #ffd23f;
+  font-size: 22px;
+}
+.bonuses li b::before {
+  content: '';
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: #ffc24a;
+  box-shadow: inset 0 0 0 2px #e0a02c, 0 1px 0 #000;
+  vertical-align: 0;
+}
+.bonuses li.none {
+  justify-content: center;
+  color: #8b8d94;
+}
+.bonuses li.none b {
+  display: none;
+}
+.bn-go {
+  margin-top: 8px;
+  padding: 10px 30px;
+  border-color: #ffd23f;
+  color: #ffd23f;
+  font-size: 16px;
+}
+@keyframes bn-in {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+
+/* The peddler: what you hold, under the offers. */
+.pd-yours {
+  margin: 16px 0 6px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8b8d94;
+}
+.pd-held {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.pd-mine {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 8px 6px;
+  border-radius: 10px;
+  border: 1px solid #4a4b50;
+  background: #222327;
+  text-align: center;
+}
+.pd-mine .pd-icon {
+  grid-row: auto;
+  font-size: 24px;
+}
+.pd-mine b {
+  font-size: 12px;
+}
+.pd-mine small {
+  font-size: 10px;
+  line-height: 1.2;
+  color: #a7a9b0;
+}
+.pd-mine.empty {
+  border-style: dashed;
+  color: #6f7178;
+  align-content: center;
+}
+
 /* The peddler (hud.showPeddler): between levels, over the dark screen; the slot pick (z 11) opens over it. */
 .peddler {
   position: absolute;

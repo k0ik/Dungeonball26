@@ -201,6 +201,39 @@ export function createHud(container) {
       death.classList.remove('on');
     },
     /**
+     * Bonuses Earned, as a level ends: the board dims under a dark veil and
+     * the level's bonuses (already added to your gold) appear one by one,
+     * name and value, in a chunky font, about three a second (onLine plays
+     * each one's sound); the list scrolls if it outgrows the screen. Then a
+     * Continue button; done() when it's pressed.
+     */
+    showBonuses(list, onLine, done) {
+      const el = document.createElement('div');
+      el.className = 'bonuses';
+      el.innerHTML = '<h2>Bonuses Earned</h2><ul></ul><button type="button" class="card-skip bn-go" hidden>Continue</button>';
+      container.appendChild(el);
+      const ul = el.querySelector('ul');
+      const go = el.querySelector('.bn-go');
+      const items = list.length ? list : [{ name: 'None this time', gold: 0 }];
+      items.forEach((b, i) => {
+        setTimeout(() => {
+          const li = document.createElement('li');
+          li.innerHTML = '<span></span><b></b>';
+          li.querySelector('span').textContent = b.name;
+          li.querySelector('b').textContent = b.gold ? `${b.gold}` : '';
+          if (!b.gold) li.className = 'none';
+          ul.append(li);
+          ul.scrollTop = ul.scrollHeight;
+          if (b.gold) onLine?.();
+          if (i === items.length - 1) setTimeout(() => (go.hidden = false), 350);
+        }, 450 + i * CONFIG.render.bonusLineSeconds * 1000);
+      });
+      go.addEventListener('click', () => {
+        el.remove();
+        done();
+      });
+    },
+    /**
      * The peddler (between levels): your gold, three artifacts for sale
      * (each a card with its price, or "Sold"), a reroll and Continue.
      * `model` is { gold, offers: [{ id, sold }], price, rerollPrice };
@@ -240,6 +273,7 @@ export function createHud(container) {
       container.appendChild(el);
       const render = (m) => {
         el.innerHTML = `<div class="pd-panel"><h2>The Peddler</h2><p class="pd-gold"><i class="coin"></i><span></span></p><div class="pd-offers"></div>
+          <p class="pd-yours">Your artifacts</p><div class="pd-held"></div>
           <div class="pd-actions"><button type="button" class="card-skip pd-reroll"></button><button type="button" class="card-skip pd-leave">Continue</button></div></div>`;
         el.querySelector('.pd-gold span').textContent = m.gold;
         const list = el.querySelector('.pd-offers');
@@ -259,6 +293,23 @@ export function createHud(container) {
           b.addEventListener('click', () => actions.buy(i));
           list.append(b);
         });
+        // What you hold, so you can buy to suit it (empty slots shown too).
+        const heldRow = el.querySelector('.pd-held');
+        for (let i = 0; i < CONFIG.cards.slots; i++) {
+          const id = m.held?.[i];
+          const t = document.createElement('div');
+          t.className = id ? 'pd-mine' : 'pd-mine empty';
+          if (id) {
+            const c = cardById(id);
+            t.innerHTML = '<span class="pd-icon" aria-hidden="true"></span><b></b><small></small>';
+            t.querySelector('.pd-icon').textContent = c.icon;
+            t.querySelector('b').textContent = c.name;
+            t.querySelector('small').textContent = c.text;
+          } else {
+            t.innerHTML = '<b>Empty</b>';
+          }
+          heldRow.append(t);
+        }
         const reroll = el.querySelector('.pd-reroll');
         reroll.textContent = `Reroll (${m.rerollPrice})`;
         reroll.disabled = m.gold < m.rerollPrice || !m.offers.length;

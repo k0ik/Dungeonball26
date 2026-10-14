@@ -294,6 +294,7 @@ export function createGame(container, levels, startIndex = 0) {
       seen: false,
       swept: false, // "All Enemies Vanquished" paid
       bonuses: [], // { name, gold }: every bonus earned here, for the Bonuses Earned screen
+      kills: 0, // enemies killed so far (One-Hit Wonder needs none before its shot)
     };
 
     start = tileCenter(level.start);
@@ -446,6 +447,8 @@ export function createGame(container, levels, startIndex = 0) {
     state.contacts = [{ x: hero.x, z: hero.z }]; // debugging: where the real shot touched things
     nextMove();
     combat.beginShot();
+    // This shot's record, for its trick shots (and One-Hit Wonder).
+    state.shotRec = { paid: new Set(), picked: new Set(), kills: 0, chests: 0, door: false, hitAt: new Map(), bounced: new Set(), comboKnocked: new Set(), cleanStart: state.lvl?.kills === 0 };
     // Shaman's Mask: each shot you take heals you.
     if (card('shamanMask') && hero.hp > 0 && hero.hp < hero.maxHp) {
       const heal = Math.min(CONFIG.cards.shamanHeal, hero.maxHp - hero.hp);
@@ -721,7 +724,10 @@ export function createGame(container, levels, startIndex = 0) {
         enemyViews.get(b)?.fall();
         overlay.removeBar(b);
         if (isTool(b)) world.balls = world.balls.filter((x) => x !== b);
-        else handleOutcomes(combat.fell(world, b));
+        else {
+          if (b.fallen === 'lava' && state.phase === 'shot') trick("Soup's On!");
+          handleOutcomes(combat.fell(world, b));
+        }
       } else {
         world.balls = world.balls.filter((x) => x !== b);
       }
@@ -802,7 +808,7 @@ export function createGame(container, levels, startIndex = 0) {
     const B = CONFIG.bonuses;
     const L = state.lvl;
     if (L && !levels[levelIndex].test) {
-      if (state.phase === 'shot' && combat.shotKills >= 1) bonus('Parting Shot', B.partingShot, false);
+      if (state.phase === 'shot' && combat.shotKills >= 1) trick('Parting Shot', false);
       if (!L.deaths) bonus('Unscathed', B.noDeaths, false);
       if (L.enemies && !L.seen) bonus('Ghost', B.unseen, false);
     }
@@ -811,6 +817,16 @@ export function createGame(container, levels, startIndex = 0) {
     hero.phased = true; // nothing bumps it now
     state.phase = 'exiting';
     sfx.play('exit', 0.8);
+  }
+
+  /** A trick shot: a bonus (CONFIG.tricks), at most once per shot each. */
+  function trick(name, callout = true) {
+    const R = state.shotRec;
+    if (R) {
+      if (R.paid.has(name)) return;
+      R.paid.add(name);
+    }
+    bonus(name, CONFIG.tricks[name], callout);
   }
 
   /**
@@ -822,7 +838,7 @@ export function createGame(container, levels, startIndex = 0) {
     state.lvl?.bonuses.push({ name, gold: got });
     if (callout) {
       sfx.play('comboKill', 0.6, { pitch: 1.2 });
-      hud.callout(`${name}!`, '', got);
+      hud.callout(name.endsWith('!') ? name : `${name}!`, '', got);
     }
   }
 
@@ -1183,6 +1199,11 @@ export function createGame(container, levels, startIndex = 0) {
     }
     const label = collect(item, hero, state);
     sfx.play(PICKUP_SOUND[item.kind], 0.8);
+    if (state.phase === 'shot' && state.shotRec) {
+      const R = state.shotRec;
+      R.picked.add(item.kind === 'superPotion' ? 'potion' : item.kind);
+      if (R.picked.has('sword') && R.picked.has('shield')) trick('Shopping Spree');
+    }
     // A key flies to the middle of the screen, spinning, then into its HUD slot, instead of a label.
     if (item.kind === 'key') hud.flyKey(item.color, overlay.pagePoint(item.x, 0.4, item.z));
     else overlay.float(label, hero.x, hero.z, hero.radius * 2 + 0.8, PICKUP_STYLE[item.kind], heroFollow());
@@ -1198,6 +1219,10 @@ export function createGame(container, levels, startIndex = 0) {
     for (const door of openDoors(level, hero, state.keys, { noKeys: card('locksmith') })) {
       doorsView.open(door);
       sfx.play('door', 1);
+      if (state.shotRec) {
+        state.shotRec.door = true;
+        if (state.shotRec.kills) trick('Door Prize');
+      }
       overlay.float('Unlocked!', door.col + 0.5, door.row + 0.5, CONFIG.render.wallHeight + 0.3, 'gear');
     }
   }
@@ -1251,6 +1276,11 @@ export function createGame(container, levels, startIndex = 0) {
         dropLoot(obj.x, obj.z);
       } else if (o.type === 'open') {
         if (state.lvl && ++state.lvl.opened === state.lvl.chests) bonus('All Treasures Looted', CONFIG.bonuses.allChests);
+        if (state.phase === 'shot' && state.shotRec) {
+          const R = state.shotRec;
+          if (++R.chests >= 2) trick('Gold Digger');
+          if (R.kills) trick('This is a Robbery');
+        }
         sfx.play('chest', 0.9);
         objectsView.openChest(obj);
         itemsView.chestCoins(obj.x, 0.35, obj.z, o.gold); // one spinning coin per gold, popping out
@@ -1267,7 +1297,18 @@ export function createGame(container, levels, startIndex = 0) {
         effects.explosion(obj.x, obj.z);
         hitStop(CONFIG.effects.hitStopBlast);
         looks.blast(level, obj.x, obj.z, world.balls, hasFace);
-        if (o.victim) handleOutcomes(combat.explosion(world, o.victim, hero)); // none when a bomb's blast set it off
+        if (o.victim) {
+          // none when a bomb's blast set it off
+          const hitHero = o.victim.kind === 'enemy' && combat.hasHitHero(o.victim);
+          const outs = combat.explosion(world, o.victim, hero);
+          if (o.victim.kind === 'enemy' && outs.some((x) => x.type === 'kill')) {
+            // Barrel of Fun: on your shot, it died setting a red barrel off;
+            // Backfire: on the enemy turn, it had just hit you.
+            if (state.phase === 'shot') trick('Barrel of Fun');
+            else if (hitHero) trick('Backfire');
+          }
+          handleOutcomes(outs);
+        }
       }
     }
   }
@@ -1277,6 +1318,8 @@ export function createGame(container, levels, startIndex = 0) {
     const damaging = new Set(outcomes.map((o) => o.event).filter(Boolean));
     const objectHits = new Set(objectOutcomes.map((o) => o.obj));
     for (const ev of world.events) {
+      // Bank Shot: a combo-knocked enemy (one an enemy you hit ran into) hits a barrel.
+      if (ev.type === 'static' && state.phase === 'shot' && state.shotRec?.comboKnocked.has(ev.ball) && (ev.obj.kind === 'barrel' || ev.obj.kind === 'explosive')) trick('Bank Shot');
       const loud = Math.min(1, ev.speed / CONFIG.aim.maxLaunchSpeed);
       hitEffect(ev, damaging.has(ev));
       const bump = ev.type === 'wall' || (ev.type === 'static' && !objectHits.has(ev.obj));
@@ -1332,6 +1375,26 @@ export function createGame(container, levels, startIndex = 0) {
         }
         if (o.amount) floatAt(o.target, `-${o.amount}`, o.type === 'combo' ? 'combo' : ''); // (a golem's split does no damage)
         if (o.amount && o.target.hp > 0) enemyViews.get(o.target)?.ouch(CONFIG.render.enemyOuchSeconds); // >.<
+        if (o.type === 'hit' && state.phase === 'shot' && state.shotRec) {
+          // Trick shots: Double Tap (two quick hits, the second kills) and
+          // Boomerang (it bounced off another enemy since your last hit).
+          const R = state.shotRec;
+          const prev = R.hitAt.get(o.target);
+          if (o.target.hp <= 0 && prev != null && world.time - prev <= CONFIG.doubleTapSeconds) trick('Double Tap');
+          if (o.target.hp <= 0 && R.bounced.has(o.target)) trick('Boomerang');
+          R.hitAt.set(o.target, world.time);
+          R.bounced.delete(o.target);
+        }
+        if (o.type === 'combo' && state.phase === 'shot' && state.shotRec && o.event) {
+          // An enemy you hit that then meets another: it may come back (Boomerang),
+          // and the one it met is combo-knocked (Bank Shot, if it then hits a barrel).
+          const R = state.shotRec;
+          const other = o.event.a === o.target ? o.event.b : o.event.a;
+          if (R.hitAt.has(o.target)) {
+            R.bounced.add(o.target);
+            R.comboKnocked.add(other);
+          }
+        }
         if (o.type === 'hit' && state.phase === 'shot') {
           // Poisoned Pen: an enemy you hit yourself is poisoned (see newRound).
           if (card('poisonedPen') && o.target.hp > 0 && !['golem', 'bomb', 'gold'].includes(o.target.type)) o.target.poisoned = true;
@@ -1402,6 +1465,16 @@ export function createGame(container, levels, startIndex = 0) {
           }
           scatterCoins(o.target.x, o.target.z, 0, rollEnemyDrops(Math.random, { potionScale: card('doctorsBag') ? CONFIG.cards.doctorsBag : 1 }));
         }
+        if (!isTool(o.target) && state.lvl) state.lvl.kills++;
+        // Trick shots that need a kill in this shot of yours.
+        if (state.phase === 'shot' && state.shotRec) {
+          const R = state.shotRec;
+          R.kills++;
+          if (R.picked.has('potion')) trick('Pit Stop');
+          if (R.picked.has('sword')) trick('Bring a Sword to a Ball Fight');
+          if (R.chests) trick('This is a Robbery');
+          if (R.door) trick('Door Prize');
+        }
         // Rogue's Dagger: each kill of your shot throws a dagger (a dagger's own kill doesn't).
         if (card('rogueDagger') && state.phase === 'shot' && !o.byDagger) throwDagger(o.target);
         // Vampirism: every kill heals you.
@@ -1417,6 +1490,8 @@ export function createGame(container, levels, startIndex = 0) {
         if (state.lvl && state.lvl.enemies && !state.lvl.swept && !enemies().some((e) => !isTool(e) && e.hp > 0)) {
           state.lvl.swept = true;
           bonus('All Enemies Vanquished', CONFIG.bonuses.allEnemies);
+          // ...in one shot, from the start: One-Hit Wonder.
+          if (state.phase === 'shot' && state.shotRec?.cleanStart && state.lvl.enemies >= 2) bonus('One-Hit Wonder', CONFIG.bonuses.oneHitWonder);
         }
       } else if (o.type === 'hurt') {
         sfx.play('hurt', 1);
@@ -1829,6 +1904,9 @@ export function createGame(container, levels, startIndex = 0) {
             overlay.float('Sword broke!', hero.x, hero.z, hero.radius * 2 + 1, 'gear', heroFollow());
             sfx.play('blocked', 0.6, { pitch: 0.8 });
           }
+          // Double Kill or Triple Kill (3 or more), judged now the shot has played out.
+          if (combat.shotKills >= 3) trick('Triple Kill');
+          else if (combat.shotKills === 2) trick('Double Kill');
           // A combo kill (2+ enemies in one shot) earns a bonus turn: the
           // enemy phase is skipped and you shoot again. With Assassin's
           // Boots, any kill does, as long as no enemy sees where you stopped.

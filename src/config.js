@@ -317,10 +317,29 @@ export const CONFIG = {
   // Trait cards (M7).
   // Bonuses (design doc: "Bonuses and callouts"), paid the moment they're
   // earned with a callout; the last two as you reach the exit.
+  // Trick shots (design doc: "Trick shots"): paid every time, once per shot each.
+  tricks: {
+    'Pit Stop': 10, // a potion, then a kill
+    'Bring a Sword to a Ball Fight': 10, // a sword, then a kill
+    'Double Kill': 10, // 2 kills in one shot (judged as it comes to rest)
+    'Triple Kill': 25, // 3 or more (instead of Double Kill)
+    'Barrel of Fun': 10, // an enemy you knocked dies setting off a red barrel
+    'Bank Shot': 20, // an enemy you knocked hits another, which hits a barrel
+    "Soup's On!": 10, // an enemy knocked into lava
+    Boomerang: 25, // an enemy you hit bounces off another and back into you, and that hit kills it
+    Backfire: 20, // enemy turn: an enemy hits you, then dies setting off a red barrel
+    'This is a Robbery': 20, // a chest and a kill
+    'Gold Digger': 15, // 2 chests
+    'Door Prize': 15, // a door unlocked and a kill
+    'Shopping Spree': 15, // a sword and a shield
+    'Double Tap': 15, // the same enemy hit twice within doubleTapSeconds, killed by the second
+    'Parting Shot': 15, // a kill, then the exit
+  },
+  doubleTapSeconds: 0.25,
   bonuses: {
     allEnemies: 20, // "Clean Sweep!": the last enemy (not tool balls) dies
     allChests: 10, // "Looted!": the last chest opens
-    partingShot: 15, // trick shot: a kill, then the exit, in one shot of yours
+    oneHitWonder: 50, // every enemy (2 or more) killed in one shot of yours, none killed before it
     noDeaths: 15, // "Untouchable!": at the exit, not knocked out on the level
     unseen: 25, // "Ghost!": at the exit, no enemy ever saw you (levels with enemies)
   },

@@ -539,6 +539,8 @@ export const CONFIG = {
     lavaDepth: 0.35, // how far below the floor the lava lies
     exitGlideSeconds: 0.45,
     calloutSeconds: 1.3, // how long a callout (bonus, Combo Kill, Bonus turn) stays
+    cardTossSeconds: 1.15, // a knockout: your artifacts tossed up and falling off the screen...
+    cardTossHeight: 1.1, // ...first rising this many card heights
     bonusLineSeconds: 0.33, // Bonuses Earned: a line about three times a second
     calloutBeat: 0.45, // the least time between two callouts: a newer one pushes the older up after this beat
     exitGlideDamping: 7,

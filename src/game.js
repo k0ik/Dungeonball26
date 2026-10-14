@@ -642,8 +642,13 @@ export function createGame(container, levels, startIndex = 0) {
     // (Fallen in a pit or lava: no skull; your own ball drops in, its face
     // turned to you with XX eyes.)
     if (!fell) heroView.setSkull(true);
-    // You lose your gear now; your artifacts stay on show while the skull
-    // rolls and go when you come back (afterKnockout).
+    // You lose your gear now, and your artifacts: they're tossed up out of
+    // the inventory and fall away off the screen.
+    if (state.cards.length) {
+      hud.tossCards(0.3);
+      state.cards = [];
+      applyCards();
+    }
     hero.sword = 0;
     hero.atk = CONFIG.hero.atk; // and the sword's +3 with it
     hero.shield = false;
@@ -745,7 +750,7 @@ export function createGame(container, levels, startIndex = 0) {
 
   function afterKnockout() {
     for (const b of world.balls) b.vx = b.vz = 0; // anything still rolling stops as you come back
-    // Dying loses your artifacts (kept on show while the skull rolled).
+    // Dying loses your artifacts (already tossed away at the knockout).
     state.cards = [];
     applyCards();
     state.lives--;

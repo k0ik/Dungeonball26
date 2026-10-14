@@ -389,6 +389,49 @@ export function createHud(container) {
       };
       showSlots();
     },
+    /**
+     * Your artifacts are lost (a knockout): each held card is tossed up out
+     * of the inventory, about its own height, then falls away off the bottom
+     * of the screen, tumbling, one just after another. `delay` seconds first.
+     * (The hand itself empties as the game clears your cards.)
+     */
+    tossCards(delay = 0) {
+      const R = CONFIG.render;
+      const box = container.getBoundingClientRect();
+      const chips = [...hand.querySelectorAll('.card-chip')];
+      chips.forEach((chip, i) => {
+        const r = chip.getBoundingClientRect();
+        const c = chip.cloneNode(true);
+        Object.assign(c.style, {
+          position: 'absolute',
+          left: `${r.left - box.left}px`,
+          top: `${r.top - box.top}px`,
+          width: `${r.width}px`,
+          height: `${r.height}px`,
+          margin: '0',
+          zIndex: '7',
+          pointerEvents: 'none',
+        });
+        container.appendChild(c);
+        const mid = (chips.length - 1) / 2;
+        const drift = (i - mid) * 34 + (Math.random() - 0.5) * 16; // fanning out a little
+        const spin = (i - mid) * 40 + (Math.random() - 0.5) * 50;
+        const fall = box.bottom - r.top + r.height * 1.5;
+        c.animate(
+          [
+            { transform: 'translate(0, 0) rotate(0deg)', easing: 'cubic-bezier(0.2, 0.75, 0.4, 1)' },
+            { transform: `translate(${drift * 0.4}px, ${-r.height * R.cardTossHeight}px) rotate(${spin * 0.35}deg)`, offset: 0.33, easing: 'cubic-bezier(0.55, 0, 0.9, 0.45)' },
+            { transform: `translate(${drift}px, ${fall}px) rotate(${spin}deg)` },
+          ],
+          { duration: R.cardTossSeconds * 1000, delay: (delay + i * 0.09) * 1000, fill: 'both' },
+        ).onfinish = () => c.remove();
+      });
+      // The real hand goes at once, so nothing is left behind the tossed copies.
+      hand.innerHTML = '';
+      hand.hidden = true;
+      shownCards = '';
+      showInventory();
+    },
     /** The row of cards you hold. */
     setCards(ids) {
       const key = ids.join();

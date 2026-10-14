@@ -315,16 +315,16 @@ export const CONFIG = {
   },
 
   // Trait cards (M7).
-  // The end-of-level scorecard (design doc: "End-of-level scorecard"): bonuses
-  // for deeds, paid at the exit, less 1% per shot taken.
-  scorecard: {
-    allEnemies: 20, // every enemy killed (levels with enemies)
-    allChests: 10, // every chest opened (levels with chests)
-    noDeaths: 15, // not knocked out on the level
-    unseen: 25, // no enemy ever saw you (levels with enemies)
-    shotPenalty: 0.01, // of the bonuses, per shot taken (never below 0)
-    tapDelay: 0.8, // seconds before a tap can close it
+  // Bonuses (design doc: "Bonuses and callouts"), paid the moment they're
+  // earned with a callout; the last two as you reach the exit.
+  bonuses: {
+    allEnemies: 20, // "Clean Sweep!": the last enemy (not tool balls) dies
+    allChests: 10, // "Looted!": the last chest opens
+    partingShot: 15, // trick shot: a kill, then the exit, in one shot of yours
+    noDeaths: 15, // "Untouchable!": at the exit, not knocked out on the level
+    unseen: 25, // "Ghost!": at the exit, no enemy ever saw you (levels with enemies)
   },
+
 
   // The peddler (design doc: "Planned: the economy"): a shop after each
   // level's scorecard, 3 artifacts at a time.
@@ -538,6 +538,8 @@ export const CONFIG = {
     pitDepth: 1.4, // how far a bottomless pit's walls are drawn down before the black
     lavaDepth: 0.35, // how far below the floor the lava lies
     exitGlideSeconds: 0.45,
+    calloutSeconds: 1.3, // how long a callout (bonus, Combo Kill, Bonus turn) stays
+    calloutBeat: 0.45, // the least time between two callouts: a newer one pushes the older up after this beat
     exitGlideDamping: 7,
     exitGlidePull: 45,
     exitBeamSeconds: 0.6,

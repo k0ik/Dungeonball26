@@ -193,42 +193,40 @@ Dropped: Fleet Feet (a smaller Skates of Rollering). Built from this list so far
 
 **To explore: stackable cards.** Copies of a card add up, each in its own slot: one Medic is +5% potion chance, two Medics (two slots) +10%, three Medics (all three slots) +15%. That's all a stack gives: each copy adds the same step, with no extra bonus for matching sets and no levelling up. Likewise Ninja at −5%, −10%, −15% sight range, and Fleet Feet at −2%, −5%, −8% friction. Since there are only 3 slots, stacking trades breadth for depth. Cards that are simple on/off toggles (Chainsmoker, Barrel of Fun, Bomb Squad, Locksmith) do nothing extra as a second copy, so you can only ever hold one of each. This changes the default above: an offer can include a stackable card you already hold (taking it fills another slot with another copy), but never a toggle you already hold.
 
-## End-of-level scorecard
+## Bonuses and callouts
 
-**Built.** When you reach the exit and the screen fades, a scorecard comes up over the dark screen ("Level Complete" and the level's name), its lines appearing one after another, before the next level loads. Each line is a deed with what it pays (`CONFIG.scorecard`); a missed deed is greyed out with a dash:
+(This replaced an end-of-level scorecard, built and then dropped: a tally screen with lines that came and went from level to level read as complex and inconsistent, and its shot penalty, 1% of the payout per shot, suited levels of different sizes badly. There is no shot penalty or shot bonus now, and no separate score: the gold counter is the one number.)
 
-| Line | Shows | Pays |
+Every bonus is paid **the moment it's earned**, with a callout naming it, its gold and what it's for (`CONFIG.bonuses`):
+
+| Callout | When | Pays |
 | --- | --- | --- |
-| Enemies slain | "All", or how many are left (tool balls don't count); only on levels with enemies | +20 if none are left |
-| Chests opened | n of N; only on levels with chests | +10 if all are open |
-| No deaths | "Untouchable", or how many times you were knocked out on the level | +15 with none |
-| Never seen | "Like a ghost", or "Spotted" if any enemy saw you at any moment on the level (whenever its "!" would show, the enemy turn included); only on levels with enemies | +25 if never seen |
-| Shots taken | the shots you took | takes 1% per shot off the bonuses above (`shotPenalty`; 100 shots leave nothing) |
-| Payout | the bonuses less the shots' cut, rounded | added to your gold |
+| Clean Sweep! (every enemy slain) | the last enemy dies (tool balls don't count; a golem isn't done until its last piece is; whoever kills it, on either turn); only on levels with enemies | +20 |
+| Looted! (every chest opened) | the last chest opens; only on levels with chests | +10 |
+| Parting Shot! (a kill, then out) | a trick shot: you reach the exit in a shot of yours that killed an enemy | +15 |
+| Untouchable! (no deaths) | as you reach the exit, if you weren't knocked out on the level | +15 |
+| Ghost! (never seen) | as you reach the exit, if no enemy saw you at any moment (whenever its "!" would show, the enemy turn included); only on levels with enemies, and not always possible (some enemies see the start) | +25 |
 
-Under it: your gold after the payout and your run's score, then "Tap to continue" (a tap closes it after 0.8 s, `tapDelay`). A game over restarts the level's record along with the level. Levels played from the editor skip it.
+The exit's callouts come up as your ball glides into the exit, and the beam-out waits for them. Then the screen fades and the peddler comes up (between levels).
 
-**Gold and score.** Gold (the counter at the top left) is what you hold to spend; the **score** is everything earned in the run (kills, chests and payouts), spent or not, shown on the scorecard and as "Score N" on the Run Complete screen. Trick shots (see below, not built yet) will add a line each when they are.
+**Callouts** (`hud.callout`) are also used for "Combo Kill!" and "Bonus turn!". One shows above the middle of the board for 1.3 s (`render.calloutSeconds`). Several close together stack: each new one waits at least 0.45 s after the last (`render.calloutBeat`), then grows in at the bottom of the stack and pushes the older ones up.
+
+A game over restarts the level (and takes your gold back to what you entered with), so bonuses earned before it are earned again on the retry, not twice. Ordinary deaths keep the board, so Clean Sweep and Looted can't be paid twice.
 
 ### Planned: the economy (coins are earned, not found)
 
 Agreed direction, not built yet. The aim is emergent, improvised play rather than a power ladder: coins reward *how* you played a level, power is capped by the 3 artifact slots, and enemies never scale to the player (difficulty comes from the hand-authored levels). It replaces collecting coins off the floor, which had become a chore of precision sweeping, and a score that mostly measured luck with loot.
 
-- **Built so far:** coins are paid, not picked up (kill gold fountains up, barrels hold no gold, hits cost none), the coin streaks are gone, and the scorecard pays the deeds. The peddler is built too (below). Still to come: paid continues.
+- **Built so far:** coins are paid, not picked up (kill gold fountains up, barrels hold no gold, hits cost none), the coin streaks are gone, and bonuses are paid with callouts as they're earned (see Bonuses and callouts). The peddler is built too (below). Still to come: paid continues.
 - **Coins are paid, not picked up.** No coins lie on the floor to be collected.
   - **Barrels never drop coins.** A barrel is empty or drops a potion or gear (sword or shield); no tools yet. The Gold row of the barrel loot table goes, its share spread over the others.
   - **Enemies pay a little.** A kill pays a small number of coins in a fountain like a chest's (show only, credited at once), not a scatter to roll over.
   - **Chests pay a little** (as now, a small fountain), and still give 1 random artifact for free.
-  - **The scorecard pays most.** At the exit, the scorecard pays out coins for deeds. Each pays a fixed amount whatever the level's size, so big levels aren't farms and every level offers the same deeds:
-    - all enemies killed
-    - all chests opened
-    - no deaths
-    - never seen
-    - trick shots landed in the level
+  - **Bonuses pay most**, each called out the moment it's earned (see Bonuses and callouts): all enemies killed, all chests opened, trick shots, and at the exit no deaths and never seen. Each pays a fixed amount whatever the level's size, so big levels aren't farms.
   - Bonuses that pull in different directions (you can't usually kill everything *and* stay unseen) are the point: each level you pick which ones to chase.
-- **Shots count against you, with no par.** The level's payout loses 1% per shot taken, floored at zero: 10 shots keep 90%, 30 keep 70%, 100 shots pay nothing. A percentage rather than a flat fee per shot, so big levels aren't punished for needing more shots.
-- **Score** is the total coins earned in the run, not the coins you hold, so spending never costs you score and nobody hoards.
-- **The peddler (built)** comes right after the scorecard's tap (not after the last level), over the dark screen: "The Peddler", your gold, and 3 artifacts you don't hold, each a card with its price (40 gold, `CONFIG.peddler.price`; "Sold" once bought, greyed with a red price if you can't afford it). Tap one to buy it: the usual "Choose a slot" comes up (headed "Buy for 40 gold"), and only placing it pays; Skip there buys nothing. If it replaces an artifact you hold, that one sells back for 5 gold (`sellBack`, said in the "Discard ...?" confirmation). Reroll (5 gold, `rerollPrice`) deals 3 new offers; Continue loads the next level. Not modelled as a character or placed in the level for now.
+- **No shot penalty** (dropped): levels differ too much in size and steps to the exit for shots to be judged fairly, so there's neither a penalty nor a bonus for them.
+- **No separate score:** the gold counter is the one number (a running score beside it confused more than it told).
+- **The peddler (built)** comes right after the exit (not after the last level), over the dark screen: "The Peddler", your gold, and 3 artifacts you don't hold, each a card with its price (40 gold, `CONFIG.peddler.price`; "Sold" once bought, greyed with a red price if you can't afford it). Tap one to buy it: the usual "Choose a slot" comes up (headed "Buy for 40 gold"), and only placing it pays; Skip there buys nothing. If it replaces an artifact you hold, that one sells back for 5 gold (`sellBack`, said in the "Discard ...?" confirmation). Reroll (5 gold, `rerollPrice`) deals 3 new offers; Continue loads the next level. Not modelled as a character or placed in the level for now.
 - **Continues:** at game over you can pay to carry on instead: 100 coins the first time in a run, then 200, then 300 and so on. It keeps the continue a lifeline rather than a crutch. (Possibly an in-app purchase one day; if so, mark continued runs on the scoreboard so purchases don't buy rank.)
 - **Artifacts stay capped at 3 slots** and nothing else grows: no XP, no levelling, no permanent stat upgrades. A new artifact replaces an old one, so power plateaus early and a run is about which three you hold right now. Artifacts should be styles that are good in most levels in different ways (heal per shot, start with sword and shield), not counters that only pay off against one enemy type.
 
@@ -260,7 +258,7 @@ Trick shots are special one-shot combos, tracked as achievements. Each one pays 
 | Door Prize | Unlock a door (roll over its key so it opens) and kill an enemy in the same shot | +15 gold |
 | Shopping Spree | Collect a sword and a shield in the same shot | +15 gold |
 | Double Tap | In your shot, hit the same enemy twice within a split second (about a quarter of a second) and kill it with the second hit; it often happens when the enemy is up against a wall and your ball bounces straight back into it | +15 gold (to tune) |
-| Parting Shot | Kill an enemy and then reach the exit, in the same shot | +15 gold (to tune) |
+| Parting Shot (**built**) | Kill an enemy and then reach the exit, in the same shot | +15 gold, called out as you reach the exit |
 
 The names and bonus amounts are placeholders to tune.
 - **Tracking:** credit for a hit passes along a chain. An enemy you hit is "knocked by you", and an enemy it hits is "combo-knocked". Whatever a knocked enemy touches next (a barrel, a pit, another enemy) is credited to the chain for the rest of the shot.
@@ -491,8 +489,6 @@ One line per open item, grouped; the full entries are below (or in the named sec
 - **Keep every enemy move on screen:** during the enemy move, adjust the camera's zoom and position in real time (not just once as the phase begins) so every moving enemy and every collision stays in view, whoever it's heading for.
 - **See an enemy's death through:** when an enemy dies at the end of its own move (a red barrel, a bomb, a combo), the camera holds on the death, waits a split second after it plays out, and only then returns to you.
 - **Coins expire:** coins that appear during play (out of a barrel, a kill, or knocked out of you) last only 2 more turns, then vanish. Placed coins (strips, `*`) don't expire. Their last turn needs a calm cue rather than blinking, which would be exhausting with many on the board: for example they dim, shrink a little and stop spinning on their last turn, or slowly fade out over it.
-- **Clear-the-level bonus:** killing every enemy before you exit pays +100 gold, with an immediate one-screen notification the moment the last one dies ("All enemies defeated! +100").
-- **All-chests bonus:** opening every chest in a level before you exit pays +100 gold per chest (5 chests: +500). It doesn't apply to a level with no chests. Like the clear-the-level bonus, it shows an immediate notification the moment the last chest opens ("All chests opened! +500"), and the end-of-level scorecard shows the sum as an equation ("Chests 5 of 5: 5 × 100 = +500").
 - **Aim cancel mark on top:** the "X" that shows while your drag is inside the cancel ring (let go to cancel) moves from on the ball to above it on screen, so the finger dragging back from the bottom never covers it.
 - **Shield blinks out:** when your shield is used up (it took a hit or a blast for you), it blinks 3 times before it disappears, so you notice it's gone. (The sword doesn't need this.)
 - **Sound effects:** you have a collection of sound effects to swap in for the placeholders (see Audio).

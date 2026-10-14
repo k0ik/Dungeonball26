@@ -81,6 +81,12 @@ export function createHud(container) {
     paused = false;
   });
 
+  // Callouts (bonuses, Combo Kill, Bonus turn): a stack above the board's middle.
+  const callouts = document.createElement('div');
+  callouts.className = 'callouts';
+  container.appendChild(callouts);
+  let calloutNext = 0; // when the next callout may appear (ms)
+
   const pick = document.createElement('div');
   pick.className = 'card-pick';
   pick.setAttribute('role', 'dialog');
@@ -195,11 +201,39 @@ export function createHud(container) {
       death.classList.remove('on');
     },
     /**
-     * The peddler (after the scorecard): your gold, three artifacts for sale
+     * The peddler (between levels): your gold, three artifacts for sale
      * (each a card with its price, or "Sold"), a reroll and Continue.
      * `model` is { gold, offers: [{ id, sold }], price, rerollPrice };
      * `actions` { buy(i), reroll(), leave() }. Returns { update(model), close() }.
      */
+    /**
+     * A callout: a bonus, "Combo Kill!" or "Bonus turn!", centred above the
+     * board for calloutSeconds. Callouts close together stack: each new one
+     * waits at least calloutBeat after the last, then appears in place and
+     * pushes the older ones up. Returns the seconds until this one is gone.
+     */
+    callout(title, sub = '', gold = 0, note = '') {
+      const R = CONFIG.render;
+      const now = performance.now();
+      const at = Math.max(now, calloutNext);
+      calloutNext = at + R.calloutBeat * 1000;
+      setTimeout(() => {
+        const el = document.createElement('div');
+        el.className = 'callout';
+        el.innerHTML = '<strong></strong><span></span><em></em>';
+        el.querySelector('strong').textContent = gold ? `${title} +${gold}` : title;
+        el.querySelector('span').textContent = sub;
+        el.querySelector('span').hidden = !sub;
+        el.querySelector('em').textContent = note;
+        el.querySelector('em').hidden = !note;
+        callouts.appendChild(el);
+        setTimeout(() => {
+          el.classList.add('out');
+          setTimeout(() => el.remove(), 300);
+        }, R.calloutSeconds * 1000);
+      }, at - now);
+      return (at - now) / 1000 + R.calloutSeconds;
+    },
     showPeddler(model, actions) {
       const el = document.createElement('div');
       el.className = 'peddler';
@@ -236,39 +270,6 @@ export function createHud(container) {
         update: render,
         close: () => el.remove(),
       };
-    },
-    /**
-     * The end-of-level scorecard over the dark screen: the level's deeds
-     * line by line (each with its bonus, or none), the shots taken and what
-     * they cost, and the payout. A tap (after a moment) closes it and calls done().
-     */
-    showScorecard(card, done) {
-      const el = document.createElement('div');
-      el.className = 'scorecard';
-      const rows = card.rows
-        .map((r, i) => `<li class="${r.bonus ? 'got' : 'miss'}" style="--i:${i}"><span class="sc-label"></span><span class="sc-detail"></span><b>${r.bonus ? `+${r.bonus}` : '—'}</b></li>`)
-        .join('');
-      const n = card.rows.length;
-      el.innerHTML = `<div class="sc-panel">
-        <h2>Level Complete</h2><p class="sc-name"></p>
-        <ul>${rows}<li class="shots" style="--i:${n}"><span class="sc-label">Shots taken</span><span class="sc-detail">${card.shots}</span><b>${card.bonus ? `−${card.cut}%` : ''}</b></li></ul>
-        <div class="sc-payout" style="--i:${n + 1}"><span>Payout</span><b>+${card.payout}</b></div>
-        <div class="sc-totals" style="--i:${n + 2}"><span><i class="coin"></i>${card.gold}</span><span>Score ${card.score}</span></div>
-        <p class="sc-tap" style="--i:${n + 3}">Tap to continue</p>
-      </div>`;
-      el.querySelector('.sc-name').textContent = card.name;
-      el.querySelectorAll('li:not(.shots)').forEach((li, i) => {
-        li.querySelector('.sc-label').textContent = card.rows[i].label;
-        li.querySelector('.sc-detail').textContent = card.rows[i].detail;
-      });
-      container.appendChild(el);
-      const opened = performance.now();
-      el.addEventListener('pointerdown', (e) => {
-        e.stopPropagation();
-        if (performance.now() - opened < CONFIG.scorecard.tapDelay * 1000) return;
-        el.remove();
-        done();
-      });
     },
     /**
      * The end-of-level card pick. Tap a card to take it; if your slots are

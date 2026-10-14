@@ -971,105 +971,61 @@ body {
   opacity: 1;
 }
 
-/* The end-of-level scorecard (hud.showScorecard), over the dark screen. */
-.scorecard {
+/* Callouts (hud.callout): bonuses, Combo Kill, Bonus turn. A stack whose
+   bottom stays put: a new one grows in at the bottom and pushes the rest up. */
+.callouts {
   position: absolute;
-  inset: 0;
-  z-index: 9;
+  left: 50%;
+  bottom: 64%;
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  z-index: 4;
+  width: min(92vw, 360px);
+}
+.callout {
   display: grid;
-  place-items: center;
-  padding: 16px;
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  justify-items: center;
+  gap: 2px;
+  padding: 8px 18px;
+  border-radius: 10px;
+  background: rgba(24, 25, 28, 0.85);
   color: #e4e5e8;
-}
-.sc-panel {
-  width: min(100%, 340px);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   text-align: center;
+  overflow: hidden;
+  animation: callout-in 0.28s ease-out both;
+  transition: opacity 0.3s ease, translate 0.3s ease;
 }
-.sc-panel h2 {
-  margin: 0;
-  font-size: 28px;
-  color: #ffd23f;
-  animation: sc-in 0.35s ease-out both;
-}
-.sc-name {
-  margin: 2px 0 18px;
-  font-size: 14px;
-  color: #a7a9b0;
-  animation: sc-in 0.35s ease-out both;
-}
-.sc-panel ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-}
-.sc-panel li,
-.sc-payout,
-.sc-totals {
-  display: grid;
-  grid-template-columns: 1fr auto 52px;
-  align-items: baseline;
-  gap: 10px;
-  text-align: left;
-  animation: sc-in 0.3s ease-out both;
-  animation-delay: calc(0.25s + var(--i) * 0.22s);
-}
-.sc-panel li .sc-label {
-  font-size: 16px;
-}
-.sc-panel li .sc-detail {
-  font-size: 13px;
-  color: #a7a9b0;
-}
-.sc-panel li b {
-  text-align: right;
-  font-size: 17px;
-}
-.sc-panel li.got b {
+.callout strong {
+  font-size: 21px;
   color: #ffd23f;
 }
-.sc-panel li.miss .sc-label,
-.sc-panel li.miss b {
-  color: #6f7178;
+.callout span {
+  font-size: 12px;
 }
-.sc-panel li.shots b {
-  color: #ff8a7a;
+.callout em {
+  font-size: 12px;
+  font-style: normal;
+  color: #b9a7ff;
 }
-.sc-payout {
-  grid-template-columns: 1fr auto;
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid #3a3b40;
-  font-size: 20px;
+.callout.out {
+  opacity: 0;
+  translate: 0 -10px;
 }
-.sc-payout b {
-  font-size: 26px;
-  color: #ffd23f;
-}
-.sc-totals {
-  grid-template-columns: 1fr 1fr;
-  margin-top: 10px;
-  font-size: 15px;
-  color: #c9cbd1;
-}
-.sc-totals span:last-child {
-  text-align: right;
-}
-.sc-totals .coin {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  margin-right: 6px;
-  vertical-align: -2px;
-}
-.sc-tap {
-  margin-top: 22px;
-  font-size: 13px;
-  color: #8b8d94;
-  animation: sc-in 0.3s ease-out both, sc-pulse 1.4s ease-in-out infinite;
-  animation-delay: calc(0.25s + var(--i) * 0.22s), calc(0.6s + var(--i) * 0.22s);
+@keyframes callout-in {
+  from {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
+  }
+  to {
+    max-height: 90px;
+  }
 }
 @keyframes sc-in {
   from {
@@ -1077,13 +1033,8 @@ body {
     translate: 0 8px;
   }
 }
-@keyframes sc-pulse {
-  50% {
-    opacity: 0.45;
-  }
-}
 
-/* The peddler (hud.showPeddler): after the scorecard, over the dark screen; the slot pick (z 11) opens over it. */
+/* The peddler (hud.showPeddler): between levels, over the dark screen; the slot pick (z 11) opens over it. */
 .peddler {
   position: absolute;
   inset: 0;

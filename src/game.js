@@ -1824,6 +1824,14 @@ export function createGame(container, levels, startIndex = 0) {
   }
 
   function frame(now) {
+    // The level editor covers the game: stop simulating and drawing it
+    // meanwhile (rendering the 3D board unseen behind the editor cost a phone
+    // its whole GPU budget, and could bring the page down).
+    if (document.body.classList.contains('editing')) {
+      last = now;
+      requestAnimationFrame(frame);
+      return;
+    }
     const frameStart = performance.now();
     // Paused (a card is open): time stands still, but the scene keeps drawing.
     const realDtRaw = (now - last) / 1000;

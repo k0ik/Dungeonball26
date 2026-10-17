@@ -26,6 +26,8 @@ import lavaPark from './levels/lava-park.txt?raw';
 import simplex from './levels/simplex.txt?raw';
 import icky from './levels/icky.txt?raw';
 import chambers from './levels/chambers.txt?raw';
+import bobsled from './levels/bobsled.txt?raw';
+import locksNKeys from './levels/locks-n-keys.txt?raw';
 
 // The run, in order (design doc: "Levels"). Levels 4 and 5 arrive in M8.
 const LEVELS = [
@@ -58,6 +60,8 @@ const LEVELS = [
   { id: 'simplex', name: 'Simplex', text: simplex },
   { id: 'icky', name: 'Icky', text: icky },
   { id: 'chambers', name: 'Chambers', text: chambers },
+  { id: 'bobsled', name: 'Bobsled', text: bobsled },
+  { id: 'locks-n-keys', name: 'Locks n Keys', text: locksNKeys },
 ];
 
 // Start on a level with the URL hash, e.g. #one-key.

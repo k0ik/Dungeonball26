@@ -234,12 +234,6 @@ export function createHud(container) {
       });
     },
     /**
-     * The peddler (between levels): your gold, three artifacts for sale
-     * (each a card with its price, or "Sold"), a reroll and Continue.
-     * `model` is { gold, offers: [{ id, sold }], price, rerollPrice };
-     * `actions` { buy(i), reroll(), leave() }. Returns { update(model), close() }.
-     */
-    /**
      * A callout: a bonus, "Combo Kill!" or "Bonus turn!", centred above the
      * board for calloutSeconds. Callouts close together stack: each new one
      * waits at least calloutBeat after the last, then appears in place and
@@ -267,53 +261,35 @@ export function createHud(container) {
       }, at - now);
       return (at - now) / 1000 + R.calloutSeconds;
     },
+    /**
+     * The peddler (between levels): a supply shop. Your gold and HP, then each
+     * item with its price; one you couldn't use or can't afford is greyed out.
+     * `model` is { gold, hp, maxHp, items: [{ name, icon, text, price, useless, poor }] };
+     * `actions` { buy(i), leave() }. Returns { update(model), close() }.
+     */
     showPeddler(model, actions) {
       const el = document.createElement('div');
       el.className = 'peddler';
       container.appendChild(el);
       const render = (m) => {
-        el.innerHTML = `<div class="pd-panel"><h2>The Peddler</h2><p class="pd-gold"><i class="coin"></i><span></span></p><div class="pd-offers"></div>
-          <p class="pd-yours">Your artifacts</p><div class="pd-held"></div>
-          <div class="pd-actions"><button type="button" class="card-skip pd-reroll"></button><button type="button" class="card-skip pd-leave">Continue</button></div></div>`;
+        el.innerHTML = `<div class="pd-panel"><h2>The Peddler</h2><p class="pd-gold"><i class="coin"></i><span></span><small></small></p><div class="pd-offers"></div>
+          <div class="pd-actions"><button type="button" class="card-skip pd-leave">Continue</button></div></div>`;
         el.querySelector('.pd-gold span').textContent = m.gold;
+        el.querySelector('.pd-gold small').textContent = `${m.hp}/${m.maxHp} HP`;
         const list = el.querySelector('.pd-offers');
-        if (!m.offers.length) list.innerHTML = '<p class="pd-empty">Nothing left to sell.</p>';
-        m.offers.forEach((o, i) => {
-          const c = cardById(o.id);
+        m.items.forEach((it, i) => {
           const b = document.createElement('button');
           b.type = 'button';
-          const afford = m.gold >= m.price;
-          b.className = `pd-offer${o.sold ? ' sold' : afford ? '' : ' poor'}`;
-          b.disabled = o.sold || !afford;
+          b.className = `pd-offer${it.useless ? ' useless' : it.poor ? ' poor' : ''}`;
+          b.disabled = it.useless || it.poor;
           b.innerHTML = '<span class="pd-icon" aria-hidden="true"></span><span class="pd-name"></span><span class="pd-text"></span><b class="pd-price"></b>';
-          b.querySelector('.pd-icon').textContent = c.icon;
-          b.querySelector('.pd-name').textContent = c.name;
-          b.querySelector('.pd-text').textContent = c.text;
-          b.querySelector('.pd-price').textContent = o.sold ? 'Sold' : `${m.price}`;
+          b.querySelector('.pd-icon').textContent = it.icon;
+          b.querySelector('.pd-name').textContent = it.name;
+          b.querySelector('.pd-text').textContent = it.text;
+          b.querySelector('.pd-price').textContent = `${it.price}`;
           b.addEventListener('click', () => actions.buy(i));
           list.append(b);
         });
-        // What you hold, so you can buy to suit it (empty slots shown too).
-        const heldRow = el.querySelector('.pd-held');
-        for (let i = 0; i < CONFIG.cards.slots; i++) {
-          const id = m.held?.[i];
-          const t = document.createElement('div');
-          t.className = id ? 'pd-mine' : 'pd-mine empty';
-          if (id) {
-            const c = cardById(id);
-            t.innerHTML = '<span class="pd-icon" aria-hidden="true"></span><b></b><small></small>';
-            t.querySelector('.pd-icon').textContent = c.icon;
-            t.querySelector('b').textContent = c.name;
-            t.querySelector('small').textContent = c.text;
-          } else {
-            t.innerHTML = '<b>Empty</b>';
-          }
-          heldRow.append(t);
-        }
-        const reroll = el.querySelector('.pd-reroll');
-        reroll.textContent = `Reroll (${m.rerollPrice})`;
-        reroll.disabled = m.gold < m.rerollPrice || !m.offers.length;
-        reroll.addEventListener('click', actions.reroll);
         el.querySelector('.pd-leave').addEventListener('click', actions.leave);
       };
       render(model);
@@ -323,17 +299,12 @@ export function createHud(container) {
       };
     },
     /**
-     * The end-of-level card pick. Tap a card to take it; if your slots are
-     * full you then pick one of yours to replace. Skip is always there.
-     * Calls done(id, replaceId) once, with id null for a skip.
+     * A chest's artifact. With none held: the card, with Take and Skip. With
+     * one held: yours and the new one side by side, with Keep yours and Swap.
+     * A skipped artifact is gone. done(replace) gets null (taken into the
+     * empty slot), the swapped-out card's id, or false for a skip.
      */
-    /**
-     * A chest's card: "New artifact" shows it, then your slots ("Choose a slot").
-     * Tap an empty slot to put it there; tap a held card to replace it (after
-     * a "Discard ...?" confirmation); or Skip. done(replace) gets null for an
-     * empty slot, the replaced card's id, or false for skip.
-     */
-    showCardFind(id, held, done, { kicker = 'New artifact', sellBack = 0 } = {}) {
+    showCardFind(id, held, done, { kicker = 'New artifact' } = {}) {
       paused = true; // the game holds still while you choose
       const finish = (answer) => {
         pick.classList.remove('on');
@@ -350,44 +321,27 @@ export function createHud(container) {
         el.querySelector('.card-text').textContent = c.text;
         return el;
       };
-      const found = cardById(id);
-      const showSlots = () => {
-        pick.innerHTML = '<p class="pick-kicker"></p><div class="pick-new"></div><h2>Choose a slot</h2><div class="slot-row"></div><button type="button" class="card-skip">Skip</button>';
-        pick.querySelector('.pick-kicker').textContent = kicker;
-        pick.querySelector('.pick-new').append(cardFace(id, 'new'));
-        const row = pick.querySelector('.slot-row');
-        for (let i = 0; i < CONFIG.cards.slots; i++) {
-          const held_ = held[i];
-          const b = document.createElement('button');
-          b.type = 'button';
-          if (held_) {
-            const c = cardById(held_);
-            b.className = 'slot held';
-            b.innerHTML = '<span class="slot-icon" aria-hidden="true"></span><span class="slot-name"></span>';
-            b.querySelector('.slot-icon').textContent = c.icon;
-            b.querySelector('.slot-name').textContent = c.name;
-            b.addEventListener('click', () => confirmReplace(held_));
-          } else {
-            b.className = 'slot empty';
-            b.innerHTML = '<span class="slot-name">Empty</span>';
-            b.addEventListener('click', () => finish(null));
-          }
-          row.append(b);
-        }
-        pick.querySelector('.card-skip').addEventListener('click', () => finish(false));
-        pick.classList.add('on');
-        row.querySelector('.slot')?.focus();
+      const old = held.length >= CONFIG.cards.slots ? held[held.length - 1] : null;
+      pick.innerHTML = '<p class="pick-kicker"></p><div class="pick-pair"></div><p class="pick-note">Skip it and it\'s gone.</p><div class="confirm-row"><button type="button" class="card-skip no"></button><button type="button" class="card-skip yes"></button></div>';
+      pick.querySelector('.pick-kicker').textContent = kicker;
+      const pair = pick.querySelector('.pick-pair');
+      const side = (label, face) => {
+        const col = document.createElement('div');
+        col.className = 'pick-side';
+        col.innerHTML = '<span class="pick-label"></span>';
+        col.querySelector('.pick-label').textContent = label;
+        col.append(face);
+        pair.append(col);
       };
-      const confirmReplace = (old) => {
-        pick.innerHTML = '<h2></h2><p></p><div class="pick-new"></div><div class="confirm-row"><button type="button" class="card-skip no">No</button><button type="button" class="card-skip yes">Yes</button></div>';
-        pick.querySelector('h2').textContent = `Discard ${cardById(old).name}?`;
-        pick.querySelector('p').textContent = `${found.name} will replace it.${sellBack ? ` It sells back for ${sellBack} gold.` : ''}`;
-        pick.querySelector('.pick-new').append(cardFace(old, 'held'));
-        pick.querySelector('.no').addEventListener('click', showSlots);
-        pick.querySelector('.yes').addEventListener('click', () => finish(old));
-        pick.querySelector('.yes').focus();
-      };
-      showSlots();
+      if (old) side('Yours', cardFace(old, 'held'));
+      side(old ? 'New' : '', cardFace(id, 'new'));
+      pair.classList.toggle('two', !!old);
+      pick.querySelector('.no').textContent = old ? 'Keep yours' : 'Skip';
+      pick.querySelector('.yes').textContent = old ? 'Swap' : 'Take';
+      pick.querySelector('.no').addEventListener('click', () => finish(false));
+      pick.querySelector('.yes').addEventListener('click', () => finish(old));
+      pick.classList.add('on');
+      pick.querySelector('.yes').focus();
     },
     /**
      * Your artifacts are lost (a knockout): each held card is tossed up out

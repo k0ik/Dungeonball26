@@ -1117,48 +1117,7 @@ body {
   }
 }
 
-/* The peddler: what you hold, under the offers. */
-.pd-yours {
-  margin: 16px 0 6px;
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #8b8d94;
-}
-.pd-held {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-.pd-mine {
-  display: grid;
-  justify-items: center;
-  gap: 2px;
-  padding: 8px 6px;
-  border-radius: 10px;
-  border: 1px solid #4a4b50;
-  background: #222327;
-  text-align: center;
-}
-.pd-mine .pd-icon {
-  grid-row: auto;
-  font-size: 24px;
-}
-.pd-mine b {
-  font-size: 12px;
-}
-.pd-mine small {
-  font-size: 10px;
-  line-height: 1.2;
-  color: #a7a9b0;
-}
-.pd-mine.empty {
-  border-style: dashed;
-  color: #6f7178;
-  align-content: center;
-}
-
-/* The peddler (hud.showPeddler): between levels, over the dark screen; the slot pick (z 11) opens over it. */
+/* The peddler (hud.showPeddler): between levels, over the dark screen. */
 .peddler {
   position: absolute;
   inset: 0;
@@ -1183,6 +1142,11 @@ body {
   margin: 6px 0 16px;
   font-size: 18px;
   font-weight: 700;
+}
+.pd-gold small {
+  margin-left: 14px;
+  font-size: 14px;
+  color: #7ee08a;
 }
 .pd-gold .coin {
   display: inline-block;
@@ -1244,13 +1208,10 @@ body {
   box-shadow: inset 0 0 0 2px #e0a02c;
   vertical-align: -1px;
 }
-.pd-offer.sold {
+.pd-offer.useless {
   border-color: #4a4b50;
   opacity: 0.5;
   cursor: default;
-}
-.pd-offer.sold .pd-price::before {
-  display: none;
 }
 .pd-offer.poor {
   border-color: #5a5b60;
@@ -1308,60 +1269,51 @@ body {
   color: #c9b7bb;
 }
 
-/* The chest card screen (hud.showCardFind): the new card, then your slots. */
+/* The chest card screen (hud.showCardFind): the new card, beside yours if you hold one. */
 .pick-kicker {
   color: #ffd23f !important;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.pick-new {
-  width: min(100%, 340px);
+.pick-pair {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 230px);
 }
-.pick-new .card {
+.pick-pair.two {
+  grid-template-columns: 1fr 1fr;
+  width: min(100%, 360px);
+}
+.pick-side {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+.pick-label {
+  font: 800 12px/1 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8b8d94;
+}
+.pick-label:empty {
+  display: none;
+}
+.pick-pair .card {
   cursor: default;
 }
-.pick-new .card.new {
+.pick-pair.two .card .card-icon {
+  font-size: 40px;
+}
+.pick-note {
+  font-size: 13px;
+  color: #8b8d94 !important;
+}
+.pick-pair .card.new {
   box-shadow: 0 0 0 3px rgba(255, 210, 63, 0.35), 0 8px 30px rgba(0, 0, 0, 0.5);
 }
 .card-pick h2 {
   margin-top: 8px;
-}
-.slot-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  width: min(100%, 340px);
-}
-.slot {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-height: 74px;
-  padding: 8px 6px;
-  border-radius: 12px;
-  font: 700 12px/1.2 system-ui, -apple-system, 'Segoe UI', sans-serif;
-  color: #f2f2f4;
-  cursor: pointer;
-}
-.slot.held {
-  background: #2a2b30;
-  border: 2px solid #c8005f;
-}
-.slot.empty {
-  background: #1d1e22;
-  border: 2px dashed #6b6d72;
-  color: #9a9ca3;
-}
-.slot:hover,
-.slot:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(255, 210, 63, 0.35);
-}
-.slot-icon {
-  font-size: 26px;
 }
 .confirm-row {
   display: flex;
@@ -1397,7 +1349,6 @@ body {
 .card .card-text {
   order: 2;
 }
-.pick-new,
 .card.big {
   width: min(100%, 230px);
 }

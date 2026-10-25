@@ -256,7 +256,6 @@ export function createGame(container, levels, startIndex = 0) {
     effects.clear();
     doorsView.build(level);
     applyCards(); // hero-side card effects (Athletic)
-    startOfLevelCards();
 
     for (const view of enemyViews.values()) {
       scene.remove(view.object);
@@ -949,36 +948,31 @@ export function createGame(container, levels, startIndex = 0) {
   }
 
   /**
-   * The peddler, between levels: three artifacts you don't hold, at a
-   * price each, a reroll for three new ones, and Continue. Buying goes through
-   * the usual "Choose a slot"; an artifact it replaces sells back for a
-   * little. Skipping there buys nothing. Calls next() on Continue.
+   * The peddler, between levels: a supply shop (artifacts come only from
+   * chests). Health, a shield, a sword or a 1-up, each at its price; an item
+   * you couldn't use (full HP, gear you already hold) or can't afford is
+   * greyed out. Gold carries over. Calls next() on Continue.
    */
   function openPeddler(next) {
-    const P = CONFIG.peddler;
     state.phase = 'shop';
-    let offers = [];
-    const deal = () => (offers = offerCards(state.cards, Math.random, P.offers).map((id) => ({ id, sold: false })));
-    deal();
-    const model = () => ({ gold: state.gold, offers, price: P.price, rerollPrice: P.rerollPrice, held: state.cards });
+    const heal = (it) => Math.ceil(it.heal * hero.maxHp);
+    const text = (it) =>
+      it.heal ? `+${heal(it)} HP (${Math.round(it.heal * 100)}% of max)` : it.id === 'sword' ? `+${CONFIG.loot.swordAtk} ATK for your next shot.` : it.text;
+    const useless = (it) => (it.heal ? hero.hp >= hero.maxHp : it.id === 'shield' ? hero.shield : it.id === 'sword' ? !!hero.sword : false);
+    const model = () => ({
+      gold: state.gold,
+      hp: hero.hp,
+      maxHp: hero.maxHp,
+      items: CONFIG.peddler.items.map((it) => ({ ...it, text: text(it), useless: useless(it), poor: state.gold < it.price })),
+    });
     const shop = hud.showPeddler(model(), {
       buy(i) {
-        const o = offers[i];
-        if (!o || o.sold || state.gold < P.price) return;
-        hud.showCardFind(o.id, state.cards, (replace) => {
-          if (replace === false) return; // changed your mind: nothing bought
-          if (!takeArtifact(o.id, replace)) return;
-          state.gold -= P.price;
-          if (replace) state.gold += P.sellBack;
-          o.sold = true;
-          shop.update(model());
-        }, { kicker: `Buy for ${P.price} gold`, sellBack: P.sellBack });
-      },
-      reroll() {
-        if (state.gold < P.rerollPrice) return;
-        state.gold -= P.rerollPrice;
-        deal();
-        sfx.play('gear', 0.5, { pitch: 1.4 });
+        const it = CONFIG.peddler.items[i];
+        if (!it || useless(it) || state.gold < it.price) return;
+        state.gold -= it.price;
+        if (it.heal) hero.hp = Math.min(hero.maxHp, hero.hp + heal(it));
+        else collect({ kind: it.id }, hero, state);
+        sfx.play('gear', 0.8);
         shop.update(model());
       },
       leave() {
@@ -1029,29 +1023,6 @@ export function createGame(container, levels, startIndex = 0) {
       }
     }
     hero.passing = passing;
-  }
-
-  /**
-   * The "start each level with..." artifacts: Warrior's Sword and Shield
-   * hand you the gear (unless you already hold it), Doctor's Bottle fills
-   * your HP. Each shows its label over your ball.
-   */
-  function startOfLevelCards() {
-    const labels = [];
-    if (card('warriorSword') && !hero.sword) {
-      hero.atk += CONFIG.loot.swordAtk;
-      hero.sword = 'ready';
-      labels.push('Sword');
-    }
-    if (card('warriorShield') && !hero.shield) {
-      hero.shield = true;
-      labels.push('Shield');
-    }
-    if (card('doctorsBottle') && hero.hp > 0 && hero.hp < hero.maxHp) {
-      labels.push(`+${hero.maxHp - hero.hp} HP`);
-      hero.hp = hero.maxHp;
-    }
-    labels.forEach((text, i) => overlay.float(text, hero.x, hero.z, hero.radius * 2 + 0.2 + i * 0.45, text === 'Sword' || text === 'Shield' ? 'gear' : 'heal', heroFollow()));
   }
 
   /** Effects that sit on the hero rather than being checked as they happen. */

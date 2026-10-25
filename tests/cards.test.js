@@ -6,13 +6,13 @@ import { createWorld, createBall, createStaticCircle, stepWorld, applyBumperKick
 import { parseLevel } from '../src/level.js';
 import { CONFIG } from '../src/config.js';
 
-test('the artifacts in the pool (Locksmith and Doppleganger shelved, Value Vacuum and Sack of Plenty removed)', () => {
+test('the artifacts in the pool (Locksmith and Doppleganger shelved; Value Vacuum, Sack of Plenty and the start-of-level gear and health removed)', () => {
   assert.deepEqual(
     CARDS.map((c) => c.name),
     [
       'Leech in a Jar', "Warrior's Nose", "Cooper's Hammer", 'Skates of Rollering',
       'Bouncy Britches', 'Chicken Heart', 'Bomb Squad T-Shirt', "Doctor's Orders", "Assassin's Cloak", "Assassin's Boots",
-      'Tap Shoes', "Warrior's Sword", "Warrior's Shield", "Doctor's Bottle", "Doctor's Bag", 'Bug Zapper',
+      'Tap Shoes', "Doctor's Bag", 'Bug Zapper',
       "Rogue's Dagger", 'Poisoned Pen', "Shaman's Mask", 'Stone Shoes',
     ],
   );
@@ -56,14 +56,13 @@ test('an offer is 3 different cards, never one you hold', () => {
   }
 });
 
-test('taking a card fills a free slot, or replaces the one you choose when full', () => {
-  let hand = takeCard([], 'athletic');
-  hand = takeCard(hand, 'elasticity');
-  hand = takeCard(hand, 'vampirism');
-  assert.deepEqual(hand, ['athletic', 'elasticity', 'vampirism']);
-  assert.equal(takeCard(hand, 'bullionaire'), null, 'full: must choose one to replace');
-  assert.deepEqual(takeCard(hand, 'bullionaire', 'elasticity'), ['athletic', 'bullionaire', 'vampirism']);
-  assert.ok(has(hand, 'vampirism') && !has(hand, 'bullionaire'));
+test('one artifact slot: taking fills it, then a new one must swap for it', () => {
+  assert.equal(CONFIG.cards.slots, 1);
+  const hand = takeCard([], 'athletic');
+  assert.deepEqual(hand, ['athletic']);
+  assert.equal(takeCard(hand, 'elasticity'), null, 'full: must swap');
+  assert.deepEqual(takeCard(hand, 'elasticity', 'athletic'), ['elasticity']);
+  assert.ok(has(hand, 'athletic') && !has(hand, 'elasticity'));
 });
 
 test('Junk Hunter doubles the sword and shield weights in barrels', () => {
@@ -123,9 +122,4 @@ test('Elasticity kicks a ball off a barrel, but not off a wall', () => {
     assert.equal(applyBumperKick(world, ball, 1.5, 9), false);
     world.events.length = 0;
   }
-});
-
-test('a found card can replace a held one even with a slot free', () => {
-  assert.deepEqual(takeCard(['athletic'], 'elasticity', 'athletic'), ['elasticity']);
-  assert.deepEqual(takeCard(['athletic'], 'elasticity'), ['athletic', 'elasticity']);
 });

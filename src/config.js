@@ -345,17 +345,21 @@ export const CONFIG = {
   },
 
 
-  // The peddler (design doc: "Planned: the economy"): a shop after each
-  // level's scorecard, 3 artifacts at a time.
+  // The peddler (design doc: "Planned: the economy"): a supply shop between
+  // levels (artifacts come only from chests). heal is a share of your max HP,
+  // rounded up.
   peddler: {
-    offers: 3,
-    price: 40, // gold per artifact
-    rerollPrice: 5, // for 3 new offers
-    sellBack: 5, // gold back for an artifact you replace with one you buy
+    items: [
+      { id: 'smallHealth', name: 'Small health', icon: '🧪', price: 50, heal: 0.35 },
+      { id: 'largeHealth', name: 'Large health', icon: '⚗️', price: 125, heal: 0.8 },
+      { id: 'shield', name: 'Shield', icon: '🛡️', price: 90, text: 'Blocks the next hit.' },
+      { id: 'sword', name: 'Sword', icon: '🗡️', price: 90, text: '+3 ATK for your next shot.' },
+      { id: 'oneUp', name: '1-up', icon: '❤️', price: 400, text: 'An extra life.' },
+    ],
   },
 
   cards: {
-    slots: 3, // cards you can hold
+    slots: 1, // artifacts you can hold: a new one swaps for it
     offer: 3, // cards offered after each level
     // Testing aid: every new game starts with this many random cards already
     // dealt (0 for the normal game, which starts with none).
@@ -407,7 +411,7 @@ export const CONFIG = {
     skullJiggleDamping: 12, // high: small, quick wobbles
     deathFadeSeconds: 0.4, // darken / lighten time, inside the 3 s
     runCompleteSeconds: 4, // the "Run Complete!" screen after the last level, before a new run
-    maxHp: 5, // TESTING: 5 HP (normally 10)
+    maxHp: 10,
     atk: 1,
     lives: 3,
   },

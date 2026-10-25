@@ -6,14 +6,14 @@ import { createWorld, createBall, createStaticCircle, stepWorld, applyBumperKick
 import { parseLevel } from '../src/level.js';
 import { CONFIG } from '../src/config.js';
 
-test('the artifacts in the pool (Locksmith and Doppleganger shelved; Value Vacuum, Sack of Plenty and the start-of-level gear and health removed)', () => {
+test('the artifacts in the pool (Locksmith, Doppleganger, Chicken Heart and Shaman\'s Mask shelved; Value Vacuum, Sack of Plenty and the start-of-level gear and health removed)', () => {
   assert.deepEqual(
     CARDS.map((c) => c.name),
     [
       'Leech in a Jar', "Warrior's Nose", "Cooper's Hammer", 'Skates of Rollering',
-      'Bouncy Britches', 'Chicken Heart', 'Bomb Squad T-Shirt', "Doctor's Orders", "Assassin's Cloak", "Assassin's Boots",
+      'Bouncy Britches', 'Bomb Squad T-Shirt', "Doctor's Orders", "Assassin's Cloak", "Assassin's Boots",
       'Tap Shoes', "Doctor's Bag", 'Bug Zapper',
-      "Rogue's Dagger", 'Poisoned Pen', "Shaman's Mask", 'Stone Shoes',
+      "Rogue's Dagger", 'Poisoned Pen', 'Stone Shoes',
     ],
   );
 });

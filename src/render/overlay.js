@@ -52,7 +52,19 @@ export function createOverlay(container, camera) {
     onHeroMarker?.();
   });
 
+  // A height above the ground lifts a label up the screen by height × lift.
+  // That's cos(elevation), as projected, but never less than in the usual
+  // 37° view, so labels and bars stay above the ball when looking (nearly)
+  // straight down, where a height would otherwise project onto the ball.
+  const elevation = THREE.MathUtils.degToRad(CONFIG.camera.elevationDeg);
+  const lift = Math.max(Math.cos(elevation), Math.cos(THREE.MathUtils.degToRad(37)));
   function toScreen(x, y, z) {
+    v.set(x, 0, z).project(camera);
+    v.y += (2 * y * lift) / (camera.top - camera.bottom);
+    return { left: ((v.x + 1) / 2) * layer.clientWidth, top: ((1 - v.y) / 2) * layer.clientHeight };
+  }
+  /** Where a point really projects (a ball's centre, say), with no label lift. */
+  function exactScreen(x, y, z) {
     v.set(x, y, z).project(camera);
     return { left: ((v.x + 1) / 2) * layer.clientWidth, top: ((1 - v.y) / 2) * layer.clientHeight };
   }
@@ -180,9 +192,9 @@ export function createOverlay(container, camera) {
       if (gear.ball && (!gear.sword.hidden || !gear.shield.hidden)) {
         // Beside the ball at its centre height, just clear of its edge on screen.
         const b = gear.ball;
-        const c = toScreen(b.x, b.radius, b.z);
+        const c = exactScreen(b.x, b.radius, b.z);
         side.setFromMatrixColumn(camera.matrixWorld, 0).multiplyScalar(b.radius);
-        const e = toScreen(b.x + side.x, b.radius + side.y, b.z + side.z);
+        const e = exactScreen(b.x + side.x, b.radius + side.y, b.z + side.z);
         // They scale with the zoom: sized for a ball about 14 px across in
         // radius (the old resting view), bigger as the camera closes in.
         const radius = Math.abs(e.left - c.left);
@@ -213,7 +225,7 @@ export function createOverlay(container, camera) {
       const h = layer.clientHeight;
       if (heroMarkerBall) {
         const b = heroMarkerBall;
-        const p = toScreen(b.x, b.radius, b.z);
+        const p = exactScreen(b.x, b.radius, b.z);
         const r = 10; // about the ball's size on screen at the resting zoom
         const off = p.left < -r || p.left > w + r || p.top < -r || p.top > h + r;
         heroMarker.hidden = !off;

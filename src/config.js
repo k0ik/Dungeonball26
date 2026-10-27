@@ -427,6 +427,15 @@ export const CONFIG = {
     // Matched to the mockup: the grid is turned so level columns run gently
     // down-right and rows run steeply down-left, seen from ~37° above the ground.
     elevationDeg: 37, // camera angle above the ground plane
+    // Trying out other views (V, or the view button at the top right, cycles
+    // them; src/viewPreset.js sets elevationDeg and yawDeg from the choice).
+    // The kill cam's jump cut keeps its own perspective camera whichever is on.
+    viewPresets: [
+      { name: '37°', elevationDeg: 37, yawDeg: 30 }, // the usual view
+      { name: '65°', elevationDeg: 65, yawDeg: 30 },
+      { name: 'Top-down', elevationDeg: 90, yawDeg: 30 },
+      { name: 'Top-down square', elevationDeg: 90, yawDeg: 0 }, // grid rows level with the screen
+    ],
     panStartPx: 8, // a drag off the ball must move this far (screen px) before it pans the map
     yawDeg: 30, // grid rotation on screen
     baseViewWidth: 9, // world units across the screen at rest

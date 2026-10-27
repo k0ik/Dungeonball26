@@ -89,6 +89,9 @@ export function createCameraRig() {
     .multiplyScalar(Math.cos(elevation))
     .add(new THREE.Vector3(0, Math.sin(elevation), 0))
     .multiplyScalar(K.distance);
+  // Screen up is away from the camera along the ground. (The same as world up
+  // for a tilted view, but still defined looking straight down.)
+  camera.up.set(-toward.x, 0, -toward.z);
 
   // Aim at ball-centre height so a framed ball sits at screen centre.
   const target = new THREE.Vector3(0, CONFIG.ball.diameter / 2, 0);
@@ -145,6 +148,8 @@ export function createCameraRig() {
     camera,
     /** Yaw in radians, for ground-plane visuals that must stay screen-aligned. */
     yaw,
+    /** Unit ground direction toward the camera (defined even looking straight down). */
+    groundToward: { ...toward },
     /** Unit vector from the scene toward the camera. */
     toCamera: offset.clone().normalize(),
     get viewWidth() {

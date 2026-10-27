@@ -28,6 +28,7 @@ import icky from './levels/icky.txt?raw';
 import chambers from './levels/chambers.txt?raw';
 import bobsled from './levels/bobsled.txt?raw';
 import locksNKeys from './levels/locks-n-keys.txt?raw';
+import { applyView, hashLevel, nextView } from './viewPreset.js';
 
 // The run, in order (design doc: "Levels"). Levels 4 and 5 arrive in M8.
 const LEVELS = [
@@ -65,7 +66,9 @@ const LEVELS = [
 ];
 
 // Start on a level with the URL hash, e.g. #one-key.
-const fromHash = LEVELS.findIndex((l) => `#${l.id}` === location.hash);
+const fromHash = LEVELS.findIndex((l) => `#${l.id}` === hashLevel());
+// The camera angle being tried (V or the view button cycles them; see viewPreset.js).
+const view = applyView();
 // If anything breaks (above all, the browser refusing to start WebGL), say so
 // on screen instead of leaving a blank page, so it can be reported.
 function showFatal(err, lost = false) {
@@ -99,6 +102,19 @@ document.querySelector('#game canvas')?.addEventListener('webglcontextlost', () 
   const g = window.game;
   const where = `level ${g.levelDef?.name ?? '?'}, phase ${g.state?.phase ?? '?'}, view ${g.rig?.viewWidth?.toFixed(1) ?? '?'} tiles, pixel ratio ${g.renderer?.getPixelRatio?.().toFixed(2) ?? "?"}`;
   showFatal(new Error(`WebGL context lost (${where})`), true);
+});
+
+// The view button (top right) and V: the next camera angle, on this level.
+const viewButton = document.createElement('button');
+viewButton.type = 'button';
+viewButton.className = 'view-switch';
+viewButton.textContent = `View: ${view.name}`;
+const switchView = () => nextView(window.game.levelDef.id ?? LEVELS[0].id);
+viewButton.addEventListener('click', switchView);
+document.getElementById('game').appendChild(viewButton);
+window.addEventListener('keydown', (e) => {
+  if (document.body.classList.contains('editing')) return;
+  if (e.key === 'v' || e.key === 'V') switchView();
 });
 
 // The level editor (desktop): E opens the current level in it.

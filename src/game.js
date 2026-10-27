@@ -1630,7 +1630,7 @@ export function createGame(container, levels, startIndex = 0) {
     // no kill cam at all: slow motion on the usual view, unframed, just
     // reads as a glitch. (It keeps looking: a spot may open up as you close in.)
     if (!C.killCutJump) return;
-    const toward = { x: rig.toCamera.x, z: rig.toCamera.z };
+    const toward = rig.groundToward;
     const spot = chooseVantage(level, world.balls, hero, { x: p.x, z: p.z }, { x: hero.vx, z: hero.vz }, toward);
     if (!spot) return;
     state.killCut = { target: p.target, x: p.x, z: p.z, at: world.time + p.t, hold: null, cam: spot };

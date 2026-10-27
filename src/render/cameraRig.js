@@ -82,7 +82,7 @@ export function computeFraming(points, { yaw, elevation, aspect, minWidth, maxWi
 
 export function createCameraRig() {
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, K.distance * 3);
-  const elevation = THREE.MathUtils.degToRad(K.elevationDeg);
+  let elevation = THREE.MathUtils.degToRad(K.elevationDeg);
   const yaw = THREE.MathUtils.degToRad(K.yawDeg);
   const { toward } = axes(yaw);
   const offset = new THREE.Vector3(toward.x, 0, toward.z)
@@ -154,6 +154,23 @@ export function createCameraRig() {
     toCamera: offset.clone().normalize(),
     get viewWidth() {
       return viewWidth;
+    },
+    /** The camera's angle above the ground, in degrees. */
+    get elevationDeg() {
+      return THREE.MathUtils.radToDeg(elevation);
+    },
+    /**
+     * Tilt to `deg` above the ground (the chase tilt), keeping the yaw: the
+     * camera swings down toward the bottom of the screen, looking up it.
+     */
+    setElevation(deg) {
+      elevation = THREE.MathUtils.degToRad(deg);
+      offset
+        .set(toward.x, 0, toward.z)
+        .multiplyScalar(Math.cos(elevation))
+        .add(new THREE.Vector3(0, Math.sin(elevation), 0))
+        .multiplyScalar(K.distance);
+      place();
     },
     /** True once the camera has (nearly) reached its current framing. */
     get settled() {

@@ -435,7 +435,14 @@ export const CONFIG = {
       { name: '65°', elevationDeg: 65, yawDeg: 30 },
       { name: 'Top-down', elevationDeg: 90, yawDeg: 30 },
       { name: 'Top-down square', elevationDeg: 90, yawDeg: 0 }, // grid rows level with the screen
+      // ...and during your shot the camera eases down into a chase tilt
+      // (chaseElevationDeg), swinging toward the bottom of the screen to look
+      // up it, never rotating; it rises back as the shot ends.
+      { name: 'Top-down square + tilt', elevationDeg: 90, yawDeg: 0, chaseElevationDeg: 60 },
     ],
+    chaseElevationDeg: null, // set from the view preset (src/viewPreset.js): null for no chase tilt
+    chaseTiltRate: 0.9, // 1/s: how slowly it eases into the tilt during your shot
+    chaseReturnRate: 3, // 1/s: how quickly it rises back once your shot is over
     panStartPx: 8, // a drag off the ball must move this far (screen px) before it pans the map
     yawDeg: 30, // grid rotation on screen
     baseViewWidth: 9, // world units across the screen at rest
@@ -512,7 +519,7 @@ export const CONFIG = {
     // slow for killCutHold after. No zoom (the camera follows as usual);
     // the jump cut to a close-up view comes next.
     killCut: true,
-    killCutWhich: 'all', // 'all' kills (for testing) or 'combo' (only a shot's 2nd kill on)
+    killCutWhich: 'combo', // 'all' kills (for testing) or 'combo' (only a shot's 2nd kill on)
     killCutLead: 0.45, // seconds of game time before the impact that slow motion starts
     killCutLook: 0.6, // seconds of game time the prediction looks ahead
     killCutEvery: 3, // frames between predictions
@@ -604,7 +611,7 @@ export const CONFIG = {
     // little bigger than the ball) with a darker rim, rocked back away from
     // the face (following it as it looks around, and to the kill cam), so
     // the two never fight. It pops off and tumbles away when the enemy dies.
-    helmet: true,
+    helmet: false, // hidden for now: from the top-down views their orientation looks silly
     helmetColor: 0x5f646d, // steel grey (lighter greys read beige under the torch)
     helmetRimColor: 0x3b3f46,
     helmetScale: 1.1, // of the ball's radius

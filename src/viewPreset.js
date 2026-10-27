@@ -27,6 +27,7 @@ export function applyView() {
   const p = CONFIG.camera.viewPresets[currentView()];
   CONFIG.camera.elevationDeg = p.elevationDeg;
   CONFIG.camera.yawDeg = p.yawDeg;
+  CONFIG.camera.chaseElevationDeg = p.chaseElevationDeg ?? null;
   return p;
 }
 

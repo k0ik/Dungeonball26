@@ -2129,6 +2129,16 @@ export function createGame(container, levels, startIndex = 0) {
       }
       if (state.returnBoost > 0) state.returnBoost = rig.settled ? 0 : state.returnBoost - dt;
     }
+    // The chase tilt (a view preset's chaseElevationDeg): during your shot the
+    // camera eases down toward it, looking up the screen; after, back up.
+    if (CONFIG.camera.chaseElevationDeg != null) {
+      const C = CONFIG.camera;
+      const chasing = state.phase === 'shot' && !state.killCut;
+      const goal = chasing ? C.chaseElevationDeg : C.elevationDeg;
+      const f = 1 - Math.exp(-(chasing ? C.chaseTiltRate : C.chaseReturnRate) * realDt);
+      const deg = rig.elevationDeg + (goal - rig.elevationDeg) * f;
+      if (Math.abs(deg - rig.elevationDeg) > 0.01) rig.setElevation(Math.abs(goal - deg) < 0.05 ? goal : deg);
+    }
     rig.updateShake(realDt);
     lighting.update(realDt, hero, world.balls, world.statics, level.exits, level.lavas ?? []);
     // The kill cam's jump cut renders from its own camera; the HP bars and

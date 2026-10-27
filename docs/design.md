@@ -375,7 +375,7 @@ Levels 1 to 3 are built (M6), followed for now by **Warrens** (24×21, your desi
 | # | Name | Size | Enemies | Keys and doors | Teaches |
 | --- | --- | --- | --- | --- | --- |
 | 1 | Long Hall | 12×33 (redrawn, curviness 5) | Eight, levels 1 to 3 (a touching pair blocks the first doorway), plus six barrels, three chests, two red barrels and 20 coins (a coin corridor down the right side and round to the left) | None | Aiming, bouncing, hitting enemies, combos, the exit |
-| 3 | One Key | 12×21 | A level 2 in the middle room and a level 1 in the bottom room, plus five barrels, a chest and a red barrel | Red: the key sits in the middle room, behind a wall from the level 2; the red door seals the top room, which holds the exit, a chest and a row of 6 coins | Keys, doors, hiding from sight |
+| 3 | One Key | 12×21 | A level 2 in the middle room and a level 1 in the bottom room, plus five barrels, a chest and a red barrel | Red: the key sits in the middle room, behind a short wall from the level 2 (shortened in a later tweak, so the key is easier to see and reach); the red door seals the top room, which holds the exit, a chest and a row of 6 coins | Keys, doors, hiding from sight |
 | 4 | Two Keys | 14×24 | Four, levels 1 to 3 | Red, blue | Routing, combos, using enemies as blockers |
 | 5 | Gauntlet | 16×32 | Seven, levels 1 to 3 | Red, blue, yellow | Scrolling, risk against greed, everything together |
 

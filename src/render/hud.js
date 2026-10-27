@@ -234,12 +234,13 @@ export function createHud(container) {
       });
     },
     /**
-     * A callout: a bonus, "Combo Kill!" or "Bonus turn!", centred above the
+     * A callout: a bonus, "Combo Kill!" or "Bonus turn!" (a trick shot's
+     * with a small "Trick Shot" eyebrow over its name), centred above the
      * board for calloutSeconds. Callouts close together stack: each new one
      * waits at least calloutBeat after the last, then appears in place and
      * pushes the older ones up. Returns the seconds until this one is gone.
      */
-    callout(title, sub = '', gold = 0, note = '') {
+    callout(title, sub = '', gold = 0, note = '', eyebrow = '') {
       const R = CONFIG.render;
       const now = performance.now();
       const at = Math.max(now, calloutNext);
@@ -247,7 +248,9 @@ export function createHud(container) {
       setTimeout(() => {
         const el = document.createElement('div');
         el.className = 'callout';
-        el.innerHTML = '<strong></strong><span></span><em></em>';
+        el.innerHTML = '<small></small><strong></strong><span></span><em></em>';
+        el.querySelector('small').textContent = eyebrow;
+        el.querySelector('small').hidden = !eyebrow;
         el.querySelector('strong').textContent = gold ? `${title} +${gold}` : title;
         el.querySelector('span').textContent = sub;
         el.querySelector('span').hidden = !sub;

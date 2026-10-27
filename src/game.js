@@ -447,7 +447,7 @@ export function createGame(container, levels, startIndex = 0) {
     nextMove();
     combat.beginShot();
     // This shot's record, for its trick shots (and One-Hit Wonder).
-    state.shotRec = { paid: new Set(), picked: new Set(), kills: 0, chests: 0, door: false, hitAt: new Map(), bounced: new Set(), comboKnocked: new Set(), cleanStart: state.lvl?.kills === 0 };
+    state.shotRec = { paid: new Set(), tricks: [], picked: new Set(), kills: 0, chests: 0, door: false, hitAt: new Map(), bounced: new Set(), comboKnocked: new Set(), cleanStart: state.lvl?.kills === 0 };
     // Shaman's Mask: each shot you take heals you.
     if (card('shamanMask') && hero.hp > 0 && hero.hp < hero.maxHp) {
       const heal = Math.min(CONFIG.cards.shamanHeal, hero.maxHp - hero.hp);
@@ -818,26 +818,31 @@ export function createGame(container, levels, startIndex = 0) {
     sfx.play('exit', 0.8);
   }
 
-  /** A trick shot: a bonus (CONFIG.tricks), at most once per shot each. */
+  /**
+   * A trick shot: a bonus (CONFIG.tricks), at most once per shot each, called
+   * out under a "Trick Shot" eyebrow. One landed on your shot earns a bonus
+   * turn as the shot comes to rest (R.tricks).
+   */
   function trick(name, callout = true) {
     const R = state.shotRec;
     if (R) {
       if (R.paid.has(name)) return;
       R.paid.add(name);
+      if (state.phase === 'shot') R.tricks.push(name);
     }
-    bonus(name, CONFIG.tricks[name], callout);
+    bonus(name, CONFIG.tricks[name], callout, 'Trick Shot');
   }
 
   /**
    * A bonus: gold now, a callout naming it (unless `callout` is false: the
    * exit's own), and a line on the level's Bonuses Earned screen.
    */
-  function bonus(name, gold, callout = true) {
+  function bonus(name, gold, callout = true, eyebrow = '') {
     const got = addGold(gold);
     state.lvl?.bonuses.push({ name, gold: got });
     if (callout) {
       sfx.play('comboKill', 0.6, { pitch: 1.2 });
-      hud.callout(name.endsWith('!') ? name : `${name}!`, '', got);
+      hud.callout(name.endsWith('!') ? name : `${name}!`, '', got, '', eyebrow);
     }
   }
 
@@ -1455,7 +1460,7 @@ export function createGame(container, levels, startIndex = 0) {
         }
         if (o.shotKills >= 2 && state.phase === 'shot') {
           sfx.play('comboKill', 0.9);
-          hud.callout(o.shotKills > 2 ? `Combo Kill ×${o.shotKills}!` : 'Combo Kill!'); // the bonus turn gets its own as the shot rests
+          hud.callout(o.shotKills > 2 ? `Combo Kill ×${o.shotKills}!` : 'Combo Kill!'); // Double or Triple Kill, and the bonus turn, follow as the shot rests
         }
         // Every enemy dead (tool balls aside; a golem's pieces count).
         if (state.lvl && state.lvl.enemies && !state.lvl.swept && !enemies().some((e) => !isTool(e) && e.hp > 0)) {
@@ -1886,15 +1891,17 @@ export function createGame(container, levels, startIndex = 0) {
           // Double Kill or Triple Kill (3 or more), judged now the shot has played out.
           if (combat.shotKills >= 3) trick('Triple Kill');
           else if (combat.shotKills === 2) trick('Double Kill');
-          // A combo kill (2+ enemies in one shot) earns a bonus turn: the
-          // enemy phase is skipped and you shoot again. With Assassin's
-          // Boots, any kill does, as long as no enemy sees where you stopped.
+          // A trick shot (any number of them: one bonus turn, no stacking)
+          // earns a bonus turn, as a pot does in pool: the enemy phase is
+          // skipped and you shoot again. With Assassin's Boots, any kill
+          // does, as long as no enemy sees where you stopped.
+          const tricks = state.shotRec?.tricks ?? [];
           const unseenKill = card('balletShoes') && combat.shotKills >= 1 && !seenByAny();
-          if (combat.shotKills >= 2 || unseenKill) {
+          if (tricks.length || unseenKill) {
             state.phase = 'aim';
             newRound();
             // Every bonus turn says what earned it.
-            const cause = combat.shotKills >= 2 ? (combat.shotKills > 2 ? `Combo Kill ×${combat.shotKills}` : 'Combo Kill') : "Assassin's Boots";
+            const cause = tricks.length === 1 ? tricks[0] : tricks.length ? `${tricks.length} trick shots` : "Assassin's Boots";
             hud.callout('Bonus turn!', 'Shoot again', 0, cause);
             sfx.play('respawn', 0.7);
           } else {

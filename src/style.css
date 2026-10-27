@@ -1000,6 +1000,13 @@ body {
   animation: callout-in 0.28s ease-out both;
   transition: opacity 0.3s ease, translate 0.3s ease;
 }
+.callout small {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #b9a7ff;
+}
 .callout strong {
   font-size: 21px;
   color: #ffd23f;

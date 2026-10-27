@@ -117,3 +117,11 @@ test('the preview matches the real shot, kills and barrels included', async () =
     assert.ok(err < 0.01, `shot ${i} (angle ${a.toFixed(2)}, speed ${speed}) ends ${err.toFixed(2)} tiles from its preview`);
   }
 });
+
+test('with a drag length, cancelling and power go by the drag, not the pointer on the ground', () => {
+  const hero = { x: 5, z: 5 };
+  // Pointer far away on the ground, but a short drag on screen: cancelled.
+  assert.equal(shotFromDrag(hero, { x: 5, z: 9 }, A.cancelRadius * 0.5).cancel, true);
+  // Pointer close on the ground, but a full-length drag: full power.
+  assert.equal(shotFromDrag(hero, { x: 5, z: 5.3 }, A.fullPowerDrag).speed, A.maxLaunchSpeed);
+});

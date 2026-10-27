@@ -445,7 +445,7 @@ export const CONFIG = {
     chaseReturnRate: 3, // 1/s: how quickly it rises back once your shot is over
     panStartPx: 8, // a drag off the ball must move this far (screen px) before it pans the map
     yawDeg: 30, // grid rotation on screen
-    baseViewWidth: 9, // world units across the screen at rest
+    baseViewWidth: 9, // the baseline zoom, tiles across: your turn sits here, and shots and the enemy turn widen from it and return to it
     maxViewWidth: 13, // speed zoom: world units across at max launch speed
     // Aiming: the zoom follows shot power, from the resting width at no power
     // to aimMaxWidth at full power, anchored on the ball (no panning).
@@ -486,12 +486,12 @@ export const CONFIG = {
     // The enemies wait for the camera to arrive before they move (at most enemyTurnMaxWait).
     settleDistance: 0.6, // tiles from the framing goal that count as arrived
     settleZoom: 0.12, // fraction of the goal width that counts as arrived
-    // Closeness (design doc: "Camerawork"). On your turn the camera sits
-    // tight on your ball, which fills restFill of the view's width (aiming
-    // zooms out from there with power). During shots and enemy moves it
+    // Closeness (design doc: "Camerawork"). On your turn the camera sits on
+    // your ball at the baseline zoom (baseViewWidth; it used to close in so
+    // your ball filled restFill of the view). During shots and enemy moves it
     // stays on you and widens to keep every moving ball in view (padding
     // followPadding), zooming out quickly and back in slowly.
-    restFill: 0.157, // your ball's share of the view's width at rest (0.2, then 0.188, felt too close)
+    restFill: 0.157, // now only the scale a drag's power is measured at (the old resting view: your ball this share of its width)
     restZoomRate: 2.2, // 1/s, easing in to the tight view
     followPadding: 1.6, // screen units around moving balls while the camera stays on you
     followZoomOutRate: 3.5, // 1/s: widen quickly when something heads off screen

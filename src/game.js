@@ -394,7 +394,9 @@ export function createGame(container, levels, startIndex = 0) {
     tmp.set(hero.x, hero.radius, hero.z).project(aimCamera);
     aimPx.heroX = ((tmp.x + 1) / 2) * rect.width;
     aimPx.heroY = ((1 - tmp.y) / 2) * rect.height;
-    aimPx.unitsPerPx = (aimCamera.right - aimCamera.left) / aimCamera.zoom / rect.width;
+    // Measured at the resting scale (a view restFill of a ball wide), not
+    // the zoom you press at, so a drag's power feels the same at any zoom.
+    aimPx.unitsPerPx = restWidth() / rect.width;
     aimPx.x = e.clientX - rect.left;
     aimPx.y = e.clientY - rect.top;
   });
@@ -416,6 +418,9 @@ export function createGame(container, levels, startIndex = 0) {
   });
 
   /** The shot the current drag sets up: aimed on the ground, powered by the drag's length on screen. */
+  /** The old resting view's width (your ball filling restFill of it): the scale drag power is measured at. */
+  const restWidth = () => CONFIG.ball.diameter / CONFIG.camera.restFill;
+
   function aimShot() {
     const px = Math.hypot(aimPx.x - aimPx.heroX, aimPx.y - aimPx.heroY);
     return shotFromDrag(hero, { x: state.pointer.x, z: state.pointer.z }, px * aimPx.unitsPerPx);
@@ -1957,7 +1962,7 @@ export function createGame(container, levels, startIndex = 0) {
             ice,
             move: (state.move ?? 0) + 1,
           });
-      aimView.show(hero, shot, preview, rig.viewWidth / rig.aimStartWidth);
+      aimView.show(hero, shot, preview, rig.viewWidth / restWidth());
       state.shownPreview = preview; // debugging: the path the preview showed
       seePath = preview?.points ?? null;
     } else if (state.phase === 'aim') {
@@ -2093,12 +2098,13 @@ export function createGame(container, levels, startIndex = 0) {
         if (state.killCam?.hero) rig.focus(hero, C.killWidth, realDt, C.closeZoomRate);
         else rig.focus(hero, tightest + speedOf(hero) * C.skullSpeedWidth, realDt, C.skullZoomRate);
       } else if (state.phase === 'aim') {
-        // Your turn, at rest: tight on your ball (restFill of the view);
-        // aiming zooms out from here with power.
-        rig.focus(hero, CONFIG.ball.diameter / C.restFill, realDt, C.restZoomRate, boost);
+        // Your turn, at rest: on your ball at the baseline zoom
+        // (baseViewWidth; no zooming in on you); aiming zooms out from here
+        // with power.
+        rig.focus(hero, C.baseViewWidth, realDt, C.restZoomRate, boost);
       } else {
         const fast = Math.min(1, speedOf(hero) / CONFIG.aim.maxLaunchSpeed);
-        const tight = CONFIG.ball.diameter / C.restFill;
+        const tight = C.baseViewWidth; // the baseline: shots and the enemy turn widen from it and come back to it
         const enemyTurn = state.phase === 'enemyWait' || state.phase === 'enemyMove';
         if (state.killCam && !enemyTurn) {
           // Kill cam: tight on the kill (and you, if you're close by).

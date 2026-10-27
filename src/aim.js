@@ -18,7 +18,9 @@ export function shotFromDrag(hero, pointer, dragDist = null) {
   const dx = hero.x - pointer.x;
   const dz = hero.z - pointer.z;
   const dist = Math.hypot(dx, dz);
-  if (dist < A.cancelRadius) return { cancel: true, fill: 0, speed: 0, dirX: 0, dirZ: 0 };
+  // Cancel by the drag's length (at the resting scale) when given, so the
+  // cancel ring is the same size on screen at any zoom.
+  if ((dragDist ?? dist) < A.cancelRadius) return { cancel: true, fill: 0, speed: 0, dirX: 0, dirZ: 0 };
   // Power comes from `dragDist` when given: the drag's length on screen in
   // tiles at the resting scale, the same in every direction (on the ground,
   // an up-or-down drag covers more tiles than a sideways one, foreshortened).

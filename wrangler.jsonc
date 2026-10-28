@@ -1,0 +1,9 @@
+// Cloudflare deploy (Workers with static assets): `npm run build` writes the
+// game to dist/, and `npx wrangler deploy` serves that folder as is.
+{
+  "name": "dungeonball",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./dist"
+  }
+}

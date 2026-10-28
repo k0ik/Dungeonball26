@@ -11,9 +11,10 @@ import { cardById } from '../cards.js';
 export function createHud(container) {
   const bar = document.createElement('div');
   bar.className = 'hud';
-  bar.innerHTML = `<div class="hud-left"><span class="coin"></span><span class="hud-gold">0</span></div>`;
+  bar.innerHTML = `<div class="hud-left"><span class="coin"></span><span class="hud-gold">0</span></div><span class="hud-level"></span>`;
   container.appendChild(bar);
   const gold = bar.querySelector('.hud-gold');
+  const levelName = bar.querySelector('.hud-level'); // the level's name, top right
   // The keys you hold: a small column beside the artifacts (inventory below).
   const keySlots = document.createElement('div');
   keySlots.className = 'key-stack';
@@ -148,6 +149,10 @@ export function createHud(container) {
     /** True while a card is open (the game holds still). */
     get paused() {
       return paused;
+    },
+    /** The level's name, shown at the top right. */
+    setLevelName(name) {
+      levelName.textContent = name ?? '';
     },
     setGold(n) {
       if (n === shownGold) return;

@@ -68,7 +68,7 @@ const LEVELS = [
 // Start on a level with the URL hash, e.g. #one-key.
 const fromHash = LEVELS.findIndex((l) => `#${l.id}` === hashLevel());
 // The camera angle being tried (V or the view button cycles them; see viewPreset.js).
-const view = applyView();
+applyView();
 // If anything breaks (above all, the browser refusing to start WebGL), say so
 // on screen instead of leaving a blank page, so it can be reported.
 function showFatal(err, lost = false) {
@@ -104,14 +104,8 @@ document.querySelector('#game canvas')?.addEventListener('webglcontextlost', () 
   showFatal(new Error(`WebGL context lost (${where})`), true);
 });
 
-// The view button (top right) and V: the next camera angle, on this level.
-const viewButton = document.createElement('button');
-viewButton.type = 'button';
-viewButton.className = 'view-switch';
-viewButton.textContent = `View: ${view.name}`;
+// V: the next camera angle, on this level (the angle shows in the debug readout, D).
 const switchView = () => nextView(window.game.levelDef.id ?? LEVELS[0].id);
-viewButton.addEventListener('click', switchView);
-document.getElementById('game').appendChild(viewButton);
 window.addEventListener('keydown', (e) => {
   if (document.body.classList.contains('editing')) return;
   if (e.key === 'v' || e.key === 'V') switchView();

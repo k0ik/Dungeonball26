@@ -231,6 +231,7 @@ export function createGame(container, levels, startIndex = 0) {
     levelIndex = (i + levels.length) % levels.length;
     const def = levels[levelIndex];
     hud.setMessage(def.message ?? null);
+    hud.setLevelName(def.name);
     // Any death scene in progress ends with the old level (respawn heals you).
     hud.hideScreen();
     state.killCam = null;
@@ -2172,7 +2173,7 @@ export function createGame(container, levels, startIndex = 0) {
 
     if (!debug.hidden) {
       debug.textContent = [
-        `${level.name}  ${fps.toFixed(0)} fps`,
+        `${level.name}  ${fps.toFixed(0)} fps  view ${CONFIG.camera.elevationDeg}°/${CONFIG.camera.yawDeg}°${CONFIG.camera.chaseElevationDeg != null ? ' + tilt' : ''}`,
         `phase  ${state.aiming ? 'aiming' : state.phase}${state.moves.length ? ` (${state.moves.length} moving)` : ''}`,
         `hero   ${hero.x.toFixed(2)}, ${hero.z.toFixed(2)}  hp ${hero.hp}/${hero.maxHp}  lives ${state.lives}`,
         `speed  ${speedOf(hero).toFixed(2)} tiles/s`,

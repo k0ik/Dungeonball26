@@ -1,7 +1,7 @@
 // Cloudflare deploy (Workers with static assets): `npm run build` writes the
 // game to dist/, and `npx wrangler deploy` serves that folder as is.
 {
-  "name": "dungeonball",
+  "name": "dungeonball26", // must match the Worker's name in Cloudflare
   "compatibility_date": "2025-09-01",
   "assets": {
     "directory": "./dist"

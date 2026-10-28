@@ -38,3 +38,10 @@ To test on a phone on the same network, run `npm run host` and open the printed 
 - `src/audio.js` — SFX via `THREE.Audio` (synthesized placeholders for now)
 - `src/game.js` — wires input, simulation, rendering and audio together
 - `tests/` — `node --test` unit tests
+
+## Deploy (Cloudflare)
+
+The game is deployed to Cloudflare as a Worker serving static assets
+(`wrangler.jsonc`): Cloudflare runs `npm run build`, then `npx wrangler deploy`,
+which serves `dist/`. Every push to the production branch (set under the
+project's Settings → Build → Branch control) redeploys it.
